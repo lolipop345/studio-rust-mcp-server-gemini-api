@@ -19,7 +19,10 @@
     "apiKeyRejected": "La chiave API è stata rifiutata.",
     "cannotConnect": "Impossibile connettersi al server.",
     "enterApiKey": "Inserisci una chiave API per continuare.",
-    "enterNewKey": "Inserisci una nuova chiave o lascia vuoto..."
+    "enterNewKey": "Inserisci una nuova chiave o lascia vuoto...",
+    "clearHistory": "Cancella tutta la cronologia",
+    "cancel": "Annulla",
+    "ok": "OK"
   },
   "titlebar": {
     "settingsTitle": "Impostazioni",
@@ -186,5 +189,8 @@
     "useCamera": "Usa fotocamera",
     "capturePhoto": "Cattura",
     "cancelCamera": "Annulla"
+  },
+  "sidebar": {
+    "search": "Cerca chat..."
   }
 }

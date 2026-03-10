@@ -19,7 +19,10 @@
     "apiKeyRejected": "API Key отклонён.",
     "cannotConnect": "Не удаётся подключиться к серверу.",
     "enterApiKey": "Введите API key для продолжения.",
-    "enterNewKey": "Введите новый ключ или оставьте пустым..."
+    "enterNewKey": "Введите новый ключ или оставьте пустым...",
+    "clearHistory": "Очистить всю историю",
+    "cancel": "Отмена",
+    "ok": "ОК"
   },
   "titlebar": {
     "settingsTitle": "Настройки",
@@ -186,5 +189,8 @@
     "useCamera": "Использовать камеру",
     "capturePhoto": "Снять",
     "cancelCamera": "Отмена"
+  },
+  "sidebar": {
+    "search": "Поиск чата..."
   }
 }

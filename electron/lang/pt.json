@@ -19,7 +19,10 @@
     "apiKeyRejected": "API Key foi rejeitada.",
     "cannotConnect": "Não é possível conectar ao servidor.",
     "enterApiKey": "Por favor, insira uma API key para continuar.",
-    "enterNewKey": "Digite nova key ou deixe vazio para manter atual..."
+    "enterNewKey": "Digite nova key ou deixe vazio para manter atual...",
+    "clearHistory": "Limpar todo o histórico",
+    "cancel": "Cancelar",
+    "ok": "OK"
   },
   "titlebar": {
     "settingsTitle": "Configurações",
@@ -186,5 +189,8 @@
     "useCamera": "Usar câmara",
     "capturePhoto": "Capturar",
     "cancelCamera": "Cancelar"
+  },
+  "sidebar": {
+    "search": "Pesquisar bate-papo..."
   }
 }

@@ -10,330 +10,427 @@
 </head>
 
 <body>
-  <div id="titlebar">
-    <div id="titlebar-drag"></div>
-    <div id="titlebar-left">
-      <!-- Mac traffic lights space -->
-    </div>
-    <div id="titlebar-center">
-    </div>
-    <div id="titlebar-actions">
-      <button id="btn-theme" class="titlebar-btn ghost-icon" title="Toggle Theme">
-        <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
-        <svg id="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round" style="display:none">
-          <circle cx="12" cy="12" r="5" />
-          <line x1="12" y1="1" x2="12" y2="3" />
-          <line x1="12" y1="21" x2="12" y2="23" />
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-          <line x1="1" y1="12" x2="3" y2="12" />
-          <line x1="21" y1="12" x2="23" y2="12" />
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-        </svg>
-      </button>
-      <button id="btn-settings" class="titlebar-btn ghost-icon" title="Settings">
+  <div id="sidebar" class="sidebar-closed">
+    <div class="sidebar-header">
+      <h3 data-i18n="sidebar.title" style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary)">
+        Chats</h3>
+      <button id="btn-new-chat" class="action-btn-subtle" title="New Chat">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path
-            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-          </path>
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
       </button>
-      <button id="btn-ghost" class="titlebar-btn ghost-icon" title="Ghost">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z" />
-          <path d="M9 10h.01" />
-          <path d="M15 10h.01" />
-        </svg>
-      </button>
+    </div>
+
+    <div class="sidebar-scrollable">
+      <div class="sidebar-section" style="margin-bottom: 24px;">
+        <div id="btn-open-search" class="sidebar-item" style="font-size: 13px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="margin-right: 8px;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span data-i18n="sidebar.search" style="flex: 1; white-space: normal;">Search Chat...</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section" id="section-pinned" style="display: none;">
+        <div class="sidebar-section-title" data-i18n="sidebar.pinned">Pinned</div>
+        <div id="sidebar-pinned-list" class="sidebar-list"></div>
+      </div>
+      <div class="sidebar-section" id="section-recent">
+        <div class="sidebar-section-title" data-i18n="sidebar.recent">Recent</div>
+        <div id="sidebar-recent-list" class="sidebar-list"></div>
+      </div>
     </div>
   </div>
 
-  <div id="chat-container" class="chat-empty">
-    <div id="welcome">
-      <div class="hero">
-        <div class="hero-top">
-          <svg class="hero-icon" width="32" height="32" viewBox="0 0 64 64" fill="none"
-            xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M60.2773 12.3887L50.8877 60.2773L3 50.8877L12.3887 3L60.2773 12.3887ZM32.9424 18.6465C32.6268 17.7606 31.3732 17.7606 31.0576 18.6465L29.7109 22.4297C28.5015 25.8277 25.8277 28.5015 22.4297 29.7109L18.6465 31.0576C17.7606 31.3732 17.7606 32.6268 18.6465 32.9424L22.4297 34.2891C25.8277 35.4985 28.5015 38.1723 29.7109 41.5703L31.0576 45.3535C31.3732 46.2394 32.6268 46.2394 32.9424 45.3535L34.2891 41.5703C35.4985 38.1723 38.1723 35.4985 41.5703 34.2891L45.3535 32.9424C46.2394 32.6268 46.2394 31.3732 45.3535 31.0576L41.5703 29.7109C38.1723 28.5015 35.4985 25.8277 34.2891 22.4297L32.9424 18.6465Z"
-              fill="var(--accent)" />
-          </svg>
-          <h1 class="hero-greeting" id="hero-greeting"></h1>
-        </div>
-        <h2 class="hero-title"></h2>
-      </div>
-    </div>
-    <div id="messages">
-    </div>
-
-    <!-- Recording Overlay (Floating above input) -->
-    <div id="recording-overlay" class="hidden">
-      <div class="recording-content">
-        <button id="btn-cancel-record" class="action-btn-subtle" title="Cancel Recording">
+  <div id="right-column">
+    <div id="titlebar">
+      <div id="titlebar-drag"></div>
+      <div id="titlebar-left">
+        <!-- Mac traffic lights space handled dynamically in CSS -->
+        <button id="btn-sidebar-toggle" class="titlebar-btn ghost-icon" title="Toggle Sidebar">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
           </svg>
         </button>
-        <div class="recording-indicator">
-          <div id="record-time">00:00</div>
-          <div class="waveform">
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-          </div>
-        </div>
-        <button id="btn-save-record" class="action-btn" title="Stop & Save">
-          <div class="record-icon-inner"></div>
+      </div>
+      <div id="titlebar-center"
+        style="display: flex; gap: 8px; align-items: center; justify-content: center; flex: 1; -webkit-app-region: drag; color: var(--text-secondary); font-size: 13px; font-weight: 500;">
+        <span id="topbar-chat-title">GeminiStudio</span>
+        <span id="topbar-chat-tokens"
+          style="opacity: 0.8; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; display: flex; align-items: center;"></span>
+      </div>
+      <div id="titlebar-actions">
+        <button id="btn-theme" class="titlebar-btn ghost-icon" title="Toggle Theme">
+          <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+          <svg id="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+        </button>
+        <button id="btn-settings" class="titlebar-btn ghost-icon" title="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+            </path>
+          </svg>
+        </button>
+        <button id="btn-ghost" class="titlebar-btn ghost-icon" title="Ghost">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z" />
+            <path d="M9 10h.01" />
+            <path d="M15 10h.01" />
+          </svg>
         </button>
       </div>
     </div>
 
-    <div id="input-area">
-      <div id="image-preview" class="hidden">
-        <img id="preview-img" src="" alt="Selected Image">
-        <button id="btn-remove-img" data-i18n-title="titlebar.closeSuggestedMenu" title="Remove">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
+    <div id="main-content">
 
-      <div id="input-wrapper">
-        <input type="file" id="image-upload" accept="*/*" multiple class="hidden">
-        <textarea id="message-input" data-i18n-placeholder="landing.placeholder" placeholder="How can I help you today?"
-          rows="1"></textarea>
-
-        <div class="input-actions-bottom">
-          <div class="input-actions-left">
-            <button id="btn-attach" class="action-btn-subtle" data-i18n-title="tooltips.attach" title="Görsel Ekle">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 5v14M5 12h14" />
+      <div id="chat-container" class="chat-empty">
+        <div id="welcome">
+          <div class="hero">
+            <div class="hero-top">
+              <svg class="hero-icon" width="32" height="32" viewBox="0 0 64 64" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M60.2773 12.3887L50.8877 60.2773L3 50.8877L12.3887 3L60.2773 12.3887ZM32.9424 18.6465C32.6268 17.7606 31.3732 17.7606 31.0576 18.6465L29.7109 22.4297C28.5015 25.8277 25.8277 28.5015 22.4297 29.7109L18.6465 31.0576C17.7606 31.3732 17.7606 32.6268 18.6465 32.9424L22.4297 34.2891C25.8277 35.4985 28.5015 38.1723 29.7109 41.5703L31.0576 45.3535C31.3732 46.2394 32.6268 46.2394 32.9424 45.3535L34.2891 41.5703C35.4985 38.1723 38.1723 35.4985 41.5703 34.2891L45.3535 32.9424C46.2394 32.6268 46.2394 31.3732 45.3535 31.0576L41.5703 29.7109C38.1723 28.5015 35.4985 25.8277 34.2891 22.4297L32.9424 18.6465Z"
+                  fill="var(--accent)" />
               </svg>
-            </button>
-
-            <div id="attach-popover" class="attach-popover hidden">
-              <button class="attach-option" id="attach-upload-files">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="12" y1="18" x2="12" y2="12"></line>
-                  <line x1="9" y1="15" x2="15" y2="15"></line>
-                </svg>
-                <span data-i18n="attach.uploadFiles">Upload Files</span>
-              </button>
-              <button class="attach-option" id="attach-record-audio">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  <line x1="12" y1="19" x2="12" y2="23"></line>
-                  <line x1="8" y1="23" x2="16" y2="23"></line>
-                </svg>
-                <span data-i18n="attach.recordAudio">Record Audio</span>
-              </button>
-              <button class="attach-option" id="attach-use-camera" disabled>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-                <span data-i18n="attach.useCamera">Use Camera</span>
-              </button>
+              <h1 class="hero-greeting" id="hero-greeting"></h1>
             </div>
-            <button id="btn-search" class="action-btn-subtle hidden" data-i18n-title="tooltips.search"
-              title="Web'de Ara (Grounding)">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="2" y1="12" x2="22" y2="12"></line>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
-                </path>
-              </svg>
-            </button>
-            <button id="btn-code" class="action-btn-subtle hidden" data-i18n-title="tooltips.code"
-              title="Python Kod Çalıştır">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="16 18 22 12 16 6"></polyline>
-                <polyline points="8 6 2 12 8 18"></polyline>
-              </svg>
-            </button>
+            <h2 class="hero-title"></h2>
           </div>
+        </div>
+        <div id="messages">
+        </div>
 
-          <div class="input-actions-right">
-            <div class="model-select-container">
-              <button id="btn-model-select" class="model-select-inline">
-                Gemini 1.5 Pro <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;">
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
-
-              <div id="model-popover" class="hidden">
-                <div class="model-option active" data-model="gemini-1.5-pro">
-                  <div class="model-header">
-                    <span class="model-name">Gemini 1.5 Pro</span>
-                  </div>
-                  <div class="model-desc" data-i18n="modelsConfig.descPro">Most capable flagship model</div>
-                  <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </div>
-
-                <div class="model-option" data-model="gemini-1.5-flash">
-                  <div class="model-header">
-                    <span class="model-name">Gemini 1.5 Flash</span>
-                  </div>
-                  <div class="model-desc" data-i18n="modelsConfig.descFlash">Fast and efficient model</div>
-                  <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </div>
-
-
-
-                <div class="popover-divider"></div>
-
-                <div class="toggle-section">
-                  <div class="toggle-info">
-                    <div class="toggle-title" data-i18n="modelsConfig.extendedThinking">Extended thinking</div>
-                    <div class="toggle-desc" data-i18n="modelsConfig.thinkComplex">Think longer for complex tasks</div>
-                  </div>
-                  <label class="switch">
-                    <input type="checkbox" id="thinking-toggle">
-                    <span class="slider round"></span>
-                  </label>
-                </div>
-
-                <div class="thinking-level-options hidden" id="thinking-levels-container">
-                  <button class="think-btn" data-level="low" data-i18n="modelsConfig.thinkLow">Low</button>
-                  <button class="think-btn active" data-level="medium" data-i18n="modelsConfig.thinkMed">Medium</button>
-                  <button class="think-btn" data-level="high" data-i18n="modelsConfig.thinkHigh">High</button>
-                </div>
-
-                <div class="popover-divider"></div>
-
-                <div class="bottom-action" id="more-models-btn">
-                  <span data-i18n="models.moreModels">More models</span>
-                  <svg class="more-models-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </div>
-
-                <div id="more-models-section" class="more-models-section hidden">
-                  <div class="model-option" data-model="gemini-1.0-pro">
-                    <div class="model-header">
-                      <span class="model-name">Gemini 1.0 Pro</span>
-                    </div>
-                    <div class="model-desc">Previous gen stable model</div>
-                    <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </div>
-                </div>
+        <!-- Recording Overlay (Floating above input) -->
+        <div id="recording-overlay" class="hidden">
+          <div class="recording-content">
+            <button id="btn-cancel-record" class="action-btn-subtle" title="Cancel Recording">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <div class="recording-indicator">
+              <div id="record-time">00:00</div>
+              <div class="waveform">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
               </div>
             </div>
-
-            <button id="btn-send" data-i18n-title="tooltips.send" title="Gönder">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 19V5M5 12l7-7 7 7" />
-              </svg>
+            <button id="btn-save-record" class="action-btn" title="Stop & Save">
+              <div class="record-icon-inner"></div>
             </button>
           </div>
         </div>
-      </div>
 
-      <div class="suggested-actions">
-        <button class="suggest-btn" data-preset="write">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-          </svg> <span data-i18n="landing.suggestWrite">Write</span>
-        </button>
-        <button class="suggest-btn" data-preset="learn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-            <path d="M6 12v5c3 3 9 3 12 0v-5" />
-          </svg> <span data-i18n="landing.suggestLearn">Learn</span>
-        </button>
-        <button class="suggest-btn" data-preset="code">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="16 18 22 12 16 6" />
-            <polyline points="8 6 2 12 8 18" />
-          </svg> <span data-i18n="landing.suggestCode">Code</span>
-        </button>
-        <button class="suggest-btn" data-preset="life">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
-            <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
-            <line x1="6" y1="2" x2="6" y2="4" />
-            <line x1="10" y1="2" x2="10" y2="4" />
-            <line x1="14" y1="2" x2="14" y2="4" />
-          </svg> <span data-i18n="landing.suggestLife">Life stuff</span>
-        </button>
-        <button class="suggest-btn" data-preset="gemini">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path
-              d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5" />
-            <path d="M9 18h6" />
-            <path d="M10 22h4" />
-          </svg> <span data-i18n="landing.suggestGemini">Gemini's choice</span>
-        </button>
-      </div>
-      <div id="suggested-menu-pane" class="hidden">
-        <div class="suggested-menu-header">
-          <div class="suggested-menu-title">
-            <svg class="suggested-menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
-            <span id="suggested-menu-title-text">Title</span>
+        <div id="input-area">
+          <div id="image-preview" class="hidden">
+            <img id="preview-img" src="" alt="Selected Image">
+            <button id="btn-remove-img" data-i18n-title="titlebar.closeSuggestedMenu" title="Remove">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
-          <button id="btn-close-suggested-menu" title="Close">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
+
+          <div id="input-wrapper">
+            <input type="file" id="image-upload" accept="*/*" multiple class="hidden">
+            <textarea id="message-input" data-i18n-placeholder="landing.placeholder"
+              placeholder="How can I help you today?" rows="1"></textarea>
+
+            <div class="input-actions-bottom">
+              <div class="input-actions-left">
+                <button id="btn-attach" class="action-btn-subtle" data-i18n-title="tooltips.attach" title="Görsel Ekle">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </button>
+
+                <div id="attach-popover" class="attach-popover hidden">
+                  <button class="attach-option" id="attach-upload-files">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="12" y1="18" x2="12" y2="12"></line>
+                      <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                    <span data-i18n="attach.uploadFiles">Upload Files</span>
+                  </button>
+                  <button class="attach-option" id="attach-record-audio">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                      <line x1="12" y1="19" x2="12" y2="23"></line>
+                      <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    <span data-i18n="attach.recordAudio">Record Audio</span>
+                  </button>
+                  <button class="attach-option" id="attach-use-camera" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                      </path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span data-i18n="attach.useCamera">Use Camera</span>
+                  </button>
+                </div>
+                <button id="btn-search" class="action-btn-subtle hidden" data-i18n-title="tooltips.search"
+                  title="Web'de Ara (Grounding)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path
+                      d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                    </path>
+                  </svg>
+                </button>
+                <button id="btn-code" class="action-btn-subtle hidden" data-i18n-title="tooltips.code"
+                  title="Python Kod Çalıştır">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="input-actions-right">
+                <div class="model-select-container">
+                  <button id="btn-model-select" class="model-select-inline">
+                    Gemini 1.5 Pro <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+
+                  <div id="model-popover" class="hidden">
+                    <div class="model-option active" data-model="gemini-1.5-pro">
+                      <div class="model-header">
+                        <span class="model-name">Gemini 1.5 Pro</span>
+                      </div>
+                      <div class="model-desc" data-i18n="modelsConfig.descPro">Most capable flagship model</div>
+                      <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </div>
+
+                    <div class="model-option" data-model="gemini-1.5-flash">
+                      <div class="model-header">
+                        <span class="model-name">Gemini 1.5 Flash</span>
+                      </div>
+                      <div class="model-desc" data-i18n="modelsConfig.descFlash">Fast and efficient model</div>
+                      <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </div>
+
+
+
+                    <div class="popover-divider"></div>
+
+                    <div class="toggle-section">
+                      <div class="toggle-info">
+                        <div class="toggle-title" data-i18n="modelsConfig.extendedThinking">Extended thinking</div>
+                        <div class="toggle-desc" data-i18n="modelsConfig.thinkComplex">Think longer for complex tasks
+                        </div>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" id="thinking-toggle">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+
+                    <div class="thinking-level-options hidden" id="thinking-levels-container">
+                      <button class="think-btn" data-level="low" data-i18n="modelsConfig.thinkLow">Low</button>
+                      <button class="think-btn active" data-level="medium"
+                        data-i18n="modelsConfig.thinkMed">Medium</button>
+                      <button class="think-btn" data-level="high" data-i18n="modelsConfig.thinkHigh">High</button>
+                    </div>
+
+                    <div class="popover-divider"></div>
+
+                    <div class="bottom-action" id="more-models-btn">
+                      <span data-i18n="models.moreModels">More models</span>
+                      <svg class="more-models-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </div>
+
+                    <div id="more-models-section" class="more-models-section hidden">
+                      <div class="model-option" data-model="gemini-1.0-pro">
+                        <div class="model-header">
+                          <span class="model-name">Gemini 1.0 Pro</span>
+                        </div>
+                        <div class="model-desc">Previous gen stable model</div>
+                        <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button id="btn-send" data-i18n-title="tooltips.send" title="Gönder">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 19V5M5 12l7-7 7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="suggested-actions">
+            <button class="suggest-btn" data-preset="write">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg> <span data-i18n="landing.suggestWrite">Write</span>
+            </button>
+            <button class="suggest-btn" data-preset="learn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                <path d="M6 12v5c3 3 9 3 12 0v-5" />
+              </svg> <span data-i18n="landing.suggestLearn">Learn</span>
+            </button>
+            <button class="suggest-btn" data-preset="code">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg> <span data-i18n="landing.suggestCode">Code</span>
+            </button>
+            <button class="suggest-btn" data-preset="life">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                <line x1="6" y1="2" x2="6" y2="4" />
+                <line x1="10" y1="2" x2="10" y2="4" />
+                <line x1="14" y1="2" x2="14" y2="4" />
+              </svg> <span data-i18n="landing.suggestLife">Life stuff</span>
+            </button>
+            <button class="suggest-btn" data-preset="gemini">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path
+                  d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5" />
+                <path d="M9 18h6" />
+                <path d="M10 22h4" />
+              </svg> <span data-i18n="landing.suggestGemini">Gemini's choice</span>
+            </button>
+          </div>
+          <div id="suggested-menu-pane" class="hidden">
+            <div class="suggested-menu-header">
+              <div class="suggested-menu-title">
+                <svg class="suggested-menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+                <span id="suggested-menu-title-text">Title</span>
+              </div>
+              <button id="btn-close-suggested-menu" title="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div class="suggested-menu-list" id="suggested-menu-list">
+              <!-- Dynamically populated rows go here -->
+            </div>
+          </div>
+
+
+
+          <div class="suggest-pills" id="suggest-pills-container">
+            <!-- Dynamically populated rows go here -->
+          </div>
+
+          <div id="input-footer" style="display:none;">
+            <span id="status-indicator">
+              <span id="status-dot"></span>
+              <span id="status-text">Bağlantı kontrol ediliyor...</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div> <!-- end right-column -->
+
+    <!-- Search View Modal -->
+    <div id="search-view" class="hidden">
+      <div id="search-view-container">
+        <div class="search-view-header">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            class="search-icon">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="active-search-input" data-i18n-placeholder="sidebar.search"
+            placeholder="Search Chat..." autocomplete="off" spellcheck="false">
+
+          <div style="position: relative; margin-right: 12px; display: flex; align-items: center;">
+            <button id="btn-search-filters" class="search-view-close" title="Filters">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+            </button>
+            <div id="search-filters-dropdown" class="hidden"
+              style="position: absolute; top: 100%; right: 0; margin-top: 8px; background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); box-shadow: var(--shadow-popover); padding: 8px; display: flex; flex-direction: column; gap: 8px; width: 140px; z-index: 10;">
+              <button class="filter-chip" data-filter="onlymodel:true">Model Only</button>
+              <button class="filter-chip" data-filter="onlyuser:true">User Only</button>
+              <button class="filter-chip" data-filter="onlytitle:true">Title Only</button>
+              <button class="filter-chip" data-filter="last:7d">Last 7 Days</button>
+            </div>
+          </div>
+
+          <button id="btn-close-search" class="search-view-close" title="Close (ESC)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="close-icon" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
         </div>
-        <div class="suggested-menu-list" id="suggested-menu-list">
-          <!-- Dynamically populated rows go here -->
-        </div>
       </div>
-
-
-
-      <div class="suggest-pills" id="suggest-pills-container">
-        <!-- Dynamically populated rows go here -->
-      </div>
-
-      <div id="input-footer" style="display:none;">
-        <span id="status-indicator">
-          <span id="status-dot"></span>
-          <span id="status-text">Bağlantı kontrol ediliyor...</span>
-        </span>
+      <div id="search-view-results" class="search-view-results">
+        <!-- populated dynamically -->
       </div>
     </div>
   </div>
@@ -403,9 +500,38 @@
           </select>
         </div>
 
+        <div class="settings-group"
+          style="margin-top: 16px; border-top: 1px solid var(--border-primary); padding-top: 16px;">
+          <button id="btn-clear-history" class="btn-danger"
+            style="width: 100%; justify-content: center; display: flex; align-items: center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span data-i18n="settings.clearHistory">Clear All History</span>
+          </button>
+        </div>
+
       </div>
       <div id="modal-footer">
         <button id="btn-save-key" class="btn-primary" data-i18n="settings.saveAndClose">Save &amp; Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Confirm Modal -->
+  <div id="confirm-modal-overlay" class="hidden">
+    <div id="confirm-modal">
+      <div id="confirm-modal-header">
+        <h3 id="confirm-modal-title">Confirm Action</h3>
+      </div>
+      <div id="confirm-modal-body">
+        <p id="confirm-modal-message">Are you sure?</p>
+      </div>
+      <div id="confirm-modal-footer">
+        <button id="btn-confirm-cancel" class="btn-secondary" data-i18n="settings.cancel">Cancel</button>
+        <button id="btn-confirm-ok" class="btn-danger" data-i18n="settings.ok">OK</button>
       </div>
     </div>
   </div>

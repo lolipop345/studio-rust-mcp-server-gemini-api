@@ -19,7 +19,10 @@
     "apiKeyRejected": "API Key was rejected.",
     "cannotConnect": "Cannot connect to server.",
     "enterApiKey": "Please enter an API key to continue.",
-    "enterNewKey": "Enter new key or leave empty to keep current..."
+    "enterNewKey": "Enter new key or leave empty to keep current...",
+    "clearHistory": "Clear All History",
+    "cancel": "Cancel",
+    "ok": "OK"
   },
   "titlebar": {
     "settingsTitle": "Settings",
@@ -178,6 +181,14 @@
       "Start a detective story set in a virtual reality world",
       "Create a new god/goddess inspired by an unknown mythology"
     ]
+  },
+  "sidebar": {
+    "title": "Chats",
+    "pinned": "Pinned",
+    "recent": "Recent",
+    "confirmDelete": "Are you sure you want to delete this chat?",
+    "confirmClearAll": "Are you sure you want to delete ALL chat history? This cannot be undone.",
+    "search": "Search Chat..."
   },
   "attach": {
     "uploadFiles": "Upload Files",

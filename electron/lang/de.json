@@ -19,7 +19,10 @@
     "apiKeyRejected": "API-Schlüssel wurde abgelehnt.",
     "cannotConnect": "Verbindung zum Server nicht möglich.",
     "enterApiKey": "Bitte gib einen API-Schlüssel ein, um fortzufahren.",
-    "enterNewKey": "Neuen Schlüssel eingeben oder leer lassen..."
+    "enterNewKey": "Neuen Schlüssel eingeben oder leer lassen...",
+    "clearHistory": "Gesamten Verlauf löschen",
+    "cancel": "Abbrechen",
+    "ok": "OK"
   },
   "titlebar": {
     "settingsTitle": "Einstellungen",
@@ -186,5 +189,8 @@
     "useCamera": "Kamera verwenden",
     "capturePhoto": "Aufnehmen",
     "cancelCamera": "Abbrechen"
+  },
+  "sidebar": {
+    "search": "Chat durchsuchen..."
   }
 }

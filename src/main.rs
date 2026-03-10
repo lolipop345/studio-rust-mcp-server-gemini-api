@@ -12,6 +12,7 @@ use std::path::PathBuf;
 
 mod error;
 mod install;
+pub mod db;
 mod rbx_studio_server;
 
 #[derive(Parser)]
@@ -37,8 +38,11 @@ async fn main() -> Result<()> {
     }
 
     let api_key = std::env::var("GEMINI_API_KEY").ok();
+    let working_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let db_path = working_dir.join("gemini_studio.db");
+    let db_client = db::DbClient::new(&db_path).expect("Failed to initialize SQLite database");
 
-    let server_state = Arc::new(Mutex::new(AppState::new()));
+    let server_state = Arc::new(Mutex::new(AppState::new(db_client)));
 
     if let Some(key) = api_key {
         let mut state = server_state.lock().await;
@@ -62,6 +66,14 @@ async fn main() -> Result<()> {
             .route("/chat/api-key", post(api_key_handler))
             .route("/chat/status", get(status_handler))
             .route("/chat/models", get(models_handler))
+            .route("/history/list", get(history_list_handler))
+            .route("/history/load/{id}", get(history_load_handler))
+            .route("/history/save", post(history_save_handler))
+            .route("/history/delete/{id}", post(history_delete_handler))
+            .route("/history/clear_all", post(history_clear_all_handler))
+            .route("/history/update_title", post(history_update_title_handler))
+            .route("/history/toggle_pin", post(history_toggle_pin_handler))
+            .route("/history/search", get(history_search_handler))
             .with_state(server_state_clone);
             
         tracing::info!("HTTP server listening on port {STUDIO_PLUGIN_PORT}");

@@ -19,7 +19,10 @@
     "apiKeyRejected": "La clé API a été rejetée.",
     "cannotConnect": "Impossible de se connecter au serveur.",
     "enterApiKey": "Veuillez entrer une clé API pour continuer.",
-    "enterNewKey": "Entrez une nouvelle clé ou laissez vide..."
+    "enterNewKey": "Entrez une nouvelle clé ou laissez vide...",
+    "clearHistory": "Effacer tout l'historique",
+    "cancel": "Annuler",
+    "ok": "OK"
   },
   "titlebar": {
     "settingsTitle": "Paramètres",
@@ -186,5 +189,8 @@
     "useCamera": "Utiliser la caméra",
     "capturePhoto": "Capturer",
     "cancelCamera": "Annuler"
+  },
+  "sidebar": {
+    "search": "Rechercher un chat..."
   }
 }

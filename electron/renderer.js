@@ -178,6 +178,10 @@ const hljsThemeLink = document.getElementById("hljs-theme");
 const btnAttach = document.getElementById("btn-attach");
 const btnSearch = document.getElementById("btn-search");
 const btnCode = document.getElementById("btn-code");
+const btnSidebarToggle = document.getElementById("btn-sidebar-toggle");
+const btnNewChat = document.getElementById("btn-new-chat");
+const sidebar = document.getElementById("sidebar");
+const btnClearHistory = document.getElementById("btn-clear-history");
 const imageUpload = document.getElementById("image-upload");
 const imagePreview = document.getElementById("image-preview");
 const previewImg = document.getElementById("preview-img");
@@ -186,6 +190,19 @@ const btnRemoveImg = document.getElementById("btn-remove-img");
 const systemPromptInput = document.getElementById("system-prompt-input");
 const tempSlider = document.getElementById("temp-slider");
 const tempVal = document.getElementById("temp-val");
+
+const btnOpenSearch = document.getElementById("btn-open-search");
+const searchView = document.getElementById("search-view");
+const btnCloseSearch = document.getElementById("btn-close-search");
+const activeSearchInput = document.getElementById("active-search-input");
+const searchViewResults = document.getElementById("search-view-results");
+let searchDebounce = null;
+
+const confirmModalOverlay = document.getElementById("confirm-modal-overlay");
+const confirmModalTitle = document.getElementById("confirm-modal-title");
+const confirmModalMessage = document.getElementById("confirm-modal-message");
+const btnConfirmCancel = document.getElementById("btn-confirm-cancel");
+const btnConfirmOk = document.getElementById("btn-confirm-ok");
 
 // State Variables
 let isProcessing = false;
@@ -512,9 +529,39 @@ function hideModal() {
     modalOverlay.classList.add("hidden");
 }
 
+function showConfirm(title, message) {
+    return new Promise((resolve) => {
+        confirmModalTitle.textContent = title;
+        confirmModalMessage.textContent = message;
+        confirmModalOverlay.classList.remove("hidden");
+
+        const handleCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        const handleOk = () => {
+            cleanup();
+            resolve(true);
+        };
+
+        const cleanup = () => {
+            confirmModalOverlay.classList.add("hidden");
+            btnConfirmCancel.removeEventListener("click", handleCancel);
+            btnConfirmOk.removeEventListener("click", handleOk);
+        };
+
+        btnConfirmCancel.addEventListener("click", handleCancel);
+        btnConfirmOk.addEventListener("click", handleOk);
+    });
+}
+
 // ─── Chat Tree State ───────────────────────────────────────────────
-const chatTree = {};
+let chatTree = {};
 let activeNodeId = null;
+let currentSessionId = null;
+let currentSessionTitle = "New Chat";
+let isSessionPinned = false;
 
 function createNode(role, content, parentId = null, extraNodesHTML = "", images = [], info = null, thoughtSignature = null) {
     const id = "node_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
@@ -532,10 +579,332 @@ function createNode(role, content, parentId = null, extraNodesHTML = "", images 
         thoughtSignature
     };
     chatTree[id] = node;
+    chatTree[id] = node;
     if (parentId && chatTree[parentId]) {
         chatTree[parentId].children.push(id);
     }
     return node;
+}
+
+function generateUUID() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+}
+
+// ─── History API ──────────────────────────────────────────────────
+
+function updateTopbar(liveTokens = 0) {
+    const titleEl = document.getElementById("topbar-chat-title");
+    const tokensEl = document.getElementById("topbar-chat-tokens");
+    if (!titleEl || !tokensEl) return;
+
+    titleEl.textContent = currentSessionTitle || "New Chat";
+
+    let totalSessionTokens = 0;
+    if (activeNodeId) {
+        const path = getBranchPath(activeNodeId);
+        path.forEach(node => {
+            if (node.info && node.info.tokens) {
+                totalSessionTokens += parseInt(node.info.tokens) || 0;
+            }
+        });
+    }
+
+    totalSessionTokens += liveTokens;
+
+    if (totalSessionTokens > 0) {
+        tokensEl.innerHTML = `<span style="margin: 0 6px; opacity: 0.3;">|</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>${totalSessionTokens.toLocaleString()} tokens`;
+    } else {
+        tokensEl.innerHTML = "";
+    }
+}
+
+async function loadSidebarHistory() {
+    try {
+        const res = await fetch(`${API_BASE}/history/list`);
+        if (!res.ok) return;
+        const chats = await res.json();
+
+        const pinnedList = document.getElementById("sidebar-pinned-list");
+        const recentList = document.getElementById("sidebar-recent-list");
+        const sectionPinned = document.getElementById("section-pinned");
+
+        pinnedList.innerHTML = "";
+        recentList.innerHTML = "";
+
+        let hasPinned = false;
+
+        chats.forEach(chat => {
+            const item = document.createElement("div");
+            item.className = "sidebar-item";
+            if (chat.id === currentSessionId) item.classList.add("active");
+
+            const titleEl = document.createElement("div");
+            titleEl.className = "sidebar-item-title";
+            titleEl.textContent = chat.title || "New Chat";
+            titleEl.title = chat.title || "New Chat";
+
+            // Double-click to rename
+            titleEl.addEventListener("dblclick", () => {
+                const input = document.createElement("input");
+                input.className = "sidebar-item-title-input";
+                input.value = chat.title;
+                item.replaceChild(input, titleEl);
+                input.focus();
+
+                let isSaving = false;
+                const saveTitle = async () => {
+                    if (isSaving) return;
+                    isSaving = true;
+                    const newTitle = input.value.trim() || "New Chat";
+                    await fetch(`${API_BASE}/history/update_title`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: chat.id, title: newTitle })
+                    });
+                    if (chat.id === currentSessionId) {
+                        currentSessionTitle = newTitle;
+                        updateTopbar();
+                    }
+                    loadSidebarHistory();
+                };
+
+                input.addEventListener("blur", saveTitle);
+                input.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") saveTitle();
+                    if (e.key === "Escape") loadSidebarHistory();
+                });
+            });
+
+            const actions = document.createElement("div");
+            actions.className = "sidebar-item-actions dropdown-container";
+
+            const ellipsisBtn = document.createElement("button");
+            ellipsisBtn.className = "sidebar-btn";
+            ellipsisBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>`;
+
+            const menu = document.createElement("div");
+            menu.className = "sidebar-item-menu hidden";
+
+            const renameBtn = document.createElement("button");
+            renameBtn.className = "sidebar-btn";
+            renameBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Rename`;
+            renameBtn.onclick = (e) => {
+                e.stopPropagation();
+                menu.classList.add("hidden");
+                titleEl.dispatchEvent(new MouseEvent("dblclick"));
+            };
+
+            const pinBtn = document.createElement("button");
+            pinBtn.className = `sidebar-btn btn-pin ${chat.pinned ? 'pinned' : ''}`;
+            pinBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="${chat.pinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.68V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3v4.68a2 2 0 0 1-1.11 1.87l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>`;
+            pinBtn.appendChild(document.createTextNode(chat.pinned ? " Unpin" : " Pin"));
+            pinBtn.onclick = async (e) => {
+                e.stopPropagation();
+                await fetch(`${API_BASE}/history/toggle_pin`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: chat.id, pinned: !chat.pinned })
+                });
+                if (chat.id === currentSessionId) isSessionPinned = !chat.pinned;
+                loadSidebarHistory();
+            };
+
+            const delBtn = document.createElement("button");
+            delBtn.className = "sidebar-btn btn-delete";
+            delBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete`;
+            delBtn.onclick = async (e) => {
+                e.stopPropagation();
+                if (confirm(t("sidebar.confirmDelete", { default: "Are you sure you want to delete this chat?" }))) {
+                    await fetch(`${API_BASE}/history/delete/${chat.id}`, { method: "POST" });
+                    if (chat.id === currentSessionId) {
+                        startNewSession(); // switch to blank session
+                    } else {
+                        loadSidebarHistory();
+                    }
+                }
+            };
+
+            item.onclick = () => loadSession(chat.id);
+
+            menu.appendChild(renameBtn);
+            menu.appendChild(pinBtn);
+            menu.appendChild(delBtn);
+
+            actions.appendChild(ellipsisBtn);
+            actions.appendChild(menu);
+
+            ellipsisBtn.onclick = (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.sidebar-item-menu').forEach(m => {
+                    if (m !== menu) m.classList.add('hidden');
+                });
+                menu.classList.toggle("hidden");
+            };
+
+            item.appendChild(titleEl);
+            item.appendChild(actions);
+
+            if (chat.pinned) {
+                pinnedList.appendChild(item);
+                hasPinned = true;
+            } else {
+                recentList.appendChild(item);
+            }
+        });
+
+        sectionPinned.style.display = hasPinned ? "block" : "none";
+
+    } catch (e) {
+        console.error("Failed to load sidebar history:", e);
+    }
+}
+
+async function autoSaveSession() {
+    if (!currentSessionId) {
+        currentSessionId = generateUUID();
+        // If it's a new session and we have at least 1 user node, generate title
+        const userNodes = Object.values(chatTree).filter(n => n.role === "user");
+        if (userNodes.length > 0) {
+            generateSessionTitle(userNodes[0].content);
+        }
+    }
+
+    try {
+        await fetch(`${API_BASE}/history/save`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id: currentSessionId,
+                title: currentSessionTitle,
+                pinned: isSessionPinned,
+                updated_at: Date.now(),
+                active_node_id: activeNodeId,
+                tree_data: JSON.stringify(chatTree)
+            })
+        });
+        loadSidebarHistory();
+    } catch (e) {
+        console.error("Failed to auto-save session:", e);
+    }
+}
+
+async function loadSession(id) {
+    if (isProcessing) return; // don't load while generating
+
+    try {
+        const res = await fetch(`${API_BASE}/history/load/${id}`);
+        if (!res.ok) return;
+        const raw = await res.json();
+
+        currentSessionId = raw.id;
+        currentSessionTitle = raw.title;
+        isSessionPinned = raw.pinned;
+
+        if (raw.tree_data) {
+            chatTree = JSON.parse(raw.tree_data);
+            activeNodeId = raw.active_node_id;
+            renderBranch(activeNodeId);
+        } else {
+            chatTree = {};
+            activeNodeId = null;
+            document.getElementById("messages").innerHTML = "";
+            document.getElementById("chat-container").classList.add("chat-empty");
+            if (welcomeEl) welcomeEl.style.display = "";
+        }
+
+        loadSidebarHistory();
+
+        // Hide sidebar on mobile after clicking
+        if (window.innerWidth < 768) {
+            toggleSidebar(false); // assuming toggleSidebar logic exists
+        }
+        updateTopbar();
+        if (inputEl) inputEl.focus();
+    } catch (e) {
+        console.error("Failed to load session:", e);
+    }
+}
+
+function startNewSession() {
+    if (isProcessing) return;
+    currentSessionId = null;
+    currentSessionTitle = "New Chat";
+    isSessionPinned = false;
+    chatTree = {};
+    activeNodeId = null;
+
+    document.getElementById("messages").innerHTML = "";
+    document.getElementById("chat-container").classList.add("chat-empty");
+    if (welcomeEl) welcomeEl.style.display = "flex";
+
+    loadSidebarHistory();
+    updateTopbar();
+    if (inputEl) inputEl.focus();
+}
+
+async function generateSessionTitle(prompt) {
+    try {
+        const payload = {
+            model: currentModel,
+            message: `Generate a very short, concise 3-5 word title for a conversation that starts with the following prompt. ONLY output the title, no quotes or additional text. Prompt: ${prompt}`
+        };
+        console.log("Generating title using payload:", payload);
+        const res = await fetch(`${API_BASE}/chat/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            console.error("Title generation rejected. Status:", res.status);
+            const errBody = await res.text();
+            console.error(errBody);
+            return;
+        }
+
+        const data = await res.json();
+        console.log("Title generation got chat_id:", data.chat_id);
+
+        const evtSource = new EventSource(`${API_BASE}/chat/events/${data.chat_id}`);
+        let titleChunk = "";
+
+        evtSource.addEventListener("text", (e) => {
+            try {
+                const payload = JSON.parse(e.data);
+                console.log("Title SSE text chunk:", payload);
+                titleChunk += payload.content || "";
+            } catch (err) { }
+        });
+
+        evtSource.addEventListener("done", () => {
+            console.log("Title SSE complete. Final text:", titleChunk);
+            evtSource.close();
+            if (titleChunk.trim()) {
+                currentSessionTitle = titleChunk.trim();
+                updateTopbar();
+                autoSaveSession(); // Resave with new title
+                loadSidebarHistory(); // Update UI
+            }
+        });
+
+        evtSource.addEventListener("error_msg", (e) => {
+            console.error("Title SSE received explicit error_msg:", e);
+            evtSource.close();
+        });
+
+        evtSource.onerror = (err) => {
+            console.error("Title SSE connection error:", err);
+            evtSource.close();
+        };
+
+    } catch (e) {
+        console.warn("Exception generating title:", e);
+    }
 }
 
 function getBranchPath(leafId) {
@@ -2050,6 +2419,7 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
             // Rough estimate mapping if exact tokens aren't streamed
             // Avg 4 chars per token
             totalTokens += Math.ceil(payload.content.length / 4);
+            updateTopbar(totalTokens);
         });
 
         let hasError = false;
@@ -2116,6 +2486,12 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
                         chatTree[activeNodeId].thoughtSignature = lastThoughtSignature;
                     }
                 }
+
+                if (!isAborting && !hasError) {
+                    autoSaveSession();
+                    updateTopbar();
+                }
+
             } catch (e) {
                 console.error("Error finishing generation:", e);
             } finally {
@@ -3019,6 +3395,10 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
+document.addEventListener("click", () => {
+    document.querySelectorAll('.sidebar-item-menu').forEach(m => m.classList.add('hidden'));
+});
+
 btnRemoveImg.addEventListener("click", () => {
     attachedFiles = [];
     imagePreview.classList.add("hidden");
@@ -3050,10 +3430,178 @@ btnCode.addEventListener("click", () => {
     }
 });
 
+if (btnSidebarToggle) {
+    btnSidebarToggle.addEventListener("click", () => {
+        sidebar.classList.toggle("sidebar-closed");
+    });
+}
+if (btnNewChat) {
+    btnNewChat.addEventListener("click", () => {
+        startNewSession();
+        if (window.innerWidth < 768) {
+            sidebar.classList.add("sidebar-closed"); // close on mobile
+        }
+    });
+}
+if (btnOpenSearch) {
+    btnOpenSearch.addEventListener("click", () => {
+        searchView.classList.remove("hidden");
+        activeSearchInput.focus();
+        const q = getSearchQuery();
+        if (q) {
+            triggerSearch(q);
+        }
+    });
+}
+if (btnCloseSearch) {
+    btnCloseSearch.addEventListener("click", () => {
+        searchView.classList.add("hidden");
+    });
+}
+if (searchView) {
+    searchView.addEventListener("click", (e) => {
+        if (e.target === searchView) {
+            searchView.classList.add("hidden");
+        }
+    });
+}
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && searchView && !searchView.classList.contains("hidden")) {
+        searchView.classList.add("hidden");
+    }
+});
+function getSearchQuery() {
+    let q = activeSearchInput ? activeSearchInput.value.trim() : "";
+    const chips = document.querySelectorAll(".filter-chip.active");
+    chips.forEach(chip => {
+        q += " " + chip.dataset.filter;
+    });
+    return q.trim();
+}
+
+const btnSearchFilters = document.getElementById("btn-search-filters");
+const searchFiltersDropdown = document.getElementById("search-filters-dropdown");
+
+if (btnSearchFilters && searchFiltersDropdown) {
+    btnSearchFilters.addEventListener("click", (e) => {
+        e.stopPropagation();
+        searchFiltersDropdown.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!searchFiltersDropdown.contains(e.target) && e.target !== btnSearchFilters) {
+            searchFiltersDropdown.classList.add("hidden");
+        }
+    });
+}
+
+document.querySelectorAll(".filter-chip").forEach(chip => {
+    chip.addEventListener("click", (e) => {
+        e.stopPropagation(); // keep dropdown open when clicking a filter
+        chip.classList.toggle("active");
+        const q = getSearchQuery();
+        if (q) triggerSearch(q);
+        else searchViewResults.innerHTML = '';
+    });
+});
+
+if (activeSearchInput) {
+    activeSearchInput.addEventListener("input", () => {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => {
+            const q = getSearchQuery();
+            if (q) triggerSearch(q);
+            else searchViewResults.innerHTML = '';
+        }, 300);
+    });
+}
+
+async function triggerSearch(query) {
+    if (!query) {
+        searchViewResults.innerHTML = '';
+        return;
+    }
+    try {
+        const response = await fetch(`${API_BASE}/history/search?q=${encodeURIComponent(query)}`);
+        const results = await response.json();
+
+        searchViewResults.innerHTML = '';
+        if (results.length === 0) {
+            searchViewResults.innerHTML = '<div style="text-align:center; color: var(--text-tertiary); margin-top: 24px;">No matching chats found.</div>';
+            return;
+        }
+
+        results.forEach(chat => {
+            const item = document.createElement("div");
+            item.className = "search-result-item";
+
+            const title = document.createElement("div");
+            title.className = "search-result-title";
+            title.textContent = chat.title;
+
+            const date = document.createElement("div");
+            date.className = "search-result-date";
+            date.textContent = new Date(chat.updated_at).toLocaleString();
+
+            item.appendChild(title);
+            if (chat.snippet) {
+                const snippet = document.createElement("div");
+                snippet.className = "search-result-snippet";
+
+                let html = chat.snippet;
+                const terms = query.split(/\s+/).filter(v => !v.includes(":"));
+                terms.forEach(term => {
+                    if (term) {
+                        const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi");
+                        html = html.replace(regex, '<mark style="background: var(--accent); color: var(--accent-fg); padding: 0 2px; border-radius: 2px;">$1</mark>');
+                    }
+                });
+
+                snippet.innerHTML = html;
+                item.appendChild(snippet);
+            }
+            item.appendChild(date);
+
+            item.addEventListener("click", async () => {
+                searchView.classList.add("hidden");
+                if (window.innerWidth < 768) {
+                    sidebar.classList.add("sidebar-closed");
+                }
+                await loadSession(chat.id);
+            });
+
+            searchViewResults.appendChild(item);
+        });
+    } catch (e) {
+        console.error("Search failed:", e);
+    }
+}
+if (btnClearHistory) {
+    btnClearHistory.addEventListener("click", async () => {
+        const confirmed = await showConfirm(
+            t("settings.clearHistory", { default: "Clear All History" }),
+            t("sidebar.confirmClearAll", { default: "Are you sure you want to delete ALL chat history? This cannot be undone." })
+        );
+
+        if (confirmed) {
+            try {
+                await fetch(`${API_BASE}/history/clear_all`, { method: "POST" });
+                startNewSession(); // clear current session
+                hideModal(); // close settings modal
+                // Try sending an event to clear up the actual UI messages div if we are currently looking at one
+                document.getElementById("messages").innerHTML = "";
+            } catch (e) {
+                console.error("Failed to clear history", e);
+            }
+        }
+    });
+}
+
 async function init() {
     initLanguage();
     initTheme();
     await loadUserAvatar();
+    loadSidebarHistory();
 
     // Try to restore saved API key from encrypted storage
     try {

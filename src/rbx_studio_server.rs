@@ -40,6 +40,7 @@ pub struct AppState {
     pub chat_streams: HashMap<String, mpsc::Sender<SsePayload>>,
     pub chat_receivers: HashMap<String, mpsc::Receiver<SsePayload>>,
     pub active_generations: HashMap<String, tokio::task::AbortHandle>,
+    pub db: crate::db::DbClient,
 }
 
 pub type PackedState = Arc<Mutex<AppState>>;
@@ -72,7 +73,7 @@ pub enum SsePayload {
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub fn new(db: crate::db::DbClient) -> Self {
         let (trigger, waiter) = watch::channel(());
         Self {
             process_queue: VecDeque::new(),
@@ -84,6 +85,7 @@ impl AppState {
             chat_streams: HashMap::new(),
             chat_receivers: HashMap::new(),
             active_generations: HashMap::new(),
+            db,
         }
     }
 }
@@ -1205,6 +1207,138 @@ pub async fn dud_proxy_loop(state: PackedState, exit: Receiver<()>) {
             };
         } else {
             waiter.changed().await.unwrap();
+        }
+    }
+}
+
+// --- History Operations ---
+
+use crate::db::{ChatSession, ChatSessionFull};
+
+#[derive(Deserialize)]
+pub struct SearchQuery {
+    pub q: String,
+}
+
+pub async fn history_search_handler(
+    State(state): State<PackedState>,
+    axum::extract::Query(query): axum::extract::Query<SearchQuery>,
+) -> Result<Json<Vec<ChatSession>>, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.search_chats(&query.q) {
+        Ok(chats) => Ok(Json(chats)),
+        Err(e) => {
+            tracing::error!("Failed to search chats: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+pub async fn history_list_handler(
+    State(state): State<PackedState>,
+) -> Result<Json<Vec<ChatSession>>, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.list_chats() {
+        Ok(chats) => Ok(Json(chats)),
+        Err(e) => {
+            tracing::error!("Failed to list chats: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+pub async fn history_load_handler(
+    State(state): State<PackedState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Result<Json<ChatSessionFull>, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.load_chat(&id) {
+        Ok(Some(chat)) => Ok(Json(chat)),
+        Ok(None) => Err(axum::http::StatusCode::NOT_FOUND),
+        Err(e) => {
+            tracing::error!("Failed to load chat: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+pub async fn history_save_handler(
+    State(state): State<PackedState>,
+    Json(chat): Json<ChatSessionFull>,
+) -> Result<axum::http::StatusCode, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.save_chat(&chat) {
+        Ok(_) => Ok(axum::http::StatusCode::OK),
+        Err(e) => {
+            tracing::error!("Failed to save chat: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+pub async fn history_delete_handler(
+    State(state): State<PackedState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Result<axum::http::StatusCode, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.delete_chat(&id) {
+        Ok(_) => Ok(axum::http::StatusCode::OK),
+        Err(e) => {
+            tracing::error!("Failed to delete chat: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+pub async fn history_clear_all_handler(
+    State(state): State<PackedState>,
+) -> Result<axum::http::StatusCode, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.clear_all() {
+        Ok(_) => Ok(axum::http::StatusCode::OK),
+        Err(e) => {
+            tracing::error!("Failed to clear all chats: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+#[derive(serde::Deserialize)]
+pub struct UpdateTitleRequest {
+    pub id: String,
+    pub title: String,
+}
+
+pub async fn history_update_title_handler(
+    State(state): State<PackedState>,
+    Json(req): Json<UpdateTitleRequest>,
+) -> Result<axum::http::StatusCode, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.update_title(&req.id, &req.title) {
+        Ok(_) => Ok(axum::http::StatusCode::OK),
+        Err(e) => {
+            tracing::error!("Failed to update title: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+#[derive(serde::Deserialize)]
+pub struct TogglePinRequest {
+    pub id: String,
+    pub pinned: bool,
+}
+
+pub async fn history_toggle_pin_handler(
+    State(state): State<PackedState>,
+    Json(req): Json<TogglePinRequest>,
+) -> Result<axum::http::StatusCode, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.toggle_pin(&req.id, req.pinned) {
+        Ok(_) => Ok(axum::http::StatusCode::OK),
+        Err(e) => {
+            tracing::error!("Failed to toggle pin: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
         }
     }
 }

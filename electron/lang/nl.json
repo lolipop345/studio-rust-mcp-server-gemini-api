@@ -19,7 +19,10 @@
     "apiKeyRejected": "API-sleutel werd geweigerd.",
     "cannotConnect": "Kan geen verbinding maken met de server.",
     "enterApiKey": "Voer a.u.b. een API-sleutel in om door te gaan.",
-    "enterNewKey": "Voer nieuwe sleutel in of laat leeg..."
+    "enterNewKey": "Voer nieuwe sleutel in of laat leeg...",
+    "clearHistory": "Volledige geschiedenis wissen",
+    "cancel": "Annuleren",
+    "ok": "OK"
   },
   "titlebar": {
     "settingsTitle": "Instellingen",
@@ -186,5 +189,8 @@
     "useCamera": "Camera gebruiken",
     "capturePhoto": "Vastleggen",
     "cancelCamera": "Annuleren"
+  },
+  "sidebar": {
+    "search": "Chat zoeken..."
   }
 }

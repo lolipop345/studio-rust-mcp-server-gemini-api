@@ -19,7 +19,10 @@
     "apiKeyRejected": "Klucz API został odrzucony.",
     "cannotConnect": "Nie można połączyć z serwerem.",
     "enterApiKey": "Proszę wprowadzić klucz API, aby kontynuować.",
-    "enterNewKey": "Wpisz nowy klucz lub pozostaw puste..."
+    "enterNewKey": "Wpisz nowy klucz lub pozostaw puste...",
+    "clearHistory": "Wyczyść całą historię",
+    "cancel": "Anuluj",
+    "ok": "OK"
   },
   "titlebar": {
     "settingsTitle": "Ustawienia",
@@ -186,5 +189,8 @@
     "useCamera": "Użyj kamery",
     "capturePhoto": "Zrób zdjęcie",
     "cancelCamera": "Anuluj"
+  },
+  "sidebar": {
+    "search": "Szukaj czatu..."
   }
 }

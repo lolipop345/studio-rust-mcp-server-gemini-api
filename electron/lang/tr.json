@@ -19,7 +19,10 @@
     "apiKeyRejected": "API Key reddedildi.",
     "cannotConnect": "Sunucuya bağlanılamıyor.",
     "enterApiKey": "Devam etmek için bir API key girin.",
-    "enterNewKey": "Yeni key girin veya boş bırakıp kapatın..."
+    "enterNewKey": "Yeni key girin veya boş bırakıp kapatın...",
+    "clearHistory": "Tüm Geçmişi Temizle",
+    "cancel": "İptal",
+    "ok": "Sil"
   },
   "titlebar": {
     "settingsTitle": "Ayarlar",
@@ -178,6 +181,14 @@
       "Sanal gerçeklik dünyasında geçen bir detektiflik hikayesi başlat",
       "Bilmediğimiz bir mitolojiden esinlenerek yeni bir tanrı/tanrıça yarat"
     ]
+  },
+  "sidebar": {
+    "title": "Sohbetler",
+    "pinned": "Sabitlenenler",
+    "recent": "Geçmiş",
+    "confirmDelete": "Bu sohbeti silmek istediğinizden emin misiniz?",
+    "confirmClearAll": "TÜM sohbet geçmişini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "search": "Sohbet Ara..."
   },
   "attach": {
     "uploadFiles": "Dosya Yükle",

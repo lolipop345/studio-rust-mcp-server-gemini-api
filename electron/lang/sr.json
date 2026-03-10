@@ -19,7 +19,10 @@
     "apiKeyRejected": "API кључ је одбијен.",
     "cannotConnect": "Није могуће повезати се са сервером.",
     "enterApiKey": "Унесите API кључ да бисте наставили.",
-    "enterNewKey": "Унеси нови кључ или остави празно..."
+    "enterNewKey": "Унеси нови кључ или остави празно...",
+    "clearHistory": "Обриши сву историју",
+    "cancel": "Откажи",
+    "ok": "У реду"
   },
   "titlebar": {
     "settingsTitle": "Подешавања",
@@ -186,5 +189,8 @@
     "useCamera": "Користи камеру",
     "capturePhoto": "Сними",
     "cancelCamera": "Откажи"
+  },
+  "sidebar": {
+    "search": "Претражи ћаскање..."
   }
 }
