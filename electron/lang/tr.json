@@ -197,5 +197,11 @@
     "useCamera": "Kamera Kullan",
     "capturePhoto": "Çek",
     "cancelCamera": "İptal"
+  },
+  "artifact": {
+    "title": "Uygulama Planı",
+    "proceed": "Devam Et",
+    "submit": "Onayla ({{count}})",
+    "sending": "Gönderiliyor..."
   }
 }

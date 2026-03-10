@@ -176,6 +176,10 @@ const hljsThemeLink = document.getElementById("hljs-theme");
 
 // New UI Elements
 const btnAttach = document.getElementById("btn-attach");
+const artifactSidebar = document.getElementById("artifact-sidebar");
+const artifactContentArea = document.getElementById("artifact-content-area");
+const btnArtifactProceed = document.getElementById("btn-artifact-proceed");
+
 const btnSearch = document.getElementById("btn-search");
 const btnCode = document.getElementById("btn-code");
 const btnSidebarToggle = document.getElementById("btn-sidebar-toggle");
@@ -216,6 +220,8 @@ let userAvatarBase64 = null;
 let activeEventSource = null;
 let currentChatId = null;
 let isAborting = false;
+let currentArtifactComments = {}; // block_index -> comment string
+let activeArtifactTx = null; // store the chat ID waiting for the plan
 
 // ─── Processing State & Abort ──────────────────────────────────────
 function setProcessingState(processing) {
@@ -241,8 +247,11 @@ function updateSendButtonState() {
 let finishGenerationHandler = null;
 
 function abortGeneration() {
+    isAborting = true;
+    if (typeof closeArtifactSidebar === "function") {
+        closeArtifactSidebar();
+    }
     if (activeEventSource) {
-        isAborting = true;
 
         // Immediately close the network connection
         activeEventSource.close();
@@ -257,6 +266,12 @@ function abortGeneration() {
             // Also remove thought chains and tool calls during abort as per user requirement
             const temporaryStuff = typingMsg.querySelectorAll(".thought-chain, .tool-call");
             temporaryStuff.forEach(el => el.remove());
+
+            // If the message bubble is completely empty after cleaning, remove the whole container
+            const pContent = typingMsg.querySelector('.message-content');
+            if (pContent && (!pContent.innerHTML || pContent.innerHTML.trim() === '')) {
+                typingMsg.remove();
+            }
         }
 
         // Send stop request to backend (background)
@@ -1439,7 +1454,7 @@ function createActionBar(node, role) {
     if (role === "user") {
         const editBtn = document.createElement("button");
         editBtn.className = "msg-action-btn icon-only";
-        editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+        editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
         editBtn.title = "Edit";
         editBtn.onclick = (e) => {
             if (isProcessing) return;
@@ -2075,6 +2090,7 @@ function addCopyButtons(el) {
         block.parentElement.addEventListener("dblclick", () => {
             const text = block.textContent;
             navigator.clipboard.writeText(text);
+            showToast("Copied to clipboard", "info");
         });
     });
 }
@@ -2340,6 +2356,23 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
                 switchedToThinking = true;
             }
             const payload = JSON.parse(e.data);
+
+            if (payload.name === "propose_plan") {
+                const planText = payload.args.plan_text;
+                // Add a placeholder block in the chat
+                const refs = addToolCall(
+                    assistantContent,
+                    "Proposal: Review Plan",
+                    {},
+                    "Waiting for your review..."
+                );
+                toolCalls[payload.name + "_" + (payload.call_index || 0)] = refs;
+
+                // Open the artifact sidebar
+                openArtifactSidebar(planText, currentChatId);
+                return;
+            }
+
             const refs = addToolCall(
                 assistantContent,
                 payload.name,
@@ -2352,6 +2385,11 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
         evtSource.addEventListener("tool_result", (e) => {
             if (isAborting) return;
             const payload = JSON.parse(e.data);
+
+            if (payload.name === "propose_plan") {
+                closeArtifactSidebar();
+            }
+
             const key = payload.name + "_" + (payload.call_index || 0);
             const refs = toolCalls[key];
             if (refs) {
@@ -3145,9 +3183,10 @@ imageUpload.addEventListener("change", (e) => {
             const fullDataUrl = ev.target.result;
             const parts = fullDataUrl.split(",");
             const mimeLine = parts[0];
+            const extractedMimeType = mimeLine.match(/:(.*?);/)[1];
             const base64 = parts[1];
 
-            let resolvedMime = getMimeType(file.name, mimeLine.match(/:(.*?);/)[1], file.type);
+            let resolvedMime = getMimeType(file.name, extractedMimeType, file.type);
             if (!resolvedMime || resolvedMime === 'application/octet-stream') {
                 resolvedMime = detectMimeFromBase64(base64) || 'application/octet-stream';
             }
@@ -3459,15 +3498,239 @@ if (btnCloseSearch) {
     });
 }
 if (searchView) {
-    searchView.addEventListener("click", (e) => {
-        if (e.target === searchView) {
-            searchView.classList.add("hidden");
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !searchView.classList.contains("hidden")) {
+            closeSearchView();
+        } else if (e.key === "Escape" && !artifactSidebar.classList.contains("hidden")) {
+            // Optional: prevent closing artifact via escape if it's blocking?
+            // closeArtifactSidebar();
+        }
+    });
+
+    // Handle "Escape" separately for suggested menu
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !suggestedMenuPane.classList.contains("hidden")) {
+            closeSuggestedMenu();
         }
     });
 }
-document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && searchView && !searchView.classList.contains("hidden")) {
-        searchView.classList.add("hidden");
+
+// ─── ARTIFACT SIDEBAR LOGIC ─────────────────────────────────────────
+
+let originalPlanLines = [];
+
+function openArtifactSidebar(markdownText, chatId) {
+    activeArtifactTx = chatId;
+    currentArtifactComments = {};
+
+    // Attempt to split original text somewhat predictably for the final submission
+    originalPlanLines = markdownText.split(/(?=\n#{1,6}\s|\n- |\n[0-9]+\.\s)/).map(s => s.trim()).filter(s => s);
+    if (originalPlanLines.length === 0) {
+        originalPlanLines = [markdownText]; // Fallback
+    }
+
+    // Render HTML
+    const html = marked.parse(markdownText);
+
+    // Create a temporary container to manipulate the DOM
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+
+    // Convert top-level block elements into interactive blocks
+    const children = Array.from(tempDiv.children);
+    tempDiv.innerHTML = "";
+
+    children.forEach((child, index) => {
+        // Only wrap substantive elements (exclude headers so they can't be commented on)
+        if (["P", "UL", "OL", "PRE", "BLOCKQUOTE", "TABLE"].includes(child.tagName)) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "artifact-block";
+            wrapper.dataset.blockIndex = index;
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "artifact-block-content";
+            contentDiv.appendChild(child);
+            wrapper.appendChild(contentDiv);
+
+            const triggerBtn = document.createElement("button");
+            triggerBtn.className = "artifact-comment-trigger";
+            triggerBtn.title = "Add a comment to this section";
+            triggerBtn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+            `;
+
+            triggerBtn.addEventListener("click", () => showCommentBox(wrapper, index));
+            wrapper.appendChild(triggerBtn);
+
+            tempDiv.appendChild(wrapper);
+        } else {
+            tempDiv.appendChild(child);
+        }
+    });
+
+    artifactContentArea.innerHTML = "";
+    artifactContentArea.appendChild(tempDiv);
+
+    // Show UI
+    artifactSidebar.classList.remove("hidden");
+    const centerColumn = document.getElementById("center-column");
+    if (centerColumn) centerColumn.style.marginRight = "0"; // Reset any old hardcoded margins
+
+    sidebar.classList.remove("sidebar-open");
+    sidebar.classList.add("sidebar-closed");
+}
+
+function showCommentBox(blockEl, blockIndex) {
+    // Check if already exists
+    let existingBox = blockEl.querySelector('.artifact-comment-box');
+    if (existingBox) {
+        existingBox.querySelector('textarea').focus();
+        return;
+    }
+
+    const trigger = blockEl.querySelector('.artifact-comment-trigger');
+    trigger.classList.add('active');
+
+    const box = document.createElement("div");
+    box.className = "artifact-comment-box";
+
+    const textarea = document.createElement("textarea");
+    textarea.placeholder = "Write your feedback specifically about this part...";
+    if (currentArtifactComments[blockIndex]) {
+        textarea.value = currentArtifactComments[blockIndex];
+    }
+    box.appendChild(textarea);
+
+    const actionsRow = document.createElement("div");
+    actionsRow.className = "artifact-comment-actions";
+
+    const btnCancel = document.createElement("button");
+    btnCancel.className = "btn-secondary";
+    btnCancel.textContent = "Cancel";
+    btnCancel.onclick = () => {
+        box.remove();
+        if (!currentArtifactComments[blockIndex]) {
+            trigger.classList.remove('active');
+        } else {
+            updateCommentBadge(blockEl, true);
+        }
+    };
+
+    const btnSave = document.createElement("button");
+    btnSave.className = "btn-primary";
+    btnSave.textContent = "Save";
+    btnSave.onclick = () => {
+        const val = textarea.value.trim();
+        if (val) {
+            currentArtifactComments[blockIndex] = val;
+            updateCommentBadge(blockEl, true);
+        } else {
+            delete currentArtifactComments[blockIndex];
+            trigger.classList.remove('active');
+            updateCommentBadge(blockEl, false);
+        }
+        box.remove();
+        updateProceedButtonState();
+    };
+
+    actionsRow.appendChild(btnCancel);
+    actionsRow.appendChild(btnSave);
+    box.appendChild(actionsRow);
+
+    blockEl.appendChild(box);
+    textarea.focus();
+}
+
+function updateCommentBadge(blockEl, hasComment) {
+    let badge = blockEl.querySelector('.artifact-comment-badge');
+    const trigger = blockEl.querySelector('.artifact-comment-trigger');
+    if (hasComment) {
+        if (!badge) {
+            badge = document.createElement("div");
+            badge.className = "artifact-comment-badge";
+            badge.textContent = "1";
+            trigger.appendChild(badge);
+        }
+        trigger.classList.add('active');
+    } else {
+        if (badge) badge.remove();
+        trigger.classList.remove('active');
+    }
+}
+
+function updateProceedButtonState() {
+    const commentCount = Object.keys(currentArtifactComments).length;
+    if (commentCount > 0) {
+        btnArtifactProceed.textContent = t("artifact.submit", { count: commentCount }) || `Submit (${commentCount})`;
+    } else {
+        btnArtifactProceed.textContent = t("artifact.proceed") || "Proceed";
+    }
+}
+
+function closeArtifactSidebar() {
+    artifactSidebar.classList.add("hidden");
+    const centerColumn = document.getElementById("center-column");
+    if (centerColumn) centerColumn.style.marginRight = "0";
+
+    // If the sidebar is being closed while a plan is active (e.g. Abort button pressed)
+    if (activeArtifactTx && isAborting) {
+        fetch(`${API_BASE}/chat/plan_response`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: activeArtifactTx, response: "User aborted the generation request." })
+        }).catch(e => console.error("Failed to abort plan:", e));
+    }
+
+    activeArtifactTx = null;
+    currentArtifactComments = {};
+    updateProceedButtonState();
+}
+
+btnArtifactProceed.addEventListener("click", async () => {
+    if (!activeArtifactTx) return;
+
+    const commentCount = Object.keys(currentArtifactComments).length;
+    let finalResponse = "";
+
+    if (commentCount === 0) {
+        finalResponse = "Approved.";
+    } else {
+        // Construct detailed feedback mapping
+        finalResponse = "User provided the following feedback on specific parts of your plan:\n\n";
+
+        const blocks = document.querySelectorAll('.artifact-block');
+        blocks.forEach((block) => {
+            const index = block.dataset.blockIndex;
+            const comment = currentArtifactComments[index];
+            if (comment) {
+                // Extract plain text content of this block
+                const sectionContent = block.querySelector('.artifact-block-content').innerText.trim().substring(0, 150) + "...";
+                finalResponse += `**Regarding section:** "${sectionContent}"\n`;
+                finalResponse += `> **Comment:** ${comment}\n\n`;
+            }
+        });
+        finalResponse += "Please revise your plan or execution based on this feedback immediately.";
+    }
+
+    const btnOrigText = btnArtifactProceed.textContent;
+    btnArtifactProceed.textContent = t("artifact.sending") || "Sending...";
+    btnArtifactProceed.disabled = true;
+
+    try {
+        await fetch(`${API_BASE}/chat/plan_response`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: activeArtifactTx, response: finalResponse })
+        });
+    } catch (e) {
+        console.error("Failed to submit plan response:", e);
+        showToast("Failed to submit review", "error");
+    } finally {
+        btnArtifactProceed.textContent = btnOrigText;
+        btnArtifactProceed.disabled = false;
+        closeArtifactSidebar();
     }
 });
 function getSearchQuery() {

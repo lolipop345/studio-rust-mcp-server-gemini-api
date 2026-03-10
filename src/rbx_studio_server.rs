@@ -40,6 +40,7 @@ pub struct AppState {
     pub chat_streams: HashMap<String, mpsc::Sender<SsePayload>>,
     pub chat_receivers: HashMap<String, mpsc::Receiver<SsePayload>>,
     pub active_generations: HashMap<String, tokio::task::AbortHandle>,
+    pub plan_waiters: HashMap<String, tokio::sync::oneshot::Sender<String>>,
     pub db: crate::db::DbClient,
 }
 
@@ -85,6 +86,7 @@ impl AppState {
             chat_streams: HashMap::new(),
             chat_receivers: HashMap::new(),
             active_generations: HashMap::new(),
+            plan_waiters: HashMap::new(),
             db,
         }
     }
@@ -136,6 +138,11 @@ pub struct RunScriptInPlayMode {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ProposePlan {
+    pub plan_text: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum ToolArgumentValues {
     RunCode(RunCode),
     InsertModel(InsertModel),
@@ -143,6 +150,7 @@ pub enum ToolArgumentValues {
     StartStopPlay(StartStopPlay),
     RunScriptInPlayMode(RunScriptInPlayMode),
     GetStudioMode(GetStudioMode),
+    ProposePlan(ProposePlan),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -365,6 +373,20 @@ pub fn build_tool_declarations() -> Vec<ToolDeclaration> {
                     "properties": {}
                 })),
             },
+            FunctionDeclaration {
+                name: "propose_plan".to_string(),
+                description: "Propose a plan, UI layout, or architecture change to the user before executing it. You MUST use this tool first when the user asks to build a new system (e.g. shop UI, spectator mode, leaderboard, etc.) or write complex cross-script logic. This opens an interactive Artifacts view for the user to review, comment on, and approve your approach before you write the code. Do NOT use this for simple questions, tweaks, or isolated bug fixes. Render the plan exactly as markdown content.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "plan_text": {
+                            "type": "string",
+                            "description": "The full markdown text of the proposed plan."
+                        }
+                    },
+                    "required": ["plan_text"]
+                })),
+            },
         ]),
         google_search: None,
         code_execution: None,
@@ -375,7 +397,8 @@ pub fn build_system_instruction(custom_prompt: Option<String>) -> GeminiContent 
     let mut text = "You are a Roblox Studio assistant. You must be aware of the current studio mode before using any tools. Infer the mode from conversation context or use get_studio_mode.\n\
         Use run_code to query data from Roblox Studio place or to change it.\n\
         After calling run_script_in_play_mode, the datamodel status will be reset to stop mode.\n\
-        Prefer using start_stop_play tool instead of run_script_in_play_mode. Only use run_script_in_play_mode to run one time unit test code on server datamodel.".to_string();
+        Prefer using start_stop_play tool instead of run_script_in_play_mode. Only use run_script_in_play_mode to run one time unit test code on server datamodel.\n\
+        When receiving a request, evaluate its scope. If it involves designing a new system, creating complex cross-script logic, or building full UI layouts, ALWAYS use the `propose_plan` tool FIRST to present a structured markdown plan for user approval. For simple commands, minor bug fixes, or direct isolated code edits, proceed normally without proposing a plan.".to_string();
 
     if let Some(custom) = custom_prompt {
         text.push_str("\n\n");
@@ -486,6 +509,15 @@ pub fn convert_function_call_to_tool_args(
             ))
         }
         "get_studio_mode" => Ok(ToolArgumentValues::GetStudioMode(GetStudioMode {})),
+        "propose_plan" => {
+             let plan_text = fc
+                .args
+                .get("plan_text")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("propose_plan missing 'plan_text' argument"))?
+                .to_string();
+             Ok(ToolArgumentValues::ProposePlan(ProposePlan { plan_text }))
+        }
         other => Err(eyre!("Unknown function call: {}", other)),
     }
 }
@@ -493,7 +525,21 @@ pub fn convert_function_call_to_tool_args(
 pub async fn dispatch_function_call(
     state: &PackedState,
     fc: &GeminiFunctionCall,
+    chat_id: &str,
 ) -> color_eyre::Result<String> {
+    if fc.name == "propose_plan" {
+        let (tx, rx) = tokio::sync::oneshot::channel::<String>();
+        {
+            let mut app_state = state.lock().await;
+            app_state.plan_waiters.insert(chat_id.to_string(), tx);
+        }
+        
+        tracing::debug!("Waiting for user feedback on proposed plan (chat_id: {})", chat_id);
+        
+        let result = rx.await.unwrap_or_else(|_| "Error: plan review modal was closed or connection lost.".to_string());
+        return Ok(result);
+    }
+
     let tool_args = convert_function_call_to_tool_args(fc)?;
     let (command, id) = ToolArguments::new(tool_args);
     tracing::debug!("Dispatching function call to Roblox Studio: {:?}", command);
@@ -631,6 +677,26 @@ pub async fn chat_stop_handler(
     }
     
     Ok(axum::http::StatusCode::OK)
+}
+
+#[derive(Deserialize)]
+pub struct ChatPlanResponseRequest {
+    pub chat_id: String,
+    pub response: String,
+}
+
+pub async fn chat_plan_response_handler(
+    State(state): State<PackedState>,
+    Json(payload): Json<ChatPlanResponseRequest>,
+) -> Result<impl IntoResponse> {
+    let mut app_state = state.lock().await;
+    
+    if let Some(tx) = app_state.plan_waiters.remove(&payload.chat_id) {
+        let _ = tx.send(payload.response);
+        Ok(axum::http::StatusCode::OK)
+    } else {
+        Err(crate::error::Report::from(eyre!("No pending plan review found for chat ID: {}", payload.chat_id)))
+    }
 }
 
 async fn process_chat(
@@ -880,7 +946,7 @@ async fn process_chat(
                     call_index: idx,
                 }).await;
 
-                let result = dispatch_function_call(&state, fc).await;
+                let result = dispatch_function_call(&state, fc, &chat_id).await;
 
                 let result_str = match result {
                     Ok(r) => r,

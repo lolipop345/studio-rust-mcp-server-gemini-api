@@ -197,5 +197,11 @@
     "useCamera": "Use Camera",
     "capturePhoto": "Capture",
     "cancelCamera": "Cancel"
+  },
+  "artifact": {
+    "title": "Implementation Plan",
+    "proceed": "Proceed",
+    "submit": "Submit ({{count}})",
+    "sending": "Sending..."
   }
 }

@@ -62,6 +62,7 @@ async fn main() -> Result<()> {
             .route("/proxy", post(proxy_handler))
             .route("/chat/send", post(chat_send_handler).layer(DefaultBodyLimit::max(50 * 1024 * 1024)))
             .route("/chat/stop", post(chat_stop_handler))
+            .route("/chat/plan_response", post(chat_plan_response_handler))
             .route("/chat/events/{id}", get(chat_events_handler))
             .route("/chat/api-key", post(api_key_handler))
             .route("/chat/status", get(status_handler))

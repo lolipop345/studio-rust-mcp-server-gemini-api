@@ -3394,20 +3394,6 @@ audio::-webkit-media-controls-time-remaining-display {
   filter: invert(var(--media-invert-amount));
 }
 
-/* Build Version Badge */
-#build-version {
-  position: fixed;
-  bottom: 8px;
-  right: 12px;
-  font-size: 10px;
-  color: var(--text-tertiary);
-  opacity: 0.4;
-  pointer-events: none;
-  z-index: 1;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  letter-spacing: 0.5px;
-}
-
 body {
   border: 4px dashed transparent;
   transition: border-color var(--transition), background-color var(--transition);
@@ -3580,4 +3566,219 @@ body.drag-active {
   font-size: 11px;
   color: var(--text-tertiary);
   margin-top: 4px;
+}
+
+/* --- ARTIFACT VIEW / PLANNING SIDEBAR --- */
+#artifact-sidebar {
+  width: 450px;
+  background: var(--bg-tertiary);
+  border-left: 1px solid var(--border-primary);
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+#artifact-sidebar.hidden {
+  width: 0;
+  min-width: 0;
+  border-left: none;
+  opacity: 0;
+}
+
+.artifact-sidebar-header {
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.artifact-sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.artifact-sidebar-title svg {
+  color: var(--accent);
+}
+
+.artifact-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.artifact-content-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+  scroll-behavior: smooth;
+  position: relative;
+}
+
+/* Base markdown styles in artifact */
+.artifact-content-area h1,
+.artifact-content-area h2,
+.artifact-content-area h3 {
+  margin-top: 24px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.artifact-content-area pre {
+  margin: 16px 0;
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+}
+
+/* Interactive Blocks for Commenting */
+.artifact-block {
+  position: relative;
+  padding: 4px 40px 4px 8px;
+  /* Space for the comment icon */
+  margin-bottom: 12px;
+  margin-left: -8px;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s ease;
+  line-height: 1.6;
+}
+
+.artifact-block:hover {
+  background-color: var(--bg-hover);
+}
+
+.artifact-block-content {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* The Comment trigger button that appears on hover */
+.artifact-comment-trigger {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 0.2s ease;
+}
+
+.artifact-block:hover .artifact-comment-trigger {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.artifact-comment-trigger:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  background: var(--bg-hover);
+}
+
+.artifact-comment-trigger.active {
+  opacity: 1;
+  transform: scale(1);
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+.artifact-comment-box {
+  margin-top: 12px;
+  margin-bottom: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  animation: slideInDown 0.2s ease-out both;
+}
+
+.artifact-comment-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 4px;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.artifact-comment-box textarea {
+  width: 100%;
+  min-height: 48px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.artifact-comment-box textarea:focus {
+  border-color: var(--accent);
+}
+
+.artifact-comment-box textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.artifact-comment-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.artifact-comment-actions button {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+.artifact-comment-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  height: 16px;
+  min-width: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
 }
