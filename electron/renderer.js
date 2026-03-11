@@ -231,6 +231,7 @@ let currentChatId = null;
 let isAborting = false;
 let currentArtifactComments = {}; // block_index -> comment string
 let activeArtifactTx = null; // store the chat ID waiting for the plan
+let isPlanningMode = false; // true when model is in planning/Q&A phase
 
 // ─── Processing State & Abort ──────────────────────────────────────
 function setProcessingState(processing) {
@@ -1273,7 +1274,19 @@ function renderBranch(leafId) {
         if (node.extraNodesHTML) {
             const wrapper = document.createElement("div");
             wrapper.innerHTML = node.extraNodesHTML;
-            Array.from(wrapper.children).forEach(child => contentEl.appendChild(child));
+            Array.from(wrapper.children).forEach(child => {
+                // Restore planning question cards in a read-only/answered state
+                if (child.classList && child.classList.contains("planning-question-card")) {
+                    child.classList.add("planning-answered");
+                    child.dataset.answered = "1";
+                    child.querySelectorAll("button, input").forEach(el => el.disabled = true);
+                }
+                // Re-attach click listeners to tool-call headers (lost after innerHTML restore)
+                if (child.classList && child.classList.contains("tool-call")) {
+                    reattachToolCallListeners(child);
+                }
+                contentEl.appendChild(child);
+            });
         }
     });
     scrollToBottom();
@@ -1418,8 +1431,16 @@ function addMessageToDOM(role, content, extraNodes = [], images = [], nodeId = n
         contentEl.appendChild(imageRow);
     }
 
+    // Non-planning extra nodes (thought-chain, tool-call) go before text
+    const planningCards = [];
     if (extraNodes.length > 0) {
-        extraNodes.forEach(child => contentEl.appendChild(child));
+        extraNodes.forEach(child => {
+            if (child.classList && child.classList.contains("planning-question-card")) {
+                planningCards.push(child);
+            } else {
+                contentEl.appendChild(child);
+            }
+        });
     }
 
     const markdownNode = document.createElement("div");
@@ -1428,6 +1449,9 @@ function addMessageToDOM(role, content, extraNodes = [], images = [], nodeId = n
         addCopyButtons(markdownNode);
     }
     contentEl.appendChild(markdownNode);
+
+    // Planning question cards go after text
+    planningCards.forEach(card => contentEl.appendChild(card));
 
     innerEl.appendChild(headerEl);
     innerEl.appendChild(contentEl);
@@ -2245,6 +2269,16 @@ function removeTypingIndicator() {
     if (el) el.remove();
 }
 
+function reattachToolCallListeners(toolCallEl) {
+    const headerEl = toolCallEl.querySelector(".tool-call-header");
+    const bodyEl = toolCallEl.querySelector(".tool-call-body");
+    if (!headerEl || !bodyEl) return;
+    headerEl.addEventListener("click", () => {
+        headerEl.classList.toggle("expanded");
+        bodyEl.classList.toggle("visible");
+    });
+}
+
 function addToolCall(parentEl, name, args, status) {
     const toolEl = document.createElement("div");
     toolEl.className = "tool-call";
@@ -2450,6 +2484,8 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
     if (isProcessing) return;
 
     setProcessingState(true);
+    isPlanningMode = false;
+    setPlanningModeIndicator(false);
     if (overrideText === null) {
         inputEl.value = "";
         autoResize();
@@ -2581,8 +2617,26 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
             }
             const payload = JSON.parse(e.data);
 
+            if (payload.name === "ask_planning_question") {
+                const question = payload.args.question || "";
+                const options = payload.args.options || [];
+                isPlanningMode = true;
+                setPlanningModeIndicator(true);
+
+                // Render interactive question card directly in chat
+                const questionBlock = createPlanningQuestionBlock(question, options, currentChatId);
+                assistantContent.appendChild(questionBlock);
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+
+                // Store a dummy ref so tool_result handler knows this call index
+                toolCalls[payload.name + "_" + (payload.call_index || 0)] = { questionBlock };
+                return;
+            }
+
             if (payload.name === "propose_plan") {
                 const planText = payload.args.plan_text;
+                isPlanningMode = true;
+                setPlanningModeIndicator(true);
                 // Add a placeholder block in the chat
                 const refs = addToolCall(
                     assistantContent,
@@ -2612,11 +2666,18 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
 
             if (payload.name === "propose_plan") {
                 closeArtifactSidebar();
+                setPlanningModeIndicator(false);
+                isPlanningMode = false;
+            }
+
+            if (payload.name === "ask_planning_question") {
+                // Question was answered; nothing extra to do — card already shows answer
+                return;
             }
 
             const key = payload.name + "_" + (payload.call_index || 0);
             const refs = toolCalls[key];
-            if (refs) {
+            if (refs && refs.statusEl) {
                 refs.statusEl.textContent = "completed";
                 const currentText = refs.bodyEl.textContent;
                 const newText = currentText + "\n\n--- Result ---\n" + payload.result;
@@ -2730,7 +2791,7 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
                     displayString = displayString.replace(/<memory>[\s\S]*?<\/memory>/i, "").trim();
                 }
 
-                const finalNodes = Array.from(assistantContent.querySelectorAll('.thought-chain, .tool-call'));
+                const finalNodes = Array.from(assistantContent.querySelectorAll('.thought-chain, .tool-call, .planning-question-card'));
 
                 if (!displayString && !extractedMemory && finalNodes.length === 0 && !hasError && !isAborting) {
                     addMessage("assistant", "Empty response from stream or connection closed unexpectedly.", [], [], infoData, lastThoughtSignature);
@@ -2760,6 +2821,8 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
                 removeTypingIndicator();
                 setProcessingState(false);
                 isAborting = false;
+                isPlanningMode = false;
+                setPlanningModeIndicator(false);
                 activeEventSource = null;
                 currentChatId = null;
                 finishGenerationHandler = null;
@@ -2780,6 +2843,8 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
                 showToast(msg, "error");
             }
             setProcessingState(false);
+            isPlanningMode = false;
+            setPlanningModeIndicator(false);
             activeEventSource = null;
             currentChatId = null;
         };
@@ -3918,6 +3983,113 @@ function closeArtifactSidebar() {
     currentArtifactComments = {};
     updateProceedButtonState();
 }
+
+// ─── PLANNING QUESTION CARD ─────────────────────────────────────────
+
+function setPlanningModeIndicator(active) {
+    let indicator = document.getElementById("planning-mode-indicator");
+    if (!indicator) return;
+    if (active) {
+        indicator.classList.remove("hidden");
+    } else {
+        indicator.classList.add("hidden");
+    }
+}
+
+function createPlanningQuestionBlock(question, options, chatId) {
+    const card = document.createElement("div");
+    card.className = "planning-question-card";
+
+    // Question header
+    const header = document.createElement("div");
+    header.className = "planning-question-header";
+    header.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span class="planning-question-label">Planning Question</span>
+    `;
+    card.appendChild(header);
+
+    // Question text
+    const questionEl = document.createElement("p");
+    questionEl.className = "planning-question-text";
+    questionEl.textContent = question;
+    card.appendChild(questionEl);
+
+    // Options grid
+    const optionsGrid = document.createElement("div");
+    optionsGrid.className = "planning-options";
+
+    options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.className = "planning-option-btn";
+        btn.textContent = opt;
+        btn.addEventListener("click", () => {
+            if (card.dataset.answered) return;
+            submitPlanningAnswer(opt, card, chatId);
+        });
+        optionsGrid.appendChild(btn);
+    });
+    card.appendChild(optionsGrid);
+
+    // Custom answer row
+    const customRow = document.createElement("div");
+    customRow.className = "planning-custom-row";
+
+    const customInput = document.createElement("input");
+    customInput.type = "text";
+    customInput.className = "planning-custom-input";
+    customInput.placeholder = "Or type a custom answer…";
+
+    const customBtn = document.createElement("button");
+    customBtn.className = "planning-custom-send";
+    customBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
+    customBtn.addEventListener("click", () => {
+        if (card.dataset.answered) return;
+        const val = customInput.value.trim();
+        if (!val) return;
+        submitPlanningAnswer(val, card, chatId);
+    });
+    customInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") customBtn.click();
+    });
+
+    customRow.appendChild(customInput);
+    customRow.appendChild(customBtn);
+    card.appendChild(customRow);
+
+    return card;
+}
+
+async function submitPlanningAnswer(answer, card, chatId) {
+    if (card.dataset.answered) return;
+    card.dataset.answered = "1";
+
+    // Mark card as answered
+    card.classList.add("planning-answered");
+    const answerBadge = document.createElement("div");
+    answerBadge.className = "planning-answer-badge";
+    answerBadge.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ${answer}`;
+    card.appendChild(answerBadge);
+
+    // Disable all interactive elements
+    card.querySelectorAll("button, input").forEach(el => el.disabled = true);
+
+    try {
+        await fetch(`${API_BASE}/chat/plan_response`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId, response: answer })
+        });
+    } catch (e) {
+        console.error("Failed to submit planning answer:", e);
+    }
+}
+
+// ─── END PLANNING QUESTION CARD ────────────────────────────────────
 
 btnArtifactProceed.addEventListener("click", async () => {
     if (!activeArtifactTx) return;

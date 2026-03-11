@@ -213,5 +213,8 @@
     "closeTitle": "Možete da zatvorite ovaj prozor",
     "returnSuccess": "Ako se GeminiStudio ne pokrene automatski, <a href='#' onclick='window.close();return false;'>kliknite ovde</a> da biste se vratili.",
     "returnFailure": "Nešto je pošlo naopako. Pokušajte ponovo."
+  },
+  "planning": {
+    "modeLabel": "AI planira — odgovorite na pitanja iznad da biste nastavili"
   }
 }

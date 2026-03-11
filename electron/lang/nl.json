@@ -213,5 +213,8 @@
     "closeTitle": "U kunt dit venster sluiten",
     "returnSuccess": "Als GeminiStudio niet automatisch startte, <a href='#' onclick='window.close();return false;'>klik hier</a> om terug te keren.",
     "returnFailure": "Er is iets misgegaan. Probeer het opnieuw."
+  },
+  "planning": {
+    "modeLabel": "AI is aan het plannen — beantwoord de vragen hierboven om door te gaan"
   }
 }

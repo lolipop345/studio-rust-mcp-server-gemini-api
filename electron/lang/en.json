@@ -218,6 +218,9 @@
     "submit": "Submit ({{count}})",
     "sending": "Sending..."
   },
+  "planning": {
+    "modeLabel": "AI is planning — answer the questions above to continue"
+  },
   "oauthCallback": {
     "successTitle": "Login Successful",
     "failureTitle": "Login Failed",

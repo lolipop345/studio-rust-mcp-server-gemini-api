@@ -213,5 +213,8 @@
     "closeTitle": "Вы можаце закрыць гэта акно",
     "returnSuccess": "Калі GeminiStudio не запусціўся аўтаматычна, <a href='#' onclick='window.close();return false;'>націсніце тут</a> для вяртання.",
     "returnFailure": "Штосьці пайшло не так. Калі ласка, паспрабуйце яшчэ раз."
+  },
+  "planning": {
+    "modeLabel": "AI плануе — адкажыце на пытанні вышэй, каб працягнуць"
   }
 }

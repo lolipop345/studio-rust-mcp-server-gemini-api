@@ -224,5 +224,8 @@
     "closeTitle": "Bu pencereyi kapatabilirsin",
     "returnSuccess": "Eğer GeminiStudio'ya otomatik geri dönmediyse, <a href='#' onclick='window.close();return false;'>buraya tıklayarak</a> geri dönebilirsin.",
     "returnFailure": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin."
+  },
+  "planning": {
+    "modeLabel": "Yapay zeka planlıyor — devam etmek için yukarıdaki soruları yanıtla"
   }
 }

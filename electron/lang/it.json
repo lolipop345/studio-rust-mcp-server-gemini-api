@@ -213,5 +213,8 @@
     "closeTitle": "Puoi chiudere questa finestra",
     "returnSuccess": "Se GeminiStudio non si è avviato automaticamente, <a href='#' onclick='window.close();return false;'>clicca qui</a> per tornare.",
     "returnFailure": "Qualcosa è andato storto. Riprova."
+  },
+  "planning": {
+    "modeLabel": "L'IA sta pianificando — rispondi alle domande sopra per continuare"
   }
 }

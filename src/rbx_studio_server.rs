@@ -143,6 +143,12 @@ pub struct ProposePlan {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct AskPlanningQuestion {
+    pub question: String,
+    pub options: Vec<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum ToolArgumentValues {
     RunCode(RunCode),
     InsertModel(InsertModel),
@@ -151,6 +157,7 @@ pub enum ToolArgumentValues {
     RunScriptInPlayMode(RunScriptInPlayMode),
     GetStudioMode(GetStudioMode),
     ProposePlan(ProposePlan),
+    AskPlanningQuestion(AskPlanningQuestion),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -387,6 +394,25 @@ pub fn build_tool_declarations() -> Vec<ToolDeclaration> {
                     "required": ["plan_text"]
                 })),
             },
+            FunctionDeclaration {
+                name: "ask_planning_question".to_string(),
+                description: "Ask the user a clarifying question before creating a plan. Use this BEFORE `propose_plan` when the user's request is ambiguous or has multiple valid implementation approaches (e.g., which UI framework, whether to use ModuleScripts, preferred visual style, complexity level). Provide 2-4 distinct options. The user can also type a custom answer. Ask at most 2 questions before proposing the plan — keep it focused.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "question": {
+                            "type": "string",
+                            "description": "The clarifying question to ask the user (e.g., 'Which UI framework should I use?')"
+                        },
+                        "options": {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "2-4 distinct options for the user to choose from (e.g., ['ScreenGui / Frames', 'Fusion reactive UI', 'React-Lua'])"
+                        }
+                    },
+                    "required": ["question", "options"]
+                })),
+            },
         ]),
         google_search: None,
         code_execution: None,
@@ -398,7 +424,10 @@ pub fn build_system_instruction(custom_prompt: Option<String>) -> GeminiContent 
         Use run_code to query data from Roblox Studio place or to change it.\n\
         After calling run_script_in_play_mode, the datamodel status will be reset to stop mode.\n\
         Prefer using start_stop_play tool instead of run_script_in_play_mode. Only use run_script_in_play_mode to run one time unit test code on server datamodel.\n\
-        When receiving a request, evaluate its scope. If it involves designing a new system, creating complex cross-script logic, or building full UI layouts, ALWAYS use the `propose_plan` tool FIRST to present a structured markdown plan for user approval. For simple commands, minor bug fixes, or direct isolated code edits, proceed normally without proposing a plan.".to_string();
+        When receiving a request, evaluate its scope:\n\
+        - For SIMPLE commands, minor bug fixes, or isolated code edits: proceed normally.\n\
+        - For COMPLEX tasks (new systems, full UI layouts, cross-script logic): first use `ask_planning_question` (at most 2 times) to clarify ambiguous choices, THEN use `propose_plan` to show a structured markdown plan before writing any code.\n\
+        `ask_planning_question` opens an interactive card in the UI — keep questions short and options concrete (e.g., 'Fusion / React-Lua / Plain ScreenGui').".to_string();
 
     if let Some(custom) = custom_prompt {
         text.push_str("\n\n");
@@ -530,6 +559,21 @@ pub fn convert_function_call_to_tool_args(
                 .to_string();
              Ok(ToolArgumentValues::ProposePlan(ProposePlan { plan_text }))
         }
+        "ask_planning_question" => {
+            let question = fc
+                .args
+                .get("question")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("ask_planning_question missing 'question' argument"))?
+                .to_string();
+            let options = fc
+                .args
+                .get("options")
+                .and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect::<Vec<_>>())
+                .unwrap_or_default();
+            Ok(ToolArgumentValues::AskPlanningQuestion(AskPlanningQuestion { question, options }))
+        }
         other => Err(eyre!("Unknown function call: {}", other)),
     }
 }
@@ -539,16 +583,16 @@ pub async fn dispatch_function_call(
     fc: &GeminiFunctionCall,
     chat_id: &str,
 ) -> color_eyre::Result<String> {
-    if fc.name == "propose_plan" {
+    if fc.name == "propose_plan" || fc.name == "ask_planning_question" {
         let (tx, rx) = tokio::sync::oneshot::channel::<String>();
         {
             let mut app_state = state.lock().await;
             app_state.plan_waiters.insert(chat_id.to_string(), tx);
         }
-        
-        tracing::debug!("Waiting for user feedback on proposed plan (chat_id: {})", chat_id);
-        
-        let result = rx.await.unwrap_or_else(|_| "Error: plan review modal was closed or connection lost.".to_string());
+
+        tracing::debug!("Waiting for user response on {} (chat_id: {})", fc.name, chat_id);
+
+        let result = rx.await.unwrap_or_else(|_| "Error: interaction was closed or connection lost.".to_string());
         return Ok(result);
     }
 

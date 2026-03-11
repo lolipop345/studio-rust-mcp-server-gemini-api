@@ -213,5 +213,8 @@
     "closeTitle": "Sie können dieses Fenster schließen",
     "returnSuccess": "Wenn GeminiStudio nicht automatisch gestartet wurde, <a href='#' onclick='window.close();return false;'>klicken Sie hier</a>, um zurückzukehren.",
     "returnFailure": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  },
+  "planning": {
+    "modeLabel": "KI plant — beantworte die obigen Fragen, um fortzufahren"
   }
 }
