@@ -22,7 +22,21 @@
     "enterNewKey": "Inserisci una nuova chiave o lascia vuoto...",
     "clearHistory": "Cancella tutta la cronologia",
     "cancel": "Annulla",
-    "ok": "OK"
+    "ok": "OK",
+    "tabApi": "API e Account",
+    "tabAgent": "Modello e Agente",
+    "tabData": "Dati e Cookie",
+    "googleAccountLabel": "Account Google",
+    "signInWithGoogle": "Accedi con Google",
+    "googleConnected": "Connesso via Google",
+    "logout": "Disconnetti",
+    "dataTitle": "Dati",
+    "dataDesc": "Elimina tutta la cronologia della chat dal database.",
+    "cookieTitle": "Cookie e Preferenze",
+    "cookieDesc": "Reimposta tema, lingua e altre preferenze locali ai valori predefiniti.",
+    "resetCookies": "Reimposta preferenze",
+    "oauthError": "OAuth non configurato. Aggiungi oauth_config.json.",
+    "resetCookiesConfirm": "Tema, lingua e altre preferenze locali verranno ripristinate. L'app verrà ricaricata."
   },
   "titlebar": {
     "settingsTitle": "Impostazioni",
@@ -192,5 +206,12 @@
   },
   "sidebar": {
     "search": "Cerca chat..."
+  },
+  "oauthCallback": {
+    "successTitle": "Accesso riuscito",
+    "failureTitle": "Accesso non riuscito",
+    "closeTitle": "Puoi chiudere questa finestra",
+    "returnSuccess": "Se GeminiStudio non si è avviato automaticamente, <a href='#' onclick='window.close();return false;'>clicca qui</a> per tornare.",
+    "returnFailure": "Qualcosa è andato storto. Riprova."
   }
 }

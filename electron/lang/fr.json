@@ -22,7 +22,21 @@
     "enterNewKey": "Entrez une nouvelle clé ou laissez vide...",
     "clearHistory": "Effacer tout l'historique",
     "cancel": "Annuler",
-    "ok": "OK"
+    "ok": "OK",
+    "tabApi": "API & Compte",
+    "tabAgent": "Modèle & Agent",
+    "tabData": "Données & Cookies",
+    "googleAccountLabel": "Compte Google",
+    "signInWithGoogle": "Se connecter avec Google",
+    "googleConnected": "Connecté via Google",
+    "logout": "Se déconnecter",
+    "dataTitle": "Données",
+    "dataDesc": "Supprimer tout l'historique de chat de la base de données.",
+    "cookieTitle": "Cookies & Préférences",
+    "cookieDesc": "Réinitialiser le thème, la langue et d'autres préférences locales par défaut.",
+    "resetCookies": "Réinitialiser les préférences",
+    "oauthError": "OAuth non configuré. Ajoutez oauth_config.json.",
+    "resetCookiesConfirm": "Le thème, la langue et d'autres préférences locales seront réinitialisés. L'application va redémarrer."
   },
   "titlebar": {
     "settingsTitle": "Paramètres",
@@ -192,5 +206,12 @@
   },
   "sidebar": {
     "search": "Rechercher un chat..."
+  },
+  "oauthCallback": {
+    "successTitle": "Connexion réussie",
+    "failureTitle": "Échec de la connexion",
+    "closeTitle": "Vous pouvez fermer cette fenêtre",
+    "returnSuccess": "Si GeminiStudio ne s'est pas lancé automatiquement, <a href='#' onclick='window.close();return false;'>cliquez ici</a> pour retourner.",
+    "returnFailure": "Un problème est survenu. Veuillez réessayer."
   }
 }

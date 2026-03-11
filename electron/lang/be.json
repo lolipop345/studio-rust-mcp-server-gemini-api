@@ -22,7 +22,21 @@
     "enterNewKey": "Увядзіце новы ключ альбо пакіньце пустым...",
     "clearHistory": "Ачысціць усю гісторыю",
     "cancel": "Адмена",
-    "ok": "Добра"
+    "ok": "Добра",
+    "tabApi": "API і Уліковы запіс",
+    "tabAgent": "Мадэль і Агент",
+    "tabData": "Даныя і Кукі",
+    "googleAccountLabel": "Уліковы запіс Google",
+    "signInWithGoogle": "Увайсці праз Google",
+    "googleConnected": "Падключана праз Google",
+    "logout": "Выйсці",
+    "dataTitle": "Даныя",
+    "dataDesc": "Выдаліць усю гісторыю чата з базы даных.",
+    "cookieTitle": "Кукі і Налады",
+    "cookieDesc": "Скінуць тэму, мову і іншыя лакальныя налады па змаўчанні.",
+    "resetCookies": "Скінуць налады",
+    "oauthError": "OAuth не настроены. Дадайце oauth_config.json.",
+    "resetCookiesConfirm": "Тэма, мова і іншыя лакальныя налады будуць скінуты. Праграма будзе перазапушчана."
   },
   "titlebar": {
     "settingsTitle": "Налады",
@@ -192,5 +206,12 @@
   },
   "sidebar": {
     "search": "Пошук чата..."
+  },
+  "oauthCallback": {
+    "successTitle": "Уваход паспяховы",
+    "failureTitle": "Памылка ўваходу",
+    "closeTitle": "Вы можаце закрыць гэта акно",
+    "returnSuccess": "Калі GeminiStudio не запусціўся аўтаматычна, <a href='#' onclick='window.close();return false;'>націсніце тут</a> для вяртання.",
+    "returnFailure": "Штосьці пайшло не так. Калі ласка, паспрабуйце яшчэ раз."
   }
 }

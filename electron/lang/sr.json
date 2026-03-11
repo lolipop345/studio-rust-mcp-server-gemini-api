@@ -22,7 +22,21 @@
     "enterNewKey": "Унеси нови кључ или остави празно...",
     "clearHistory": "Обриши сву историју",
     "cancel": "Откажи",
-    "ok": "У реду"
+    "ok": "У реду",
+    "tabApi": "API i Nalog",
+    "tabAgent": "Model i Agent",
+    "tabData": "Podaci i Kolačići",
+    "googleAccountLabel": "Google Nalog",
+    "signInWithGoogle": "Prijavi se sa Google-om",
+    "googleConnected": "Povezano preko Google-a",
+    "logout": "Odjavi se",
+    "dataTitle": "Podaci",
+    "dataDesc": "Obriši svu sačuvanu istoriju ćaskanja iz baze podataka.",
+    "cookieTitle": "Kolačići i Podešavanja",
+    "cookieDesc": "Resetuj temu, jezik i ostala lokalna podešavanja na podrazumevano.",
+    "resetCookies": "Resetuj Podešavanja",
+    "oauthError": "OAuth nije konfigurisan. Dodajte oauth_config.json.",
+    "resetCookiesConfirm": "Tema, jezik i ostala lokalna podešavanja biće resetovana. Aplikacija će se ponovo učitati."
   },
   "titlebar": {
     "settingsTitle": "Подешавања",
@@ -192,5 +206,12 @@
   },
   "sidebar": {
     "search": "Претражи ћаскање..."
+  },
+  "oauthCallback": {
+    "successTitle": "Uspešna prijava",
+    "failureTitle": "Prijava nije uspela",
+    "closeTitle": "Možete da zatvorite ovaj prozor",
+    "returnSuccess": "Ako se GeminiStudio ne pokrene automatski, <a href='#' onclick='window.close();return false;'>kliknite ovde</a> da biste se vratili.",
+    "returnFailure": "Nešto je pošlo naopako. Pokušajte ponovo."
   }
 }

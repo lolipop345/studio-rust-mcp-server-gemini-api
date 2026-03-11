@@ -22,7 +22,21 @@
     "enterNewKey": "Yeni key girin veya boş bırakıp kapatın...",
     "clearHistory": "Tüm Geçmişi Temizle",
     "cancel": "İptal",
-    "ok": "Sil"
+    "ok": "Sil",
+    "tabApi": "API ve Hesap",
+    "tabAgent": "Model ve Agent",
+    "tabData": "Veri ve Çerez",
+    "googleAccountLabel": "Google Hesabı",
+    "signInWithGoogle": "Google ile Giriş Yap",
+    "googleConnected": "Google ile Bağlanıldı",
+    "logout": "Çıkış Yap",
+    "dataTitle": "Veri",
+    "dataDesc": "Veritabanındaki tüm kayıtlı sohbet geçmişini sil.",
+    "cookieTitle": "Çerez ve Tercihler",
+    "cookieDesc": "Tema, dil ve diğer yerel tercihleri varsayılana sıfırla.",
+    "resetCookies": "Tercihleri Sıfırla",
+    "oauthError": "OAuth yapılandırılmamış. oauth_config.json dosyasını ekleyin.",
+    "resetCookiesConfirm": "Tema, dil ve diğer yerel tercihler varsayılana sıfırlanacak. Uygulama yeniden yüklenecek."
   },
   "titlebar": {
     "settingsTitle": "Ayarlar",
@@ -203,5 +217,12 @@
     "proceed": "Devam Et",
     "submit": "Onayla ({{count}})",
     "sending": "Gönderiliyor..."
+  },
+  "oauthCallback": {
+    "successTitle": "Başarıyla Google hesabına giriş yaptın.",
+    "failureTitle": "Giriş başarısız.",
+    "closeTitle": "Bu pencereyi kapatabilirsin",
+    "returnSuccess": "Eğer GeminiStudio'ya otomatik geri dönmediyse, <a href='#' onclick='window.close();return false;'>buraya tıklayarak</a> geri dönebilirsin.",
+    "returnFailure": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin."
   }
 }

@@ -22,7 +22,21 @@
     "enterNewKey": "Enter new key or leave empty to keep current...",
     "clearHistory": "Clear All History",
     "cancel": "Cancel",
-    "ok": "OK"
+    "ok": "OK",
+    "tabApi": "API & Account",
+    "tabAgent": "Model & Agent",
+    "tabData": "Data & Cookie",
+    "googleAccountLabel": "Google Account",
+    "signInWithGoogle": "Sign in with Google",
+    "googleConnected": "Connected via Google",
+    "logout": "Logout",
+    "dataTitle": "Data",
+    "dataDesc": "Delete all saved chat history from the database.",
+    "cookieTitle": "Cookie & Preferences",
+    "cookieDesc": "Reset theme, language and other local preferences to defaults.",
+    "resetCookies": "Reset Preferences",
+    "oauthError": "OAuth not configured. Add oauth_config.json.",
+    "resetCookiesConfirm": "Theme, language, and other local preferences will be reset to defaults. The app will reload."
   },
   "titlebar": {
     "settingsTitle": "Settings",
@@ -203,5 +217,12 @@
     "proceed": "Proceed",
     "submit": "Submit ({{count}})",
     "sending": "Sending..."
+  },
+  "oauthCallback": {
+    "successTitle": "Login Successful",
+    "failureTitle": "Login Failed",
+    "closeTitle": "You can close this window",
+    "returnSuccess": "If GeminiStudio did not launch automatically, <a href='#' onclick='window.close();return false;'>click here</a> to return.",
+    "returnFailure": "Something went wrong. Please try again."
   }
 }

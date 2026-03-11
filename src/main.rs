@@ -123,6 +123,9 @@ async fn main() -> Result<()> {
         })
     } else {
         tracing::info!("Port busy, using proxy mode (disabling UI launch)");
+        eprintln!("⚠️  Port {} is already in use by another instance.", STUDIO_PLUGIN_PORT);
+        eprintln!("⚠️  Running in proxy mode and disabling Electron UI launch.");
+        eprintln!("⚠️  To launch the UI, please close the existing server first.");
         tokio::spawn(async move {
             dud_proxy_loop(server_state_clone, close_rx).await;
         })

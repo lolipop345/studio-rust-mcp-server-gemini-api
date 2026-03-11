@@ -22,7 +22,21 @@
     "enterNewKey": "Введите новый ключ или оставьте пустым...",
     "clearHistory": "Очистить всю историю",
     "cancel": "Отмена",
-    "ok": "ОК"
+    "ok": "ОК",
+    "tabApi": "API и Аккаунт",
+    "tabAgent": "Модель и Агент",
+    "tabData": "Данные и Куки",
+    "googleAccountLabel": "Аккаунт Google",
+    "signInWithGoogle": "Войти через Google",
+    "googleConnected": "Подключено через Google",
+    "logout": "Выйти",
+    "dataTitle": "Данные",
+    "dataDesc": "Удалить всю сохраненную историю чата из базы данных.",
+    "cookieTitle": "Куки и Настройки",
+    "cookieDesc": "Сбросить тему, язык и другие локальные настройки к значениям по умолчанию.",
+    "resetCookies": "Сбросить настройки",
+    "oauthError": "OAuth не настроен. Добавьте oauth_config.json.",
+    "resetCookiesConfirm": "Тема, язык и другие локальные настройки будут сброшены. Приложение будет перезапущено."
   },
   "titlebar": {
     "settingsTitle": "Настройки",
@@ -192,5 +206,12 @@
   },
   "sidebar": {
     "search": "Поиск чата..."
+  },
+  "oauthCallback": {
+    "successTitle": "Вход успешен",
+    "failureTitle": "Сбой входа",
+    "closeTitle": "Вы можете закрыть это окно",
+    "returnSuccess": "Если GeminiStudio не запустился автоматически, <a href='#' onclick='window.close();return false;'>нажмите здесь</a> для возврата.",
+    "returnFailure": "Что-то пошло не так. Пожалуйста, попробуйте снова."
   }
 }

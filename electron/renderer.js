@@ -186,6 +186,13 @@ const btnSidebarToggle = document.getElementById("btn-sidebar-toggle");
 const btnNewChat = document.getElementById("btn-new-chat");
 const sidebar = document.getElementById("sidebar");
 const btnClearHistory = document.getElementById("btn-clear-history");
+const btnResetCookies = document.getElementById("btn-reset-cookies");
+const btnModalClose = document.getElementById("btn-modal-close");
+const btnGoogleSignin = document.getElementById("btn-google-signin");
+const googleAccountCard = document.getElementById("google-account-card");
+const googleAvatar = document.getElementById("google-avatar");
+const googleEmailEl = document.getElementById("google-email");
+const btnGoogleLogout = document.getElementById("btn-google-logout");
 const imageUpload = document.getElementById("image-upload");
 const imagePreview = document.getElementById("image-preview");
 const previewImg = document.getElementById("preview-img");
@@ -209,8 +216,10 @@ const btnConfirmCancel = document.getElementById("btn-confirm-cancel");
 const btnConfirmOk = document.getElementById("btn-confirm-ok");
 
 // State Variables
+let isGoogleLoggedIn = false;
+let googleUserInfo = null; // { email, picture, access_token }
 let isProcessing = false;
-let currentModel = "gemini-1.5-pro";
+let currentModel = "";
 let currentThinkingLevel = "none"; // Disabled by default until toggle is checked
 let useSearch = true; // Web Grounding default ON
 let useCode = false;
@@ -503,6 +512,14 @@ let savedApiKeyLoaded = false; // Track if the displayed key is the masked saved
 async function showModal() {
     modalOverlay.classList.remove("hidden");
 
+    // Always reset to first tab
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+    const firstTab = document.querySelector(".tab-btn[data-tab='tab-api']");
+    if (firstTab) firstTab.classList.add("active");
+    const firstPanel = document.getElementById("tab-api");
+    if (firstPanel) firstPanel.classList.remove("hidden");
+
     // If we have a saved key, show masked version
     try {
         const result = await ipcRenderer.invoke("load-api-key");
@@ -523,7 +540,7 @@ async function showModal() {
         savedApiKeyLoaded = false;
     }
 
-    apiKeyInput.focus();
+    if (!isGoogleLoggedIn) apiKeyInput.focus();
 }
 
 // When user starts typing, clear the masked key
@@ -542,6 +559,192 @@ apiKeyInput.addEventListener("copy", (e) => {
 
 function hideModal() {
     modalOverlay.classList.add("hidden");
+}
+
+// ── Settings tab switching ──────────────────────────────────────────────────
+document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+        btn.classList.add("active");
+        const panel = document.getElementById(btn.dataset.tab);
+        if (panel) panel.classList.remove("hidden");
+    });
+});
+
+// Close modal via X button
+if (btnModalClose) {
+    btnModalClose.addEventListener("click", hideModal);
+}
+
+// ── Google OAuth ────────────────────────────────────────────────────────────
+function updateGoogleLoginUI() {
+    if (isGoogleLoggedIn && googleUserInfo) {
+        googleAccountCard.classList.remove("hidden");
+        btnGoogleSignin.classList.add("hidden");
+        googleEmailEl.textContent = googleUserInfo.email || "";
+        if (googleUserInfo.picture) {
+            googleAvatar.src = googleUserInfo.picture;
+        }
+        // Disable API key input
+        const keyWrapper = document.getElementById("key-input-wrapper");
+        if (keyWrapper) keyWrapper.classList.add("input-disabled");
+    } else {
+        googleAccountCard.classList.add("hidden");
+        btnGoogleSignin.classList.remove("hidden");
+        const keyWrapper = document.getElementById("key-input-wrapper");
+        if (keyWrapper) keyWrapper.classList.remove("input-disabled");
+    }
+}
+
+// Set Google OAuth access token on the backend
+async function setGoogleToken(accessToken) {
+    try {
+        const res = await fetch(`${API_BASE}/chat/api-key`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ api_key: `Bearer ${accessToken}` }),
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
+}
+
+if (btnGoogleSignin) {
+    btnGoogleSignin.addEventListener("click", async () => {
+        const result = await ipcRenderer.invoke("google-oauth-start");
+        if (!result.success) {
+            console.error("OAuth start failed:", result.error);
+            // Show error in UI
+            const existing = document.querySelector("#tab-api .error-text");
+            if (existing) existing.remove();
+            const err = document.createElement("p");
+            err.className = "error-text";
+            err.textContent = result.error || t("settings.oauthError", { default: "OAuth not configured. Add oauth_config.json." });
+            document.getElementById("tab-api").appendChild(err);
+        }
+    });
+}
+
+// Listen for OAuth callback from main process
+ipcRenderer.on("google-oauth-code", async (_event, data) => {
+    if (data.error) {
+        console.error("OAuth error:", data.error);
+        return;
+    }
+    // Exchange code for tokens
+    const tokenResult = await ipcRenderer.invoke("google-oauth-exchange", data.code);
+    if (!tokenResult.success) {
+        console.error("Token exchange failed:", tokenResult.error);
+        return;
+    }
+    const tokens = tokenResult.tokens;
+    // Fetch user info
+    const userResult = await ipcRenderer.invoke("google-fetch-userinfo", tokens.access_token);
+    const user = userResult.success ? userResult.user : {};
+    // Store token + user info
+    const tokenData = {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token || null,
+        expires_at: Date.now() + ((tokens.expires_in || 3600) * 1000),
+        email: user.email || "",
+        picture: user.picture || "",
+        name: user.name || user.given_name || "",
+    };
+    await ipcRenderer.invoke("google-save-token", JSON.stringify(tokenData));
+    // Update state
+    googleUserInfo = tokenData;
+    isGoogleLoggedIn = true;
+    // Send token to backend
+    await setGoogleToken(tokens.access_token);
+    await checkStatus();
+    await fetchModels();
+    updateGoogleLoginUI();
+    // Focus window
+    mainWindow && mainWindow.focus && mainWindow.focus();
+});
+
+if (btnGoogleLogout) {
+    btnGoogleLogout.addEventListener("click", async () => {
+        await ipcRenderer.invoke("google-delete-token");
+        isGoogleLoggedIn = false;
+        googleUserInfo = null;
+        // Re-load saved API key if available
+        try {
+            const result = await ipcRenderer.invoke("load-api-key");
+            if (result.key) {
+                await setApiKey(result.key);
+            } else {
+                await ipcRenderer.invoke("delete-api-key");
+            }
+        } catch {}
+        await checkStatus();
+        updateGoogleLoginUI();
+    });
+}
+
+// Restore Google login on startup
+async function restoreGoogleLogin() {
+    try {
+        const result = await ipcRenderer.invoke("google-load-token");
+        if (!result.token || !result.token.access_token) return;
+
+        let token = result.token;
+
+        // Check if access token is expired (5 min buffer)
+        const isExpired = token.expires_at && Date.now() > token.expires_at - 300000;
+        if (isExpired) {
+            if (!token.refresh_token) {
+                // No refresh token — force re-login
+                await ipcRenderer.invoke("google-delete-token");
+                return;
+            }
+            const refreshResult = await ipcRenderer.invoke("google-refresh-token", token.refresh_token);
+            if (!refreshResult.success) {
+                // Refresh failed — force re-login
+                await ipcRenderer.invoke("google-delete-token");
+                return;
+            }
+            token = {
+                ...token,
+                access_token: refreshResult.access_token,
+                expires_at: Date.now() + (refreshResult.expires_in * 1000),
+            };
+            await ipcRenderer.invoke("google-save-token", JSON.stringify(token));
+        }
+
+        // If name is missing (old session), try to fetch it
+        if (!token.name && token.access_token) {
+            try {
+                const userResult = await ipcRenderer.invoke("google-fetch-userinfo", token.access_token);
+                if (userResult.success && userResult.user) {
+                    token.name = userResult.user.name || userResult.user.given_name || "";
+                    token.picture = token.picture || userResult.user.picture || "";
+                    await ipcRenderer.invoke("google-save-token", JSON.stringify(token));
+                }
+            } catch {}
+        }
+        googleUserInfo = token;
+        isGoogleLoggedIn = true;
+        await setGoogleToken(token.access_token);
+        updateGoogleLoginUI();
+    } catch {}
+}
+
+// ── Cookie / Preferences Reset ─────────────────────────────────────────────
+if (btnResetCookies) {
+    btnResetCookies.addEventListener("click", async () => {
+        const confirmed = await showConfirm(
+            t("settings.resetCookies", { default: "Reset Preferences" }),
+            t("settings.resetCookiesConfirm", { default: "Theme, language, and other local preferences will be reset to defaults. The app will reload." })
+        );
+        if (confirmed) {
+            localStorage.removeItem("theme");
+            localStorage.removeItem("app_language");
+            location.reload();
+        }
+    });
 }
 
 function showConfirm(title, message) {
@@ -1104,10 +1307,16 @@ function addMessageToDOM(role, content, extraNodes = [], images = [], nodeId = n
 
     const avatarEl = document.createElement("div");
     avatarEl.className = `message-avatar ${role}`;
-    const displayName = role === "user" ? getSystemFullName() : currentModel;
+    const googleName = isGoogleLoggedIn && googleUserInfo?.name ? googleUserInfo.name : null;
+    const displayName = role === "user"
+        ? (googleName || getSystemFullName())
+        : currentModel;
 
     if (role === "user") {
-        if (userAvatarBase64) {
+        const googlePicture = isGoogleLoggedIn && googleUserInfo?.picture ? googleUserInfo.picture : null;
+        if (googlePicture) {
+            avatarEl.innerHTML = `<img src="${googlePicture}" alt="${displayName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
+        } else if (userAvatarBase64) {
             avatarEl.innerHTML = `<img src="${userAvatarBase64}" alt="User Profile"/>`;
         } else {
             avatarEl.textContent = displayName.charAt(0).toUpperCase();
@@ -1737,13 +1946,25 @@ function showToast(message, type = 'info') {
 async function fetchModels() {
     try {
         const res = await fetch(`${API_BASE}/chat/models`);
-        if (!res.ok) return;
+        if (!res.ok) {
+            const loadingRow = document.getElementById("model-loading-row");
+            if (loadingRow) loadingRow.querySelector("span").textContent = "No models available";
+            return;
+        }
         const data = await res.json();
         const models = data.models || [];
-        if (models.length === 0) return;
+        if (models.length === 0) {
+            const loadingRow = document.getElementById("model-loading-row");
+            if (loadingRow) loadingRow.querySelector("span").textContent = "No models available";
+            return;
+        }
 
         const popover = document.getElementById("model-popover");
         const divider = popover.querySelector(".popover-divider");
+
+        // Remove loading row if present
+        const loadingRow = document.getElementById("model-loading-row");
+        if (loadingRow) loadingRow.remove();
 
         let current = popover.firstChild;
         while (current && current !== divider) {
@@ -1820,6 +2041,8 @@ async function fetchModels() {
 
     } catch (err) {
         console.error("Failed to fetch models:", err);
+        const loadingRow = document.getElementById("model-loading-row");
+        if (loadingRow) loadingRow.querySelector("span").textContent = "Failed to load models";
     }
 }
 
@@ -1828,7 +2051,8 @@ function selectModel(opt, hidePopover = true) {
     opt.classList.add("active");
     currentModel = opt.getAttribute("data-model");
     const textLabel = opt.querySelector(".model-name").textContent.trim();
-    modelBtn.innerHTML = `${textLabel} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;"><path d="m6 9 6 6 6-6"/></svg>`;
+    const labelEl = document.getElementById("model-btn-label");
+    if (labelEl) labelEl.textContent = textLabel;
     if (hidePopover) modelPopover.classList.add("hidden");
 }
 
@@ -2811,6 +3035,13 @@ saveKeyBtn.addEventListener("click", async () => {
         document.querySelectorAll(".suggest-btn").forEach(b => b.classList.remove("expanded"));
     }
 
+    // If Google login is active, skip API key validation and just close
+    if (isGoogleLoggedIn) {
+        hideModal();
+        inputEl.focus();
+        return;
+    }
+
     const key = apiKeyInput.value.trim();
 
     // If key is empty or contains masked dots, check if we already have a saved key
@@ -2824,12 +3055,12 @@ saveKeyBtn.addEventListener("click", async () => {
         } else {
             // No key saved, and no language change just happened? We need a key.
             // If they just changed language but have no key, still force them to enter a key.
-            const existing = document.querySelector("#modal-body .error-text");
+            const existing = document.querySelector("#tab-api .error-text");
             if (existing) existing.remove();
             const err = document.createElement("p");
             err.className = "error-text";
             err.textContent = t("settings.enterApiKey");
-            document.getElementById("modal-body").appendChild(err);
+            document.getElementById("tab-api").appendChild(err);
             return;
         }
     }
@@ -2837,7 +3068,7 @@ saveKeyBtn.addEventListener("click", async () => {
     saveKeyBtn.disabled = true;
     saveKeyBtn.textContent = t("settings.saving");
 
-    const existing = document.querySelector("#modal-body .error-text");
+    const existing = document.querySelector("#tab-api .error-text");
     if (existing) existing.remove();
 
     try {
@@ -2853,13 +3084,13 @@ saveKeyBtn.addEventListener("click", async () => {
             const err = document.createElement("p");
             err.className = "error-text";
             err.textContent = t("settings.apiKeyRejected");
-            document.getElementById("modal-body").appendChild(err);
+            document.getElementById("tab-api").appendChild(err);
         }
     } catch {
         const err = document.createElement("p");
         err.className = "error-text";
         err.textContent = t("settings.cannotConnect");
-        document.getElementById("modal-body").appendChild(err);
+        document.getElementById("tab-api").appendChild(err);
     }
 
     saveKeyBtn.disabled = false;
@@ -3866,22 +4097,27 @@ async function init() {
     await loadUserAvatar();
     loadSidebarHistory();
 
-    // Try to restore saved API key from encrypted storage
-    try {
-        const result = await ipcRenderer.invoke("load-api-key");
-        if (result.key) {
-            await setApiKey(result.key);
-        }
-    } catch (err) {
-        console.error("Failed to load saved API key:", err);
-    }
+    // Try to restore Google login first
+    await restoreGoogleLogin();
 
-    // Migrate from localStorage if exists (one-time)
-    const oldKey = localStorage.getItem("gemini_api_key");
-    if (oldKey) {
-        await setApiKey(oldKey);
-        await ipcRenderer.invoke("save-api-key", oldKey);
-        localStorage.removeItem("gemini_api_key");
+    if (!isGoogleLoggedIn) {
+        // Try to restore saved API key from encrypted storage
+        try {
+            const result = await ipcRenderer.invoke("load-api-key");
+            if (result.key) {
+                await setApiKey(result.key);
+            }
+        } catch (err) {
+            console.error("Failed to load saved API key:", err);
+        }
+
+        // Migrate from localStorage if exists (one-time)
+        const oldKey = localStorage.getItem("gemini_api_key");
+        if (oldKey) {
+            await setApiKey(oldKey);
+            await ipcRenderer.invoke("save-api-key", oldKey);
+            localStorage.removeItem("gemini_api_key");
+        }
     }
 
     const hasKey = await checkStatus();
@@ -3889,8 +4125,8 @@ async function init() {
         showModal();
     } else {
         inputEl.focus();
-        await fetchModels();
     }
+    await fetchModels();
 
     setInterval(checkStatus, 30000);
 }

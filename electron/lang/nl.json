@@ -22,7 +22,21 @@
     "enterNewKey": "Voer nieuwe sleutel in of laat leeg...",
     "clearHistory": "Volledige geschiedenis wissen",
     "cancel": "Annuleren",
-    "ok": "OK"
+    "ok": "OK",
+    "tabApi": "API & Account",
+    "tabAgent": "Model & Agent",
+    "tabData": "Gegevens & Cookies",
+    "googleAccountLabel": "Google-account",
+    "signInWithGoogle": "Inloggen met Google",
+    "googleConnected": "Verbonden via Google",
+    "logout": "Uitloggen",
+    "dataTitle": "Gegevens",
+    "dataDesc": "Verwijder de volledige chatgeschiedenis uit de database.",
+    "cookieTitle": "Cookies & Voorkeuren",
+    "cookieDesc": "Thema, taal en andere lokale voorkeuren resetten naar standaardinstellingen.",
+    "resetCookies": "Voorkeuren resetten",
+    "oauthError": "OAuth niet geconfigureerd. Voeg oauth_config.json toe.",
+    "resetCookiesConfirm": "Thema, taal en andere lokale voorkeuren worden gereset. De app wordt opnieuw geladen."
   },
   "titlebar": {
     "settingsTitle": "Instellingen",
@@ -192,5 +206,12 @@
   },
   "sidebar": {
     "search": "Chat zoeken..."
+  },
+  "oauthCallback": {
+    "successTitle": "Inloggen succesvol",
+    "failureTitle": "Inloggen mislukt",
+    "closeTitle": "U kunt dit venster sluiten",
+    "returnSuccess": "Als GeminiStudio niet automatisch startte, <a href='#' onclick='window.close();return false;'>klik hier</a> om terug te keren.",
+    "returnFailure": "Er is iets misgegaan. Probeer het opnieuw."
   }
 }

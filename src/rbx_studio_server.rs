@@ -418,6 +418,15 @@ pub fn build_system_instruction(custom_prompt: Option<String>) -> GeminiContent 
     }
 }
 
+/// Returns (url, is_oauth) — if the credential starts with "Bearer " it is an OAuth token.
+fn build_gemini_url(base: &str, model: &str, credential: &str) -> (String, bool) {
+    if credential.starts_with("Bearer ") {
+        (format!("{}/{}:streamGenerateContent?alt=sse", base, model), true)
+    } else {
+        (format!("{}/{}:streamGenerateContent?alt=sse&key={}", base, model, credential), false)
+    }
+}
+
 pub async fn stream_to_gemini(
     client: &reqwest::Client,
     api_key: &str,
@@ -427,10 +436,7 @@ pub async fn stream_to_gemini(
     system_instruction: &GeminiContent,
     generation_config: Option<GenerationConfig>,
 ) -> color_eyre::Result<reqwest::Response> {
-    let url = format!(
-        "{}/{}:streamGenerateContent?alt=sse&key={}",
-        GEMINI_API_BASE, model, api_key
-    );
+    let (url, is_oauth) = build_gemini_url(GEMINI_API_BASE, model, api_key);
 
     let request_body = GeminiRequest {
         contents: contents.to_vec(),
@@ -439,9 +445,15 @@ pub async fn stream_to_gemini(
         generation_config,
     };
 
-    let response = client
+    let mut builder = client
         .post(&url)
-        .header("Content-Type", "application/json")
+        .header("Content-Type", "application/json");
+
+    if is_oauth {
+        builder = builder.header("Authorization", api_key);
+    }
+
+    let response = builder
         .json(&request_body)
         .send()
         .await?;
@@ -1131,14 +1143,23 @@ pub async fn models_handler(
     let client = reqwest::Client::new();
     let mut all_models: Vec<GeminiModel> = Vec::new();
     let mut page_token: Option<String> = None;
-    
+    let is_oauth = api_key.starts_with("Bearer ");
+
     loop {
-        let mut url = format!("https://generativelanguage.googleapis.com/v1beta/models?key={}&pageSize=1000", api_key);
+        let mut url = if is_oauth {
+            format!("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000")
+        } else {
+            format!("https://generativelanguage.googleapis.com/v1beta/models?key={}&pageSize=1000", api_key)
+        };
         if let Some(ref token) = page_token {
             url.push_str(&format!("&pageToken={}", token));
         }
-        
-        let res = client.get(&url).send().await?;
+
+        let mut req = client.get(&url);
+        if is_oauth {
+            req = req.header("Authorization", &api_key);
+        }
+        let res = req.send().await?;
         if !res.status().is_success() {
             let txt = res.text().await?;
             return Err(Report::from(eyre!("Failed to fetch models: {}", txt)));
