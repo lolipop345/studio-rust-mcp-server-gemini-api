@@ -46,13 +46,15 @@
     "connected": "Verbonden met Gemini",
     "apiKeyNotSet": "API-sleutel niet ingesteld",
     "serverNotRunning": "Server draait niet",
-    "connecting": "Verbinden..."
+    "connecting": "Verbinden...",
+    "thinking": "Denkt na..."
   },
   "models": {
     "moreModels": "Meer modellen"
   },
   "chat": {
-    "inputPlaceholder": "Stuur een bericht..."
+    "inputPlaceholder": "Stuur een bericht...",
+    "newChat": "Nieuwe chat"
   },
   "landing": {
     "motivationalPhrases": [
@@ -108,7 +110,9 @@
     "fileTooLarge": "Het bestand dat u probeert te uploaden, overschrijdt de limiet van 100 MB ({{size}} MB!).",
     "unsupportedFile": "\"{{name}}\" wordt niet ondersteund en is niet geüpload.",
     "micDenied": "Microfoon toegang geweigerd.",
-    "cameraDenied": "Camera toegang geweigerd."
+    "cameraDenied": "Camera toegang geweigerd.",
+    "connectionLost": "Verbinding verloren. Probeer opnieuw.",
+    "submitFailed": "Beoordeling verzenden mislukt"
   },
   "prompts": {
     "write": [
@@ -215,6 +219,46 @@
     "returnFailure": "Er is iets misgegaan. Probeer het opnieuw."
   },
   "planning": {
-    "modeLabel": "AI is aan het plannen — beantwoord de vragen hierboven om door te gaan"
+    "modeLabel": "AI is aan het plannen — beantwoord de vragen hierboven om door te gaan",
+    "questionLabel": "Planningsvraag",
+    "customPlaceholder": "Of typ een aangepast antwoord…"
+  },
+  "search": {
+    "filterBy": "Filteren op",
+    "filterModel": "Alleen model",
+    "filterUser": "Alleen gebruiker",
+    "filterTitle": "Alleen titel",
+    "filterLast7": "Laatste 7 dagen",
+    "noResults": "Geen overeenkomende chats gevonden."
+  },
+  "toolCall": {
+    "running": "uitvoeren...",
+    "completed": "voltooid",
+    "proposalName": "Voorstel: Plan bekijken",
+    "waitingReview": "Wachten op uw beoordeling..."
+  },
+  "actions": {
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd!",
+    "copiedToClipboard": "Gekopieerd naar klembord",
+    "rerun": "Opnieuw uitvoeren",
+    "regenerate": "Opnieuw genereren",
+    "delete": "Verwijderen",
+    "rename": "Hernoemen",
+    "pin": "Vastzetten",
+    "unpin": "Losmaken",
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "saveAndSubmit": "Opslaan en verzenden"
+  },
+  "media": {
+    "audioRecording": "Audio-opname",
+    "attachment": "Bijlage"
+  },
+  "artifact": {
+    "commentTriggerTitle": "Opmerking toevoegen aan dit gedeelte",
+    "commentPlaceholder": "Schrijf uw feedback over dit gedeelte...",
+    "commentCancel": "Annuleren",
+    "commentSave": "Opslaan"
   }
 }

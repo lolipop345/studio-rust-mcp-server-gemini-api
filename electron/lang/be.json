@@ -46,13 +46,15 @@
     "connected": "Падключана да Gemini",
     "apiKeyNotSet": "Ключ не пазначаны",
     "serverNotRunning": "Сервер не працуе",
-    "connecting": "Падключэнне..."
+    "connecting": "Падключэнне...",
+    "thinking": "Думае..."
   },
   "models": {
     "moreModels": "Больш мадэляў"
   },
   "chat": {
-    "inputPlaceholder": "Адправіць паведамленне..."
+    "inputPlaceholder": "Адправіць паведамленне...",
+    "newChat": "Новы чат"
   },
   "landing": {
     "motivationalPhrases": [
@@ -108,7 +110,9 @@
     "fileTooLarge": "Файл, які вы спрабуеце загрузіць, перавышае ліміт у 100 МБ ({{size}} МБ!).",
     "unsupportedFile": "\"{{name}}\" не падтрымліваецца і не быў загружаны.",
     "micDenied": "Доступ да мікрафона адхілены.",
-    "cameraDenied": "Доступ да камеры адхілены."
+    "cameraDenied": "Доступ да камеры адхілены.",
+    "connectionLost": "Злучэнне страчана. Паўтарыце спробу.",
+    "submitFailed": "Не атрымалася адправіць агляд"
   },
   "prompts": {
     "write": [
@@ -215,6 +219,46 @@
     "returnFailure": "Штосьці пайшло не так. Калі ласка, паспрабуйце яшчэ раз."
   },
   "planning": {
-    "modeLabel": "AI плануе — адкажыце на пытанні вышэй, каб працягнуць"
+    "modeLabel": "AI плануе — адкажыце на пытанні вышэй, каб працягнуць",
+    "questionLabel": "Пытанне планавання",
+    "customPlaceholder": "Або ўвядзіце ўласны адказ…"
+  },
+  "search": {
+    "filterBy": "Фільтраваць па",
+    "filterModel": "Толькі мадэль",
+    "filterUser": "Толькі карыстальнік",
+    "filterTitle": "Толькі загаловак",
+    "filterLast7": "Апошнія 7 дзён",
+    "noResults": "Адпаведных чатаў не знойдзена."
+  },
+  "toolCall": {
+    "running": "выконваецца...",
+    "completed": "завершана",
+    "proposalName": "Прапанова: Прагляд плана",
+    "waitingReview": "Чаканне вашага агляду..."
+  },
+  "actions": {
+    "copy": "Капіяваць",
+    "copied": "Скапіявана!",
+    "copiedToClipboard": "Скапіявана ў буфер абмену",
+    "rerun": "Перазапусціць",
+    "regenerate": "Перастварыць",
+    "delete": "Выдаліць",
+    "rename": "Перайменаваць",
+    "pin": "Замацаваць",
+    "unpin": "Адмацаваць",
+    "cancel": "Адмена",
+    "save": "Захаваць",
+    "saveAndSubmit": "Захаваць і адправіць"
+  },
+  "media": {
+    "audioRecording": "Аўдыёзапіс",
+    "attachment": "Укладанне"
+  },
+  "artifact": {
+    "commentTriggerTitle": "Дадаць каментар да гэтага раздзела",
+    "commentPlaceholder": "Напішыце водгук аб гэтым раздзеле...",
+    "commentCancel": "Адмена",
+    "commentSave": "Захаваць"
   }
 }

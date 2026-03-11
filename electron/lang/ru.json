@@ -46,13 +46,15 @@
     "connected": "Подключено к Gemini",
     "apiKeyNotSet": "API key не установлен",
     "serverNotRunning": "Сервер не запущен",
-    "connecting": "Подключение..."
+    "connecting": "Подключение...",
+    "thinking": "Думает..."
   },
   "models": {
     "moreModels": "Больше моделей"
   },
   "chat": {
-    "inputPlaceholder": "Отправить сообщение..."
+    "inputPlaceholder": "Отправить сообщение...",
+    "newChat": "Новый чат"
   },
   "landing": {
     "motivationalPhrases": [
@@ -108,7 +110,9 @@
     "fileTooLarge": "Файл, который вы пытаетесь загрузить, превышает лимит в 100 МБ ({{size}} МБ!).",
     "unsupportedFile": "\"{{name}}\" не поддерживается и не был загружен.",
     "micDenied": "Доступ к микрофону отклонён.",
-    "cameraDenied": "Доступ к камере отклонён."
+    "cameraDenied": "Доступ к камере отклонён.",
+    "connectionLost": "Соединение потеряно. Попробуйте ещё раз.",
+    "submitFailed": "Не удалось отправить отзыв"
   },
   "prompts": {
     "write": [
@@ -215,6 +219,46 @@
     "returnFailure": "Что-то пошло не так. Пожалуйста, попробуйте снова."
   },
   "planning": {
-    "modeLabel": "ИИ планирует — ответьте на вопросы выше, чтобы продолжить"
+    "modeLabel": "ИИ планирует — ответьте на вопросы выше, чтобы продолжить",
+    "questionLabel": "Вопрос планирования",
+    "customPlaceholder": "Или введите свой ответ…"
+  },
+  "search": {
+    "filterBy": "Фильтр",
+    "filterModel": "Только модель",
+    "filterUser": "Только пользователь",
+    "filterTitle": "Только заголовок",
+    "filterLast7": "Последние 7 дней",
+    "noResults": "Совпадающие чаты не найдены."
+  },
+  "toolCall": {
+    "running": "выполняется...",
+    "completed": "завершено",
+    "proposalName": "Предложение: Просмотр плана",
+    "waitingReview": "Ожидание вашего ответа..."
+  },
+  "actions": {
+    "copy": "Копировать",
+    "copied": "Скопировано!",
+    "copiedToClipboard": "Скопировано в буфер обмена",
+    "rerun": "Перезапустить",
+    "regenerate": "Regenerovat",
+    "delete": "Удалить",
+    "rename": "Переименовать",
+    "pin": "Закрепить",
+    "unpin": "Открепить",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "saveAndSubmit": "Сохранить и отправить"
+  },
+  "media": {
+    "audioRecording": "Аудиозапись",
+    "attachment": "Вложение"
+  },
+  "artifact": {
+    "commentTriggerTitle": "Добавить комментарий к этому разделу",
+    "commentPlaceholder": "Напишите ваш отзыв об этом разделе...",
+    "commentCancel": "Отмена",
+    "commentSave": "Сохранить"
   }
 }

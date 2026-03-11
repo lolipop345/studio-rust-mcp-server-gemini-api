@@ -779,7 +779,7 @@ function showConfirm(title, message) {
 let chatTree = {};
 let activeNodeId = null;
 let currentSessionId = null;
-let currentSessionTitle = "New Chat";
+let currentSessionTitle = "";
 let isSessionPinned = false;
 
 function createNode(role, content, parentId = null, extraNodesHTML = "", images = [], info = null, thoughtSignature = null) {
@@ -821,7 +821,7 @@ function updateTopbar(liveTokens = 0) {
     const tokensEl = document.getElementById("topbar-chat-tokens");
     if (!titleEl || !tokensEl) return;
 
-    titleEl.textContent = currentSessionTitle || "New Chat";
+    titleEl.textContent = currentSessionTitle || t("chat.newChat");
 
     let totalSessionTokens = 0;
     if (activeNodeId) {
@@ -864,8 +864,8 @@ async function loadSidebarHistory() {
 
             const titleEl = document.createElement("div");
             titleEl.className = "sidebar-item-title";
-            titleEl.textContent = chat.title || "New Chat";
-            titleEl.title = chat.title || "New Chat";
+            titleEl.textContent = chat.title || t("chat.newChat");
+            titleEl.title = chat.title || t("chat.newChat");
 
             // Double-click to rename
             titleEl.addEventListener("dblclick", () => {
@@ -879,7 +879,7 @@ async function loadSidebarHistory() {
                 const saveTitle = async () => {
                     if (isSaving) return;
                     isSaving = true;
-                    const newTitle = input.value.trim() || "New Chat";
+                    const newTitle = input.value.trim() || t("chat.newChat");
                     await fetch(`${API_BASE}/history/update_title`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -911,7 +911,7 @@ async function loadSidebarHistory() {
 
             const renameBtn = document.createElement("button");
             renameBtn.className = "sidebar-btn";
-            renameBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Rename`;
+            renameBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> ${t("actions.rename")}`;
             renameBtn.onclick = (e) => {
                 e.stopPropagation();
                 menu.classList.add("hidden");
@@ -921,7 +921,7 @@ async function loadSidebarHistory() {
             const pinBtn = document.createElement("button");
             pinBtn.className = `sidebar-btn btn-pin ${chat.pinned ? 'pinned' : ''}`;
             pinBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="${chat.pinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.68V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3v4.68a2 2 0 0 1-1.11 1.87l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>`;
-            pinBtn.appendChild(document.createTextNode(chat.pinned ? " Unpin" : " Pin"));
+            pinBtn.appendChild(document.createTextNode(chat.pinned ? " " + t("actions.unpin") : " " + t("actions.pin")));
             pinBtn.onclick = async (e) => {
                 e.stopPropagation();
                 await fetch(`${API_BASE}/history/toggle_pin`, {
@@ -935,7 +935,7 @@ async function loadSidebarHistory() {
 
             const delBtn = document.createElement("button");
             delBtn.className = "sidebar-btn btn-delete";
-            delBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete`;
+            delBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> ${t("actions.delete")}`;
             delBtn.onclick = async (e) => {
                 e.stopPropagation();
                 if (confirm(t("sidebar.confirmDelete", { default: "Are you sure you want to delete this chat?" }))) {
@@ -1052,7 +1052,7 @@ async function loadSession(id) {
 function startNewSession() {
     if (isProcessing) return;
     currentSessionId = null;
-    currentSessionTitle = "New Chat";
+    currentSessionTitle = "";
     isSessionPinned = false;
     chatTree = {};
     activeNodeId = null;
@@ -1393,7 +1393,7 @@ function addMessageToDOM(role, content, extraNodes = [], images = [], nodeId = n
                 imageRow.appendChild(thumb);
             } else if (imgSrc.startsWith("data:audio/")) {
                 const nameMatch = imgSrc.match(/name=([^;]+)/);
-                const title = nameMatch ? decodeURIComponent(nameMatch[1]) : "Ses Kaydı";
+                const title = nameMatch ? decodeURIComponent(nameMatch[1]) : t("media.audioRecording");
                 const audioWrap = createCustomAudioPlayer(imgSrc, title);
                 imageRow.appendChild(audioWrap);
             } else if (imgSrc.startsWith("data:video/")) {
@@ -1423,7 +1423,7 @@ function addMessageToDOM(role, content, extraNodes = [], images = [], nodeId = n
                         <line x1="16" y1="17" x2="8" y2="17"></line>
                         <polyline points="10 9 9 9 8 9"></polyline>
                     </svg>
-                    <span>${ext.toUpperCase()} Ek</span>
+                    <span>${ext.toUpperCase()} ${t("media.attachment")}</span>
                 `;
                 imageRow.appendChild(fileChip);
             }
@@ -1465,7 +1465,8 @@ function addMessageToDOM(role, content, extraNodes = [], images = [], nodeId = n
     return contentEl;
 }
 
-function createCustomAudioPlayer(src, title = "Ses Kaydı") {
+function createCustomAudioPlayer(src, title = null) {
+    if (!title) title = t("media.audioRecording");
     const wrap = document.createElement("div");
     wrap.className = "custom-audio-player";
 
@@ -1720,7 +1721,7 @@ function createActionBar(node, role) {
 
             const cancelBtn = document.createElement('button');
             cancelBtn.className = 'inline-edit-cancel';
-            cancelBtn.textContent = 'Cancel';
+            cancelBtn.textContent = t("actions.cancel");
             cancelBtn.onclick = () => {
                 editContainer.remove();
                 markdownNodes.forEach(n => n.style.display = '');
@@ -1729,7 +1730,7 @@ function createActionBar(node, role) {
 
             const saveBtn = document.createElement('button');
             saveBtn.className = 'inline-edit-save';
-            saveBtn.textContent = 'Save & Submit';
+            saveBtn.textContent = t("actions.saveAndSubmit");
             saveBtn.onclick = () => {
                 const newText = textarea.value.trim();
                 if (!newText) return;
@@ -1760,7 +1761,7 @@ function createActionBar(node, role) {
         const rerunBtn = document.createElement("button");
         rerunBtn.className = "msg-action-btn icon-only";
         rerunBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>`;
-        rerunBtn.title = "Rerun";
+        rerunBtn.title = t("actions.rerun");
         rerunBtn.onclick = (e) => {
             if (isProcessing) return;
             activeNodeId = node.parentId;
@@ -1775,10 +1776,10 @@ function createActionBar(node, role) {
         const copyBtn = document.createElement("button");
         copyBtn.className = "msg-action-btn icon-only";
         copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-        copyBtn.title = "Copy";
+        copyBtn.title = t("actions.copy");
         copyBtn.onclick = (e) => {
             navigator.clipboard.writeText(node.content);
-            showToast("Copied to clipboard", "info");
+            showToast(t("actions.copiedToClipboard"), "info");
         };
 
         btnGroup.appendChild(editBtn);
@@ -1789,7 +1790,7 @@ function createActionBar(node, role) {
         const rerunBtn = document.createElement("button");
         rerunBtn.className = "msg-action-btn icon-only";
         rerunBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>`;
-        rerunBtn.title = "Regenerate";
+        rerunBtn.title = t("actions.regenerate");
         rerunBtn.onclick = (e) => {
             if (isProcessing) return;
             const userParent = chatTree[node.parentId];
@@ -1807,7 +1808,7 @@ function createActionBar(node, role) {
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "msg-action-btn danger icon-only";
         deleteBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-        deleteBtn.title = "Delete";
+        deleteBtn.title = t("actions.delete");
         deleteBtn.onclick = (e) => {
             if (isProcessing) return;
             deleteNode(node.id);
@@ -2163,7 +2164,7 @@ function switchToThinkingPhase() {
             <circle class="think-dot" cx="12" cy="12" r="1.2" />
             <circle class="think-dot" cx="15" cy="12" r="1.2" />
         </svg>
-        <span class="status-text">Düşünüyor...</span>
+        <span class="status-text">${t("status.thinking")}</span>
     `;
 
     connectingEl.replaceWith(thinkingEl);
@@ -2172,7 +2173,7 @@ function switchToThinkingPhase() {
 function addThinkingSection(parentEl, thoughtText) {
     // Parse thought text into lines for timeline
     const lines = thoughtText.split('\n').filter(l => l.trim());
-    const summaryLine = lines[0] || 'Düşünüyor...';
+    const summaryLine = lines[0] || t("status.thinking");
     const detailLines = lines.slice(1);
 
     // Check if thought chain already exists
@@ -2294,7 +2295,7 @@ function addToolCall(parentEl, name, args, status) {
 
     const statusEl = document.createElement("span");
     statusEl.className = "tool-call-status";
-    statusEl.textContent = status || "running...";
+    statusEl.textContent = status || t("toolCall.running");
 
     headerEl.innerHTML = chevron;
     headerEl.appendChild(nameEl);
@@ -2348,7 +2349,7 @@ function addCopyButtons(el) {
         block.parentElement.addEventListener("dblclick", () => {
             const text = block.textContent;
             navigator.clipboard.writeText(text);
-            showToast("Copied to clipboard", "info");
+            showToast(t("actions.copiedToClipboard"), "info");
         });
     });
 }
@@ -2357,9 +2358,9 @@ window.copyCode = function (btn) {
     const pre = btn.closest("pre");
     const code = pre.querySelector("code");
     navigator.clipboard.writeText(code.textContent);
-    btn.textContent = "Copied!";
+    btn.textContent = t("actions.copied");
     setTimeout(() => {
-        btn.textContent = "Copy";
+        btn.textContent = t("actions.copy");
     }, 2000);
 };
 
@@ -2640,9 +2641,9 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
                 // Add a placeholder block in the chat
                 const refs = addToolCall(
                     assistantContent,
-                    "Proposal: Review Plan",
+                    t("toolCall.proposalName"),
                     {},
-                    "Waiting for your review..."
+                    t("toolCall.waitingReview")
                 );
                 toolCalls[payload.name + "_" + (payload.call_index || 0)] = refs;
 
@@ -2655,7 +2656,7 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
                 assistantContent,
                 payload.name,
                 payload.args,
-                "running..."
+                t("toolCall.running")
             );
             toolCalls[payload.name + "_" + (payload.call_index || 0)] = refs;
         });
@@ -2678,7 +2679,7 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
             const key = payload.name + "_" + (payload.call_index || 0);
             const refs = toolCalls[key];
             if (refs && refs.statusEl) {
-                refs.statusEl.textContent = "completed";
+                refs.statusEl.textContent = t("toolCall.completed");
                 const currentText = refs.bodyEl.textContent;
                 const newText = currentText + "\n\n--- Result ---\n" + payload.result;
                 refs.bodyEl.innerHTML = `<pre><code class="hljs language-json">${hljs.highlightAuto(newText).value}</code></pre>`;
@@ -2838,7 +2839,7 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
             evtSource.close();
             removeTypingIndicator();
             if (!finalText && !hasError) {
-                const msg = "Connection lost. Please try again.";
+                const msg = t("errors.connectionLost");
                 addMessage("assistant", msg);
                 showToast(msg, "error");
             }
@@ -3850,7 +3851,7 @@ function openArtifactSidebar(markdownText, chatId) {
 
             const triggerBtn = document.createElement("button");
             triggerBtn.className = "artifact-comment-trigger";
-            triggerBtn.title = "Add a comment to this section";
+            triggerBtn.title = t("artifact.commentTriggerTitle");
             triggerBtn.innerHTML = `
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
@@ -3893,7 +3894,7 @@ function showCommentBox(blockEl, blockIndex) {
     box.className = "artifact-comment-box";
 
     const textarea = document.createElement("textarea");
-    textarea.placeholder = "Write your feedback specifically about this part...";
+    textarea.placeholder = t("artifact.commentPlaceholder");
     if (currentArtifactComments[blockIndex]) {
         textarea.value = currentArtifactComments[blockIndex];
     }
@@ -3904,7 +3905,7 @@ function showCommentBox(blockEl, blockIndex) {
 
     const btnCancel = document.createElement("button");
     btnCancel.className = "btn-secondary";
-    btnCancel.textContent = "Cancel";
+    btnCancel.textContent = t("artifact.commentCancel");
     btnCancel.onclick = () => {
         box.remove();
         if (!currentArtifactComments[blockIndex]) {
@@ -3916,7 +3917,7 @@ function showCommentBox(blockEl, blockIndex) {
 
     const btnSave = document.createElement("button");
     btnSave.className = "btn-primary";
-    btnSave.textContent = "Save";
+    btnSave.textContent = t("artifact.commentSave");
     btnSave.onclick = () => {
         const val = textarea.value.trim();
         if (val) {
@@ -4009,7 +4010,7 @@ function createPlanningQuestionBlock(question, options, chatId) {
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
-        <span class="planning-question-label">Planning Question</span>
+        <span class="planning-question-label">${t("planning.questionLabel")}</span>
     `;
     card.appendChild(header);
 
@@ -4042,7 +4043,7 @@ function createPlanningQuestionBlock(question, options, chatId) {
     const customInput = document.createElement("input");
     customInput.type = "text";
     customInput.className = "planning-custom-input";
-    customInput.placeholder = "Or type a custom answer…";
+    customInput.placeholder = t("planning.customPlaceholder");
 
     const customBtn = document.createElement("button");
     customBtn.className = "planning-custom-send";
@@ -4129,7 +4130,7 @@ btnArtifactProceed.addEventListener("click", async () => {
         });
     } catch (e) {
         console.error("Failed to submit plan response:", e);
-        showToast("Failed to submit review", "error");
+        showToast(t("errors.submitFailed") || "Failed to submit review", "error");
     } finally {
         btnArtifactProceed.textContent = btnOrigText;
         btnArtifactProceed.disabled = false;
@@ -4165,6 +4166,9 @@ document.querySelectorAll(".filter-chip").forEach(chip => {
     chip.addEventListener("click", (e) => {
         e.stopPropagation(); // keep dropdown open when clicking a filter
         chip.classList.toggle("active");
+        // Update filter button highlight
+        const anyActive = document.querySelectorAll(".filter-chip.active").length > 0;
+        btnSearchFilters.classList.toggle("has-active", anyActive);
         const q = getSearchQuery();
         if (q) triggerSearch(q);
         else searchViewResults.innerHTML = '';
@@ -4193,7 +4197,7 @@ async function triggerSearch(query) {
 
         searchViewResults.innerHTML = '';
         if (results.length === 0) {
-            searchViewResults.innerHTML = '<div style="text-align:center; color: var(--text-tertiary); margin-top: 24px;">No matching chats found.</div>';
+            searchViewResults.innerHTML = `<div style="text-align:center; color: var(--text-tertiary); margin-top: 24px;">${t("search.noResults")}</div>`;
             return;
         }
 

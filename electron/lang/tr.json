@@ -46,13 +46,15 @@
     "connected": "Gemini'ye bağlandı",
     "apiKeyNotSet": "API key ayarlanmamış",
     "serverNotRunning": "Sunucu çalışmıyor",
-    "connecting": "Bağlantı kuruluyor..."
+    "connecting": "Bağlantı kuruluyor...",
+    "thinking": "Düşünüyor..."
   },
   "models": {
     "moreModels": "Daha fazla model"
   },
   "chat": {
-    "inputPlaceholder": "Mesaj gönder..."
+    "inputPlaceholder": "Mesaj gönder...",
+    "newChat": "Yeni Sohbet"
   },
   "landing": {
     "motivationalPhrases": [
@@ -108,7 +110,9 @@
     "fileTooLarge": "Yüklemeye çalıştığınız dosya 100MB üzerinde ({{size}}MB!).",
     "unsupportedFile": "\"{{name}}\" desteklenmiyor ve yüklenmedi.",
     "micDenied": "Mikrofon erişimi reddedildi.",
-    "cameraDenied": "Kamera erişimi reddedildi."
+    "cameraDenied": "Kamera erişimi reddedildi.",
+    "connectionLost": "Bağlantı kesildi. Lütfen tekrar deneyin.",
+    "submitFailed": "İnceleme gönderilemedi"
   },
   "prompts": {
     "write": [
@@ -216,7 +220,11 @@
     "title": "Uygulama Planı",
     "proceed": "Devam Et",
     "submit": "Onayla ({{count}})",
-    "sending": "Gönderiliyor..."
+    "sending": "Gönderiliyor...",
+    "commentTriggerTitle": "Bu bölüme yorum ekle",
+    "commentPlaceholder": "Bu bölüm hakkındaki geri bildiriminizi yazın...",
+    "commentCancel": "İptal",
+    "commentSave": "Kaydet"
   },
   "oauthCallback": {
     "successTitle": "Başarıyla Google hesabına giriş yaptın.",
@@ -226,6 +234,40 @@
     "returnFailure": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin."
   },
   "planning": {
-    "modeLabel": "Yapay zeka planlıyor — devam etmek için yukarıdaki soruları yanıtla"
+    "modeLabel": "Yapay zeka planlıyor — devam etmek için yukarıdaki soruları yanıtla",
+    "questionLabel": "Planlama Sorusu",
+    "customPlaceholder": "Ya da özel bir cevap yazın…"
+  },
+  "search": {
+    "filterBy": "Filtrele",
+    "filterModel": "Yalnızca Model",
+    "filterUser": "Yalnızca Kullanıcı",
+    "filterTitle": "Yalnızca Başlık",
+    "filterLast7": "Son 7 Gün",
+    "noResults": "Eşleşen sohbet bulunamadı."
+  },
+  "toolCall": {
+    "running": "çalışıyor...",
+    "completed": "tamamlandı",
+    "proposalName": "Öneri: Planı İncele",
+    "waitingReview": "İncelemenizi bekliyoruz..."
+  },
+  "actions": {
+    "copy": "Kopyala",
+    "copied": "Kopyalandı!",
+    "copiedToClipboard": "Panoya kopyalandı",
+    "rerun": "Yeniden Çalıştır",
+    "regenerate": "Yeniden Oluştur",
+    "delete": "Sil",
+    "rename": "Yeniden Adlandır",
+    "pin": "Sabitle",
+    "unpin": "Sabitlemeyi Kaldır",
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "saveAndSubmit": "Kaydet ve Gönder"
+  },
+  "media": {
+    "audioRecording": "Ses Kaydı",
+    "attachment": "Ek"
   }
 }

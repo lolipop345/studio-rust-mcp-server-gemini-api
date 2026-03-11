@@ -46,13 +46,15 @@
     "connected": "Połączono z Gemini",
     "apiKeyNotSet": "Brak klucza API",
     "serverNotRunning": "Serwer nie działa",
-    "connecting": "Łączenie..."
+    "connecting": "Łączenie...",
+    "thinking": "Myśli..."
   },
   "models": {
     "moreModels": "Więcej modeli"
   },
   "chat": {
-    "inputPlaceholder": "Wyślij wiadomość..."
+    "inputPlaceholder": "Wyślij wiadomość...",
+    "newChat": "Nowy czat"
   },
   "landing": {
     "motivationalPhrases": [
@@ -108,7 +110,9 @@
     "fileTooLarge": "Plik, który próbujesz przesłać, przekracza limit 100 MB ({{size}} MB!).",
     "unsupportedFile": "\"{{name}}\" nie jest obsługiwany i nie został przesłany.",
     "micDenied": "Brak dostępu do mikrofonu.",
-    "cameraDenied": "Brak dostępu do kamery."
+    "cameraDenied": "Brak dostępu do kamery.",
+    "connectionLost": "Utracono połączenie. Spróbuj ponownie.",
+    "submitFailed": "Nie udało się przesłać recenzji"
   },
   "prompts": {
     "write": [
@@ -215,6 +219,46 @@
     "returnFailure": "Coś poszło nie tak. Spróbuj ponownie."
   },
   "planning": {
-    "modeLabel": "AI planuje — odpowiedz na powyższe pytania, aby kontynuować"
+    "modeLabel": "AI planuje — odpowiedz na powyższe pytania, aby kontynuować",
+    "questionLabel": "Pytanie planowania",
+    "customPlaceholder": "Lub wpisz własną odpowiedź…"
+  },
+  "search": {
+    "filterBy": "Filtruj według",
+    "filterModel": "Tylko model",
+    "filterUser": "Tylko użytkownik",
+    "filterTitle": "Tylko tytuł",
+    "filterLast7": "Ostatnie 7 dni",
+    "noResults": "Nie znaleziono pasujących czatów."
+  },
+  "toolCall": {
+    "running": "uruchamianie...",
+    "completed": "ukończono",
+    "proposalName": "Propozycja: Przejrzyj plan",
+    "waitingReview": "Oczekiwanie na Twoją recenzję..."
+  },
+  "actions": {
+    "copy": "Kopiuj",
+    "copied": "Skopiowano!",
+    "copiedToClipboard": "Skopiowano do schowka",
+    "rerun": "Uruchom ponownie",
+    "regenerate": "Wygeneruj ponownie",
+    "delete": "Usuń",
+    "rename": "Zmień nazwę",
+    "pin": "Przypnij",
+    "unpin": "Odepnij",
+    "cancel": "Anuluj",
+    "save": "Zapisz",
+    "saveAndSubmit": "Zapisz i wyślij"
+  },
+  "media": {
+    "audioRecording": "Nagranie audio",
+    "attachment": "Załącznik"
+  },
+  "artifact": {
+    "commentTriggerTitle": "Dodaj komentarz do tej sekcji",
+    "commentPlaceholder": "Napisz swoją opinię o tej sekcji...",
+    "commentCancel": "Anuluj",
+    "commentSave": "Zapisz"
   }
 }

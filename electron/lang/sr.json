@@ -46,13 +46,15 @@
     "connected": "Повезано на Gemini",
     "apiKeyNotSet": "API кључ није постављен",
     "serverNotRunning": "Сервер не ради",
-    "connecting": "Повезивање..."
+    "connecting": "Повезивање...",
+    "thinking": "Razmišlja..."
   },
   "models": {
     "moreModels": "Више модела"
   },
   "chat": {
-    "inputPlaceholder": "Пошаљи поруку..."
+    "inputPlaceholder": "Пошаљи поруку...",
+    "newChat": "Novi razgovor"
   },
   "landing": {
     "motivationalPhrases": [
@@ -108,7 +110,9 @@
     "fileTooLarge": "Datoteka koju pokušavate da otpremite premašuje ograničenje od 100 MB ({{size}} MB!).",
     "unsupportedFile": "\"{{name}}\" nije podržan i nije otpremljen.",
     "micDenied": "Приступ микрофону одбијен.",
-    "cameraDenied": "Приступ камери одбијен."
+    "cameraDenied": "Приступ камери одбијен.",
+    "connectionLost": "Veza izgubljena. Pokušajte ponovo.",
+    "submitFailed": "Slanje pregleda nije uspelo"
   },
   "prompts": {
     "write": [
@@ -215,6 +219,46 @@
     "returnFailure": "Nešto je pošlo naopako. Pokušajte ponovo."
   },
   "planning": {
-    "modeLabel": "AI planira — odgovorite na pitanja iznad da biste nastavili"
+    "modeLabel": "AI planira — odgovorite na pitanja iznad da biste nastavili",
+    "questionLabel": "Pitanje planiranja",
+    "customPlaceholder": "Ili unesite prilagođeni odgovor…"
+  },
+  "search": {
+    "filterBy": "Filtriraj po",
+    "filterModel": "Samo model",
+    "filterUser": "Samo korisnik",
+    "filterTitle": "Samo naslov",
+    "filterLast7": "Poslednjih 7 dana",
+    "noResults": "Nije pronađen nijedan odgovarajući razgovor."
+  },
+  "toolCall": {
+    "running": "pokretanje...",
+    "completed": "završeno",
+    "proposalName": "Prijedlog: Pregledaj plan",
+    "waitingReview": "Čekanje vašeg pregleda..."
+  },
+  "actions": {
+    "copy": "Kopiraj",
+    "copied": "Kopirano!",
+    "copiedToClipboard": "Kopirano u međuspremnik",
+    "rerun": "Ponovo pokreni",
+    "regenerate": "Regeneriši",
+    "delete": "Obriši",
+    "rename": "Preimenuj",
+    "pin": "Zakači",
+    "unpin": "Otkvači",
+    "cancel": "Otkaži",
+    "save": "Sačuvaj",
+    "saveAndSubmit": "Sačuvaj i pošalji"
+  },
+  "media": {
+    "audioRecording": "Audio snimak",
+    "attachment": "Prilog"
+  },
+  "artifact": {
+    "commentTriggerTitle": "Dodaj komentar ovom odeljku",
+    "commentPlaceholder": "Napišite povratne informacije o ovom odeljku...",
+    "commentCancel": "Otkaži",
+    "commentSave": "Sačuvaj"
   }
 }

@@ -413,17 +413,38 @@
             placeholder="Search Chat..." autocomplete="off" spellcheck="false">
 
           <div style="position: relative; margin-right: 12px; display: flex; align-items: center;">
-            <button id="btn-search-filters" class="search-view-close" title="Filters">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            <button id="btn-search-filters" class="search-view-close search-filter-btn" title="Filters">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
               </svg>
             </button>
-            <div id="search-filters-dropdown" class="hidden"
-              style="position: absolute; top: 100%; right: 0; margin-top: 8px; background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); box-shadow: var(--shadow-popover); padding: 8px; display: flex; flex-direction: column; gap: 8px; width: 140px; z-index: 10;">
-              <button class="filter-chip" data-filter="onlymodel:true">Model Only</button>
-              <button class="filter-chip" data-filter="onlyuser:true">User Only</button>
-              <button class="filter-chip" data-filter="onlytitle:true">Title Only</button>
-              <button class="filter-chip" data-filter="last:7d">Last 7 Days</button>
+            <div id="search-filters-dropdown" class="hidden">
+              <p class="filter-dropdown-label" data-i18n="search.filterBy">Filter by</p>
+              <div class="filter-section">
+                <button class="filter-chip" data-filter="onlymodel:true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z"/><path d="M3 12h1M20 12h1M12 3v1M12 20v1M5.6 5.6l.7.7M17.7 17.7l.7.7M5.6 18.4l.7-.7M17.7 6.3l.7-.7"/></svg>
+                  <span data-i18n="search.filterModel">Model Only</span>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+                <button class="filter-chip" data-filter="onlyuser:true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span data-i18n="search.filterUser">User Only</span>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+                <button class="filter-chip" data-filter="onlytitle:true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>
+                  <span data-i18n="search.filterTitle">Title Only</span>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+              </div>
+              <div class="filter-divider"></div>
+              <div class="filter-section">
+                <button class="filter-chip" data-filter="last:7d">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span data-i18n="search.filterLast7">Last 7 Days</span>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+              </div>
             </div>
           </div>
 

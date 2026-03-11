@@ -46,13 +46,15 @@
     "connected": "Свързан към Gemini",
     "apiKeyNotSet": "Не е зададен API ключ",
     "serverNotRunning": "Сървърът не работи",
-    "connecting": "Свързване..."
+    "connecting": "Свързване...",
+    "thinking": "Мисли..."
   },
   "models": {
     "moreModels": "Още модели"
   },
   "chat": {
-    "inputPlaceholder": "Изпратете съобщение..."
+    "inputPlaceholder": "Изпратете съобщение...",
+    "newChat": "Нов чат"
   },
   "landing": {
     "motivationalPhrases": [
@@ -108,7 +110,9 @@
     "fileTooLarge": "Файлът, който се опитвате да качите, надвишава ограничението от 100MB ({{size}}MB!).",
     "unsupportedFile": "\"{{name}}\" не се поддържа и не беше качен.",
     "micDenied": "Достъпът до микрофона е отказан.",
-    "cameraDenied": "Достъпът до камерата е отказан."
+    "cameraDenied": "Достъпът до камерата е отказан.",
+    "connectionLost": "Връзката е изгубена. Моля, опитайте отново.",
+    "submitFailed": "Неуспешно изпращане на рецензия"
   },
   "prompts": {
     "write": [
@@ -215,6 +219,46 @@
     "returnFailure": "Нещо се обърка. Моля, опитайте отново."
   },
   "planning": {
-    "modeLabel": "AI планира — отговорете на въпросите по-горе, за да продължите"
+    "modeLabel": "AI планира — отговорете на въпросите по-горе, за да продължите",
+    "questionLabel": "Въпрос за планиране",
+    "customPlaceholder": "Или въведете персонализиран отговор…"
+  },
+  "search": {
+    "filterBy": "Филтрирай по",
+    "filterModel": "Само модел",
+    "filterUser": "Само потребител",
+    "filterTitle": "Само заглавие",
+    "filterLast7": "Последните 7 дни",
+    "noResults": "Не са намерени съответстващи чатове."
+  },
+  "toolCall": {
+    "running": "изпълнява се...",
+    "completed": "завършено",
+    "proposalName": "Предложение: Прегледайте плана",
+    "waitingReview": "Чакам вашата проверка..."
+  },
+  "actions": {
+    "copy": "Копиране",
+    "copied": "Копирано!",
+    "copiedToClipboard": "Копирано в клипборда",
+    "rerun": "Повторно изпълнение",
+    "regenerate": "Прегенериране",
+    "delete": "Изтриване",
+    "rename": "Преименуване",
+    "pin": "Закачи",
+    "unpin": "Откачи",
+    "cancel": "Отказ",
+    "save": "Запазване",
+    "saveAndSubmit": "Запази и изпрати"
+  },
+  "media": {
+    "audioRecording": "Аудио запис",
+    "attachment": "Прикачен файл"
+  },
+  "artifact": {
+    "commentTriggerTitle": "Добавяне на коментар към тази секция",
+    "commentPlaceholder": "Напишете отзива си за тази секция...",
+    "commentCancel": "Отказ",
+    "commentSave": "Запазване"
   }
 }

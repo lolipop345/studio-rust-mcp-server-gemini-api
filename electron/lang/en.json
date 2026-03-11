@@ -46,13 +46,15 @@
     "connected": "Connected to Gemini",
     "apiKeyNotSet": "API key not set",
     "serverNotRunning": "Server not running",
-    "connecting": "Connecting..."
+    "connecting": "Connecting...",
+    "thinking": "Thinking..."
   },
   "models": {
     "moreModels": "More models"
   },
   "chat": {
-    "inputPlaceholder": "Send a message..."
+    "inputPlaceholder": "Send a message...",
+    "newChat": "New Chat"
   },
   "landing": {
     "motivationalPhrases": [
@@ -108,7 +110,9 @@
     "fileTooLarge": "The file you are trying to upload exceeds the 100MB limit ({{size}}MB!).",
     "unsupportedFile": "\"{{name}}\" is not supported and was not uploaded.",
     "micDenied": "Microphone access denied.",
-    "cameraDenied": "Camera access denied."
+    "cameraDenied": "Camera access denied.",
+    "connectionLost": "Connection lost. Please try again.",
+    "submitFailed": "Failed to submit review"
   },
   "prompts": {
     "write": [
@@ -216,10 +220,16 @@
     "title": "Implementation Plan",
     "proceed": "Proceed",
     "submit": "Submit ({{count}})",
-    "sending": "Sending..."
+    "sending": "Sending...",
+    "commentTriggerTitle": "Add a comment to this section",
+    "commentPlaceholder": "Write your feedback about this section...",
+    "commentCancel": "Cancel",
+    "commentSave": "Save"
   },
   "planning": {
-    "modeLabel": "AI is planning — answer the questions above to continue"
+    "modeLabel": "AI is planning — answer the questions above to continue",
+    "questionLabel": "Planning Question",
+    "customPlaceholder": "Or type a custom answer…"
   },
   "oauthCallback": {
     "successTitle": "Login Successful",
@@ -227,5 +237,37 @@
     "closeTitle": "You can close this window",
     "returnSuccess": "If GeminiStudio did not launch automatically, <a href='#' onclick='window.close();return false;'>click here</a> to return.",
     "returnFailure": "Something went wrong. Please try again."
+  },
+  "search": {
+    "filterBy": "Filter by",
+    "filterModel": "Model Only",
+    "filterUser": "User Only",
+    "filterTitle": "Title Only",
+    "filterLast7": "Last 7 Days",
+    "noResults": "No matching chats found."
+  },
+  "toolCall": {
+    "running": "running...",
+    "completed": "completed",
+    "proposalName": "Proposal: Review Plan",
+    "waitingReview": "Waiting for your review..."
+  },
+  "actions": {
+    "copy": "Copy",
+    "copied": "Copied!",
+    "copiedToClipboard": "Copied to clipboard",
+    "rerun": "Rerun",
+    "regenerate": "Regenerate",
+    "delete": "Delete",
+    "rename": "Rename",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saveAndSubmit": "Save & Submit"
+  },
+  "media": {
+    "audioRecording": "Audio Recording",
+    "attachment": "Attachment"
   }
 }

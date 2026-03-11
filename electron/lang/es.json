@@ -46,13 +46,15 @@
     "connected": "Conectado a Gemini",
     "apiKeyNotSet": "Clave API no configurada",
     "serverNotRunning": "El servidor no se está ejecutando",
-    "connecting": "Conectando..."
+    "connecting": "Conectando...",
+    "thinking": "Pensando..."
   },
   "models": {
     "moreModels": "Más modelos"
   },
   "chat": {
-    "inputPlaceholder": "Envía un mensaje..."
+    "inputPlaceholder": "Envía un mensaje...",
+    "newChat": "Nuevo chat"
   },
   "landing": {
     "motivationalPhrases": [
@@ -108,7 +110,9 @@
     "fileTooLarge": "El archivo que intenta cargar supera el límite de 100 MB (¡{{size}} MB!).",
     "unsupportedFile": "\"{{name}}\" no es compatible y no se ha subido.",
     "micDenied": "Acceso al micrófono denegado.",
-    "cameraDenied": "Acceso a la cámara denegado."
+    "cameraDenied": "Acceso a la cámara denegado.",
+    "connectionLost": "Conexión perdida. Por favor intenta de nuevo.",
+    "submitFailed": "Error al enviar la revisión"
   },
   "prompts": {
     "write": [
@@ -215,6 +219,46 @@
     "returnFailure": "Algo salió mal. Por favor, inténtalo de nuevo."
   },
   "planning": {
-    "modeLabel": "La IA está planificando — responde las preguntas anteriores para continuar"
+    "modeLabel": "La IA está planificando — responde las preguntas anteriores para continuar",
+    "questionLabel": "Pregunta de planificación",
+    "customPlaceholder": "O escribe una respuesta personalizada…"
+  },
+  "search": {
+    "filterBy": "Filtrar por",
+    "filterModel": "Solo modelo",
+    "filterUser": "Solo usuario",
+    "filterTitle": "Solo título",
+    "filterLast7": "Últimos 7 días",
+    "noResults": "No se encontraron chats coincidentes."
+  },
+  "toolCall": {
+    "running": "ejecutando...",
+    "completed": "completado",
+    "proposalName": "Propuesta: Revisar plan",
+    "waitingReview": "Esperando tu revisión..."
+  },
+  "actions": {
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "copiedToClipboard": "Copiado al portapapeles",
+    "rerun": "Reejecutar",
+    "regenerate": "Regenerar",
+    "delete": "Eliminar",
+    "rename": "Renombrar",
+    "pin": "Fijar",
+    "unpin": "Desfijar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "saveAndSubmit": "Guardar y enviar"
+  },
+  "media": {
+    "audioRecording": "Grabación de audio",
+    "attachment": "Archivo adjunto"
+  },
+  "artifact": {
+    "commentTriggerTitle": "Agregar un comentario a esta sección",
+    "commentPlaceholder": "Escribe tu opinión sobre esta sección...",
+    "commentCancel": "Cancelar",
+    "commentSave": "Guardar"
   }
 }
