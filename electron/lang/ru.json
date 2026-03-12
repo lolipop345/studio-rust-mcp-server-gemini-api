@@ -25,7 +25,11 @@
     "ok": "ОК",
     "tabApi": "API и Аккаунт",
     "tabAgent": "Модель и Агент",
+    "tabThemes": "Темы",
     "tabData": "Данные и Куки",
+    "themesTitle": "Оформление",
+    "themesDark": "Тёмная",
+    "themesLight": "Светлая",
     "googleAccountLabel": "Аккаунт Google",
     "signInWithGoogle": "Войти через Google",
     "googleConnected": "Подключено через Google",
@@ -88,7 +92,8 @@
     "suggestCode": "Код",
     "suggestLife": "Жизнь",
     "suggestGemini": "Выбор Gemini",
-    "hello": "Привет, {name}"
+    "hello": "Привет, {name}",
+    "tempChatSubtitle": "Сообщения не будут сохранены"
   },
   "tooltips": {
     "attach": "Прикрепить изображение",
@@ -209,7 +214,12 @@
     "cancelCamera": "Отмена"
   },
   "sidebar": {
-    "search": "Поиск чата..."
+    "search": "Поиск чата...",
+    "history": "История",
+    "tempChat": "Временный чат",
+    "newChat": "Новый чат",
+    "projects": "Проекты",
+    "searchChats": "Поиск чатов"
   },
   "oauthCallback": {
     "successTitle": "Вход успешен",

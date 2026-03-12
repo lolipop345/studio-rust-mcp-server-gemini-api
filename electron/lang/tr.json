@@ -25,7 +25,11 @@
     "ok": "Sil",
     "tabApi": "API ve Hesap",
     "tabAgent": "Model ve Agent",
+    "tabThemes": "Temalar",
     "tabData": "Veri ve Çerez",
+    "themesTitle": "Görünüm",
+    "themesDark": "Koyu",
+    "themesLight": "Açık",
     "googleAccountLabel": "Google Hesabı",
     "signInWithGoogle": "Google ile Giriş Yap",
     "googleConnected": "Google ile Bağlanıldı",
@@ -82,6 +86,7 @@
       "Mühendisliğini yükselt.",
       "Zor sorunları çöz."
     ],
+    "tempChatSubtitle": "Mesajlar kaydedilmeyecek",
     "placeholder": "Bugün size nasıl yardımcı olabilirim?",
     "suggestWrite": "Yaz",
     "suggestLearn": "Öğren",
@@ -206,7 +211,12 @@
     "recent": "Geçmiş",
     "confirmDelete": "Bu sohbeti silmek istediğinizden emin misiniz?",
     "confirmClearAll": "TÜM sohbet geçmişini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-    "search": "Sohbet Ara..."
+    "search": "Sohbet Ara...",
+    "history": "Geçmiş",
+    "tempChat": "Geçici Sohbet",
+    "newChat": "Yeni Sohbet",
+    "projects": "Projeler",
+    "searchChats": "Sohbet Ara"
   },
   "attach": {
     "uploadFiles": "Dosya Yükle",

@@ -156,9 +156,7 @@ const messagesEl = document.getElementById("messages");
 const welcomeEl = document.getElementById("welcome");
 const inputEl = document.getElementById("message-input");
 const sendBtn = document.getElementById("btn-send");
-const themeBtn = document.getElementById("btn-theme");
 const settingsBtn = document.getElementById("btn-settings");
-const ghostBtn = document.getElementById("btn-ghost");
 const modelBtn = document.getElementById("btn-model-select");
 const modelPopover = document.getElementById("model-popover");
 const moreModelsBtn = document.getElementById("more-models-btn");
@@ -169,8 +167,7 @@ const saveKeyBtn = document.getElementById("btn-save-key");
 const toggleKeyBtn = document.getElementById("btn-toggle-key");
 const statusDot = document.getElementById("status-dot");
 const statusText = document.getElementById("status-text");
-const iconMoon = document.getElementById("icon-moon");
-const iconSun = document.getElementById("icon-sun");
+
 const getKeyLink = document.getElementById("get-key-link");
 const hljsThemeLink = document.getElementById("hljs-theme");
 
@@ -232,6 +229,7 @@ let isAborting = false;
 let currentArtifactComments = {}; // block_index -> comment string
 let activeArtifactTx = null; // store the chat ID waiting for the plan
 let isPlanningMode = false; // true when model is in planning/Q&A phase
+let isTemporarySession = false; // true when in temporary (unsaved) chat mode
 
 // ─── Processing State & Abort ──────────────────────────────────────
 function setProcessingState(processing) {
@@ -462,13 +460,10 @@ function toggleTheme() {
 }
 
 function updateThemeIcons(theme) {
-    if (theme === "dark") {
-        iconMoon.style.display = "block";
-        iconSun.style.display = "none";
-    } else {
-        iconMoon.style.display = "none";
-        iconSun.style.display = "block";
-    }
+    // Sync theme card active state in settings
+    document.querySelectorAll(".theme-card").forEach(card => {
+        card.classList.toggle("active", card.dataset.themeValue === theme);
+    });
 }
 
 function updateHljsTheme(theme) {
@@ -662,6 +657,7 @@ ipcRenderer.on("google-oauth-code", async (_event, data) => {
     await checkStatus();
     await fetchModels();
     updateGoogleLoginUI();
+    updateSidebarProfile();
     // Focus window
     mainWindow && mainWindow.focus && mainWindow.focus();
 });
@@ -679,9 +675,10 @@ if (btnGoogleLogout) {
             } else {
                 await ipcRenderer.invoke("delete-api-key");
             }
-        } catch {}
+        } catch { }
         await checkStatus();
         updateGoogleLoginUI();
+        updateSidebarProfile();
     });
 }
 
@@ -724,13 +721,14 @@ async function restoreGoogleLogin() {
                     token.picture = token.picture || userResult.user.picture || "";
                     await ipcRenderer.invoke("google-save-token", JSON.stringify(token));
                 }
-            } catch {}
+            } catch { }
         }
         googleUserInfo = token;
         isGoogleLoggedIn = true;
         await setGoogleToken(token.access_token);
         updateGoogleLoginUI();
-    } catch {}
+        updateSidebarProfile();
+    } catch { }
 }
 
 // ── Cookie / Preferences Reset ─────────────────────────────────────────────
@@ -984,6 +982,7 @@ async function loadSidebarHistory() {
 }
 
 async function autoSaveSession() {
+    if (isTemporarySession) return; // Don't persist temporary chats
     if (!currentSessionId) {
         currentSessionId = generateUUID();
         // If it's a new session and we have at least 1 user node, generate title
@@ -3060,14 +3059,81 @@ function closeSuggestedMenu() {
 
 btnCloseSuggestedMenu.addEventListener("click", closeSuggestedMenu);
 
-themeBtn.addEventListener("click", toggleTheme);
-
 settingsBtn.addEventListener("click", showModal);
 
-ghostBtn.addEventListener("click", () => {
-    // Placeholder for future functionality
-    console.log("Ghost button clicked - coming soon!");
+// Theme card click handlers (inside settings modal)
+document.querySelectorAll(".theme-card").forEach(card => {
+    card.addEventListener("click", () => {
+        const theme = card.dataset.themeValue;
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        updateThemeIcons(theme);
+        updateHljsTheme(theme);
+    });
 });
+
+// ─── Sidebar new buttons ────────────────────────────────────────
+
+const btnTempChat = document.getElementById("btn-temp-chat");
+const btnToggleHistory = document.getElementById("btn-toggle-history");
+const sidebarHistoryContent = document.getElementById("sidebar-history-content");
+
+function updateTempChatUI() {
+    document.body.classList.toggle("temp-mode", isTemporarySession);
+    btnTempChat.classList.toggle("temp-active", isTemporarySession);
+}
+
+btnTempChat.addEventListener("click", async () => {
+    if (!isTemporarySession) {
+        // Only save current session if it actually has content —
+        // avoids creating a blank "Yeni Sohbet" entry when on an empty screen
+        const hasMessages = Object.values(chatTree).some(n => n.role === "user");
+        if (hasMessages || currentSessionId) {
+            await autoSaveSession();
+        }
+        isTemporarySession = true;
+        updateTempChatUI();
+        startNewSession();
+    } else {
+        // Leaving temp mode: discard temp session, go fresh
+        isTemporarySession = false;
+        updateTempChatUI();
+        startNewSession();
+    }
+});
+
+
+btnToggleHistory.addEventListener("click", () => {
+    btnToggleHistory.classList.toggle("sidebar-history-collapsed");
+    sidebarHistoryContent.classList.toggle("collapsed");
+});
+
+// ─── Sidebar profile footer ─────────────────────────────────────
+
+function updateSidebarProfile() {
+    const avatarEl = document.getElementById("sidebar-footer-avatar");
+    const nameEl = document.getElementById("sidebar-footer-name");
+    if (!avatarEl || !nameEl) return;
+
+    if (isGoogleLoggedIn && googleUserInfo) {
+        // Google account: show avatar photo + email
+        if (googleUserInfo.picture) {
+            avatarEl.innerHTML = `<img src="${googleUserInfo.picture}" alt="">`;
+        } else {
+            const initial = (googleUserInfo.email || "G")[0].toUpperCase();
+            avatarEl.textContent = initial;
+            avatarEl.style.background = "var(--accent)";
+        }
+        nameEl.textContent = googleUserInfo.email || "";
+    } else {
+        // System user: show first letter of username
+        const username = (typeof require !== "undefined")
+            ? (() => { try { return require("os").userInfo().username; } catch { return "User"; } })()
+            : "User";
+        avatarEl.textContent = username[0].toUpperCase();
+        nameEl.textContent = username;
+    }
+}
 
 sendBtn.addEventListener("click", () => {
     if (isProcessing) abortGeneration();
@@ -3773,6 +3839,11 @@ if (btnSidebarToggle) {
 }
 if (btnNewChat) {
     btnNewChat.addEventListener("click", () => {
+        // Exit temporary session mode if active
+        if (isTemporarySession) {
+            isTemporarySession = false;
+            updateTempChatUI();
+        }
         startNewSession();
         if (window.innerWidth < 768) {
             sidebar.classList.add("sidebar-closed"); // close on mobile
@@ -4275,6 +4346,7 @@ async function init() {
 
     // Try to restore Google login first
     await restoreGoogleLogin();
+    updateSidebarProfile();
 
     if (!isGoogleLoggedIn) {
         // Try to restore saved API key from encrypted storage

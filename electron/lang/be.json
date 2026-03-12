@@ -25,7 +25,11 @@
     "ok": "Добра",
     "tabApi": "API і Уліковы запіс",
     "tabAgent": "Мадэль і Агент",
+    "tabThemes": "Тэмы",
     "tabData": "Даныя і Кукі",
+    "themesTitle": "Афармленне",
+    "themesDark": "Цёмная",
+    "themesLight": "Светлая",
     "googleAccountLabel": "Уліковы запіс Google",
     "signInWithGoogle": "Увайсці праз Google",
     "googleConnected": "Падключана праз Google",
@@ -88,7 +92,8 @@
     "suggestCode": "Код",
     "suggestLife": "Жыццё",
     "suggestGemini": "Выбар Gemini",
-    "hello": "Прывітанне {name}"
+    "hello": "Прывітанне {name}",
+    "tempChatSubtitle": "Паведамленні не будуць захаваны"
   },
   "tooltips": {
     "attach": "Прымацаваць малюнак",
@@ -209,7 +214,12 @@
     "cancelCamera": "Адмена"
   },
   "sidebar": {
-    "search": "Пошук чата..."
+    "search": "Пошук чата...",
+    "history": "Гісторыя",
+    "tempChat": "Часовы чат",
+    "newChat": "Новы чат",
+    "projects": "Праекты",
+    "searchChats": "Пошук чатаў"
   },
   "oauthCallback": {
     "successTitle": "Уваход паспяховы",

@@ -11,37 +11,74 @@
 
 <body>
   <div id="sidebar" class="sidebar-closed">
-    <div class="sidebar-header">
-      <h3 data-i18n="sidebar.title" style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary)">
-        Chats</h3>
-      <button id="btn-new-chat" class="action-btn-subtle" title="New Chat">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    <!-- Title -->
+    <div class="sidebar-title-row">
+      <span class="sidebar-title-text" data-i18n="sidebar.title">Chats</span>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="sidebar-actions">
+      <button class="sidebar-action-btn" id="btn-temp-chat">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z" />
+          <path d="M9 10h.01" />
+          <path d="M15 10h.01" />
         </svg>
+        <span data-i18n="sidebar.tempChat">Temporary Chat</span>
+      </button>
+      <button class="sidebar-action-btn" id="btn-new-chat">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+        </svg>
+        <span data-i18n="sidebar.newChat">New Chat</span>
+      </button>
+      <button class="sidebar-action-btn" id="btn-open-search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <span data-i18n="sidebar.searchChats">Search Chats</span>
       </button>
     </div>
 
-    <div class="sidebar-scrollable">
-      <div class="sidebar-section" style="margin-bottom: 24px;">
-        <div id="btn-open-search" class="sidebar-item" style="font-size: 13px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            style="margin-right: 8px;">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <span data-i18n="sidebar.search" style="flex: 1; white-space: normal;">Search Chat...</span>
-        </div>
-      </div>
+    <!-- History header (collapsible) -->
+    <button class="sidebar-history-header" id="btn-toggle-history">
+      <span data-i18n="sidebar.history">History</span>
+      <svg class="history-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
 
+    <div class="sidebar-scrollable" id="sidebar-history-content">
       <div class="sidebar-section" id="section-pinned" style="display: none;">
         <div class="sidebar-section-title" data-i18n="sidebar.pinned">Pinned</div>
         <div id="sidebar-pinned-list" class="sidebar-list"></div>
       </div>
       <div class="sidebar-section" id="section-recent">
-        <div class="sidebar-section-title" data-i18n="sidebar.recent">Recent</div>
         <div id="sidebar-recent-list" class="sidebar-list"></div>
+      </div>
+    </div>
+
+    <!-- Footer: profile + action buttons -->
+    <div class="sidebar-footer">
+      <div class="sidebar-profile" id="sidebar-profile">
+        <div class="sidebar-profile-avatar" id="sidebar-footer-avatar"></div>
+        <span class="sidebar-profile-name" id="sidebar-footer-name"></span>
+      </div>
+      <div class="sidebar-footer-btns">
+        <button id="btn-settings" class="sidebar-footer-btn" title="Settings">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
       </div>
     </div>
   </div>
@@ -66,48 +103,28 @@
           style="opacity: 0.8; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; display: flex; align-items: center;"></span>
       </div>
       <div id="titlebar-actions">
-        <button id="btn-theme" class="titlebar-btn ghost-icon" title="Toggle Theme">
-          <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-          <svg id="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
-            <circle cx="12" cy="12" r="5" />
-            <line x1="12" y1="1" x2="12" y2="3" />
-            <line x1="12" y1="21" x2="12" y2="23" />
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-            <line x1="1" y1="12" x2="3" y2="12" />
-            <line x1="21" y1="12" x2="23" y2="12" />
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-          </svg>
-        </button>
-        <button id="btn-settings" class="titlebar-btn ghost-icon" title="Settings">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path
-              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-            </path>
-          </svg>
-        </button>
-        <button id="btn-ghost" class="titlebar-btn ghost-icon" title="Ghost">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z" />
-            <path d="M9 10h.01" />
-            <path d="M15 10h.01" />
-          </svg>
-        </button>
       </div>
     </div>
 
     <div id="main-content">
 
       <div id="chat-container" class="chat-empty">
+
         <div id="welcome">
+
+          <!-- Gizli Sohbet banner — inside welcome flow, shown only in temp mode -->
+          <div id="temp-chat-header">
+            <div class="temp-chat-icon-wrap">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <span class="temp-chat-title" data-i18n="sidebar.tempChat">Gizli Sohbet</span>
+            <span class="temp-chat-subtitle" data-i18n="landing.tempChatSubtitle">Mesajlar kaydedilmeyecek</span>
+          </div>
+
           <div class="hero">
             <div class="hero-top">
               <svg class="hero-icon" width="32" height="32" viewBox="0 0 64 64" fill="none"
@@ -152,10 +169,11 @@
 
         <!-- Planning mode banner (shown while model asks planning questions) -->
         <div id="planning-mode-indicator" class="hidden">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <span data-i18n="planning.modeLabel">AI is planning — answer the questions above to continue</span>
         </div>
@@ -239,8 +257,8 @@
                 <div class="model-select-container">
                   <button id="btn-model-select" class="model-select-inline">
                     <span id="model-btn-label">Loading...</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;">
                       <path d="m6 9 6 6 6-6" />
                     </svg>
                   </button>
@@ -414,35 +432,66 @@
 
           <div style="position: relative; margin-right: 12px; display: flex; align-items: center;">
             <button id="btn-search-filters" class="search-view-close search-filter-btn" title="Filters">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+                <line x1="11" y1="18" x2="13" y2="18" />
               </svg>
             </button>
             <div id="search-filters-dropdown" class="hidden">
               <p class="filter-dropdown-label" data-i18n="search.filterBy">Filter by</p>
               <div class="filter-section">
                 <button class="filter-chip" data-filter="onlymodel:true">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z"/><path d="M3 12h1M20 12h1M12 3v1M12 20v1M5.6 5.6l.7.7M17.7 17.7l.7.7M5.6 18.4l.7-.7M17.7 6.3l.7-.7"/></svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 8c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z" />
+                    <path
+                      d="M3 12h1M20 12h1M12 3v1M12 20v1M5.6 5.6l.7.7M17.7 17.7l.7.7M5.6 18.4l.7-.7M17.7 6.3l.7-.7" />
+                  </svg>
                   <span data-i18n="search.filterModel">Model Only</span>
-                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                 </button>
                 <button class="filter-chip" data-filter="onlyuser:true">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
                   <span data-i18n="search.filterUser">User Only</span>
-                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                 </button>
                 <button class="filter-chip" data-filter="onlytitle:true">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 6h16M4 12h10M4 18h6" />
+                  </svg>
                   <span data-i18n="search.filterTitle">Title Only</span>
-                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                 </button>
               </div>
               <div class="filter-divider"></div>
               <div class="filter-section">
                 <button class="filter-chip" data-filter="last:7d">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
                   <span data-i18n="search.filterLast7">Last 7 Days</span>
-                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -496,6 +545,15 @@
                 fill="currentColor" />
             </svg>
             <span data-i18n="settings.tabAgent">Agent</span>
+          </button>
+          <button class="tab-btn" data-tab="tab-themes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a10 10 0 0 1 0 20" />
+              <path d="M12 8v8M8 12h8" />
+            </svg>
+            <span data-i18n="settings.tabThemes">Themes</span>
           </button>
           <button class="tab-btn" data-tab="tab-data">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -609,7 +667,50 @@
             </div>
           </div>
 
-          <!-- TAB 3: Data & Cookie -->
+          <!-- TAB 3: Themes -->
+          <div id="tab-themes" class="tab-panel hidden">
+            <div class="settings-group">
+              <label data-i18n="settings.themesTitle">Appearance</label>
+              <div class="theme-cards">
+                <button class="theme-card" data-theme-value="dark">
+                  <div class="theme-card-preview theme-preview-dark">
+                    <div class="theme-preview-bar"></div>
+                    <div class="theme-preview-body">
+                      <div class="theme-preview-bubble"></div>
+                      <div class="theme-preview-bubble short"></div>
+                      <div class="theme-preview-bubble"></div>
+                    </div>
+                  </div>
+                  <div class="theme-card-label">
+                    <span data-i18n="settings.themesDark">Dark</span>
+                    <svg class="theme-card-check" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                </button>
+                <button class="theme-card" data-theme-value="light">
+                  <div class="theme-card-preview theme-preview-light">
+                    <div class="theme-preview-bar"></div>
+                    <div class="theme-preview-body">
+                      <div class="theme-preview-bubble"></div>
+                      <div class="theme-preview-bubble short"></div>
+                      <div class="theme-preview-bubble"></div>
+                    </div>
+                  </div>
+                  <div class="theme-card-label">
+                    <span data-i18n="settings.themesLight">Light</span>
+                    <svg class="theme-card-check" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: Data & Cookie -->
           <div id="tab-data" class="tab-panel hidden">
             <div class="data-section">
               <p class="data-section-title" data-i18n="settings.dataTitle">Data</p>

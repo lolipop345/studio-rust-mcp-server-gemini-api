@@ -25,7 +25,11 @@
     "ok": "OK",
     "tabApi": "API & Account",
     "tabAgent": "Model & Agent",
+    "tabThemes": "Thema's",
     "tabData": "Gegevens & Cookies",
+    "themesTitle": "Uiterlijk",
+    "themesDark": "Donker",
+    "themesLight": "Licht",
     "googleAccountLabel": "Google-account",
     "signInWithGoogle": "Inloggen met Google",
     "googleConnected": "Verbonden via Google",
@@ -88,7 +92,8 @@
     "suggestCode": "Code",
     "suggestLife": "Dagelijks leven",
     "suggestGemini": "Selectie van Gemini",
-    "hello": "Hallo {name}"
+    "hello": "Hallo {name}",
+    "tempChatSubtitle": "Berichten worden niet opgeslagen"
   },
   "tooltips": {
     "attach": "Afbeelding toevoegen",
@@ -209,7 +214,12 @@
     "cancelCamera": "Annuleren"
   },
   "sidebar": {
-    "search": "Chat zoeken..."
+    "search": "Chat zoeken...",
+    "history": "Geschiedenis",
+    "tempChat": "Tijdelijke chat",
+    "newChat": "Nieuwe chat",
+    "projects": "Projecten",
+    "searchChats": "Chats zoeken"
   },
   "oauthCallback": {
     "successTitle": "Inloggen succesvol",

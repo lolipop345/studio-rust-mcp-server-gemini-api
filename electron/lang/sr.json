@@ -25,7 +25,11 @@
     "ok": "У реду",
     "tabApi": "API i Nalog",
     "tabAgent": "Model i Agent",
+    "tabThemes": "Теме",
     "tabData": "Podaci i Kolačići",
+    "themesTitle": "Изглед",
+    "themesDark": "Тамна",
+    "themesLight": "Светла",
     "googleAccountLabel": "Google Nalog",
     "signInWithGoogle": "Prijavi se sa Google-om",
     "googleConnected": "Povezano preko Google-a",
@@ -88,7 +92,8 @@
     "suggestCode": "Код",
     "suggestLife": "Живот",
     "suggestGemini": "Gemini избор",
-    "hello": "Здраво {name}"
+    "hello": "Здраво {name}",
+    "tempChatSubtitle": "Poruke neće biti sačuvane"
   },
   "tooltips": {
     "attach": "Приложи слику",
@@ -209,7 +214,12 @@
     "cancelCamera": "Откажи"
   },
   "sidebar": {
-    "search": "Претражи ћаскање..."
+    "search": "Претражи ћаскање...",
+    "history": "Istorija",
+    "tempChat": "Privremeni razgovor",
+    "newChat": "Novi razgovor",
+    "projects": "Projekti",
+    "searchChats": "Pretraži razgovore"
   },
   "oauthCallback": {
     "successTitle": "Uspešna prijava",

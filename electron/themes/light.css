@@ -1,0 +1,51 @@
+/* ──────────────────────────────────────────────
+   GeminiStudio — Light Theme
+   Included automatically when theme = "light"
+────────────────────────────────────────────── */
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #fdfdfd;
+  --bg-tertiary: #f4f4f4;
+
+  --bg-input: #f4f4f4;
+  --bg-input-focus: #f4f4f4;
+  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-message-user: #f0f0f0;
+  --bg-message-assistant: transparent;
+
+  --bg-tool-call: rgba(0, 0, 0, 0.03);
+  --bg-modal: #ffffff;
+  --bg-modal-overlay: rgba(0, 0, 0, 0.2);
+  --bg-code: #f6f8fa;
+  --bg-code-inline: rgba(0, 0, 0, 0.05);
+  --bg-blockquote: rgba(0, 0, 0, 0.03);
+
+  --border-primary: rgba(0, 0, 0, 0.1);
+  --border-input: rgba(0, 0, 0, 0.05);
+  --border-input-focus: rgba(0, 0, 0, 0.15);
+  --border-tool: rgba(0, 0, 0, 0.1);
+  --border-blockquote: #aaaaaa;
+
+  --text-primary: #0d0d0d;
+  --text-secondary: #6e6e80;
+  --text-tertiary: #8e8ea0;
+  --text-link: #303030;
+  --text-code: #1f2937;
+
+  --accent: #216BFF;
+  --accent-hover: #1b5ada;
+  --accent-glow: rgba(33, 107, 255, 0.1);
+
+  --status-connected: #16a34a;
+  --status-disconnected: #dc2626;
+  --status-warning: #d97706;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --shadow-popover: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 10px 30px rgba(0, 0, 0, 0.1);
+
+  --select-chevron-filter: invert(0.8);
+  --media-invert-amount: 0%;
+}

@@ -25,7 +25,11 @@
     "ok": "Aceptar",
     "tabApi": "API y Cuenta",
     "tabAgent": "Modelo y Agente",
+    "tabThemes": "Temas",
     "tabData": "Datos y Cookies",
+    "themesTitle": "Apariencia",
+    "themesDark": "Oscuro",
+    "themesLight": "Claro",
     "googleAccountLabel": "Cuenta de Google",
     "signInWithGoogle": "Iniciar sesión con Google",
     "googleConnected": "Conectado a través de Google",
@@ -88,7 +92,8 @@
     "suggestCode": "Código",
     "suggestLife": "Estilo de vida",
     "suggestGemini": "Elección de Gemini",
-    "hello": "Hola {name}"
+    "hello": "Hola {name}",
+    "tempChatSubtitle": "Los mensajes no se guardarán"
   },
   "tooltips": {
     "attach": "Adjuntar Imagen",
@@ -209,7 +214,12 @@
     "cancelCamera": "Cancelar"
   },
   "sidebar": {
-    "search": "Buscar chat..."
+    "search": "Buscar chat...",
+    "history": "Historial",
+    "tempChat": "Chat temporal",
+    "newChat": "Nuevo chat",
+    "projects": "Proyectos",
+    "searchChats": "Buscar chats"
   },
   "oauthCallback": {
     "successTitle": "Inicio de sesión exitoso",

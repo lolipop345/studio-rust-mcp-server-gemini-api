@@ -25,7 +25,11 @@
     "ok": "OK",
     "tabApi": "API e Account",
     "tabAgent": "Modello e Agente",
+    "tabThemes": "Temi",
     "tabData": "Dati e Cookie",
+    "themesTitle": "Aspetto",
+    "themesDark": "Scuro",
+    "themesLight": "Chiaro",
     "googleAccountLabel": "Account Google",
     "signInWithGoogle": "Accedi con Google",
     "googleConnected": "Connesso via Google",
@@ -88,7 +92,8 @@
     "suggestCode": "Codice",
     "suggestLife": "Stile di vita",
     "suggestGemini": "Scelta di Gemini",
-    "hello": "Ciao {name}"
+    "hello": "Ciao {name}",
+    "tempChatSubtitle": "I messaggi non verranno salvati"
   },
   "tooltips": {
     "attach": "Allega Immagine",
@@ -209,7 +214,12 @@
     "cancelCamera": "Annulla"
   },
   "sidebar": {
-    "search": "Cerca chat..."
+    "search": "Cerca chat...",
+    "history": "Cronologia",
+    "tempChat": "Chat temporanea",
+    "newChat": "Nuova chat",
+    "projects": "Progetti",
+    "searchChats": "Cerca chat"
   },
   "oauthCallback": {
     "successTitle": "Accesso riuscito",
