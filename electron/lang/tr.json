@@ -30,6 +30,17 @@
     "themesTitle": "Görünüm",
     "themesDark": "Koyu",
     "themesLight": "Açık",
+    "themesDeepOrange": "Koyu Turuncu",
+    "themesAmoled": "AMOLED",
+    "importTheme": "Temayı İçe Aktar",
+    "exportTheme": "Temayı Dışa Aktar",
+    "customThemes": "Özel Görünümler",
+    "themesKoknar": "Köknar Yeşili",
+    "themesKanliAy": "Kanlı Ay",
+    "deleteThemeConfirm": "'{name}' temasını silmek istediğinize emin misiniz?",
+    "deleteThemeTitle": "Temayı Sil",
+    "importError": "Tema içe aktarılamadı: ",
+    "exportError": "Tema dışa aktarılamadı: ",
     "googleAccountLabel": "Google Hesabı",
     "signInWithGoogle": "Google ile Giriş Yap",
     "googleConnected": "Google ile Bağlanıldı",
@@ -40,7 +51,15 @@
     "cookieDesc": "Tema, dil ve diğer yerel tercihleri varsayılana sıfırla.",
     "resetCookies": "Tercihleri Sıfırla",
     "oauthError": "OAuth yapılandırılmamış. oauth_config.json dosyasını ekleyin.",
-    "resetCookiesConfirm": "Tema, dil ve diğer yerel tercihler varsayılana sıfırlanacak. Uygulama yeniden yüklenecek."
+    "resetCookiesConfirm": "Tema, dil ve diğer yerel tercihler varsayılana sıfırlanacak. Uygulama yeniden yüklenecek.",
+    "customInstructions": "Özel Talimatlar",
+    "customInstructionsDesc": "Bu talimatlar her sohbette modele gönderilir. Otomatik kaydedilir.",
+    "customInstructionsPlaceholder": "Örn: Her zaman Türkçe yanıt ver. Resmi dil kullan...",
+    "systemInstructionsDesc": "Oturum bazlı talimatlar. Oturumlar arasında kaydedilmez.",
+    "tabTools": "Plugin & Araçlar",
+    "updatePlugin": "Plugin Güncelle",
+    "installPlugin": "Plugin İndir",
+    "pluginToolsDesc": "Roblox Studio pluginini indirin veya en güncel sürüme yükseltin."
   },
   "titlebar": {
     "settingsTitle": "Ayarlar",
@@ -279,5 +298,30 @@
   "media": {
     "audioRecording": "Ses Kaydı",
     "attachment": "Ek"
+  },
+  "projects": {
+    "title": "Projeler",
+    "description": "Sohbetlerini projelere göre organize et.",
+    "name": "Proje adı",
+    "details": "Detaylar (opsiyonel)",
+    "create": "Proje Oluştur",
+    "history": "Proje Geçmişi",
+    "checkHistory": "Geçmişi İncele",
+    "back": "Geri",
+    "empty": "Henüz proje yok.",
+    "chats": "sohbet",
+    "activeProject": "Aktif Proje",
+    "exitProject": "Projeden Çık",
+    "noContext": "Henüz hafıza yok — ilk sohbetten sonra oluşacak.",
+    "deleteProject": "Projeyi Sil",
+    "confirmDelete": "\"{name}\" projesini silmek istediğinizden emin misiniz? Tüm sohbetler genel geçmişe taşınacak."
+  },
+  "aiMode": {
+    "fast": "Hızlı",
+    "fastDesc": "Doğrudan işlem yapar, plan yapmaz",
+    "planning": "Planlama",
+    "planningDesc": "Önce plan oluşturur, sonra uygular",
+    "imaginer": "Düşünceli",
+    "imaginerDesc": "Yapıyı analiz eder, dikkatli değişiklik yapar"
   }
 }

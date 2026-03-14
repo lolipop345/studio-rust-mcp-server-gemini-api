@@ -35,6 +35,13 @@
         </svg>
         <span data-i18n="sidebar.newChat">New Chat</span>
       </button>
+      <button class="sidebar-action-btn" id="btn-projects">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        </svg>
+        <span data-i18n="sidebar.projects">Projects</span>
+      </button>
       <button class="sidebar-action-btn" id="btn-open-search">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
@@ -42,6 +49,22 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <span data-i18n="sidebar.searchChats">Search Chats</span>
+      </button>
+    </div>
+
+    <!-- Project mode banner (shown when a project is active) -->
+    <div id="project-mode-banner" class="hidden">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      </svg>
+      <span id="project-mode-name"></span>
+      <button id="btn-exit-project" title="Exit project">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
       </button>
     </div>
 
@@ -103,6 +126,24 @@
           style="opacity: 0.8; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; display: flex; align-items: center;"></span>
       </div>
       <div id="titlebar-actions">
+        <!-- Windows/Linux custom window controls (hidden on macOS) -->
+        <div id="window-controls">
+          <button id="btn-minimize" class="window-control-btn" title="Minimize">
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <rect y="5" width="12" height="1.5" fill="currentColor" />
+            </svg>
+          </button>
+          <button id="btn-maximize" class="window-control-btn" title="Maximize">
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <rect x="1" y="1" width="10" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.3" />
+            </svg>
+          </button>
+          <button id="btn-close-window" class="window-control-btn window-close-btn" title="Close">
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -234,6 +275,72 @@
                     <span data-i18n="attach.useCamera">Use Camera</span>
                   </button>
                 </div>
+                <div class="ai-mode-container">
+                  <button id="btn-ai-mode" class="ai-mode-btn" title="AI Mode">
+                    <svg id="ai-mode-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    <span id="ai-mode-label" data-i18n="aiMode.fast">Fast</span>
+                  </button>
+                  <div id="ai-mode-popover" class="hidden">
+                    <button class="ai-mode-option active" data-mode="fast">
+                      <div class="ai-mode-option-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                        </svg>
+                      </div>
+                      <div class="ai-mode-option-info">
+                        <span class="ai-mode-option-name" data-i18n="aiMode.fast">Fast</span>
+                        <span class="ai-mode-option-desc" data-i18n="aiMode.fastDesc">Direct execution, no
+                          planning</span>
+                      </div>
+                      <svg class="ai-mode-check" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </button>
+                    <button class="ai-mode-option" data-mode="planning">
+                      <div class="ai-mode-option-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                        </svg>
+                      </div>
+                      <div class="ai-mode-option-info">
+                        <span class="ai-mode-option-name" data-i18n="aiMode.planning">Planning</span>
+                        <span class="ai-mode-option-desc" data-i18n="aiMode.planningDesc">Creates a plan first, then
+                          executes</span>
+                      </div>
+                      <svg class="ai-mode-check" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </button>
+                    <button class="ai-mode-option" data-mode="imaginer">
+                      <div class="ai-mode-option-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 16v-4" />
+                          <path d="M12 8h.01" />
+                        </svg>
+                      </div>
+                      <div class="ai-mode-option-info">
+                        <span class="ai-mode-option-name" data-i18n="aiMode.imaginer">Imaginer</span>
+                        <span class="ai-mode-option-desc" data-i18n="aiMode.imaginerDesc">Analyzes structure, then
+                          modifies thoughtfully</span>
+                      </div>
+                      <svg class="ai-mode-check" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
                 <button id="btn-search" class="action-btn-subtle hidden" data-i18n-title="tooltips.search"
                   title="Web'de Ara (Grounding)">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -511,6 +618,166 @@
       </div>
     </div>
 
+    <!-- ── Projects View ────────────────────────────────────────── -->
+    <div id="projects-view" class="hidden">
+      <div id="projects-view-container">
+        <!-- header removed — access via sidebar -->
+        <div class="projects-view-body">
+          <div class="projects-create-section">
+            <div class="projects-hero">
+              <div class="projects-hero-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              <h2 data-i18n="projects.title">Projects</h2>
+              <p data-i18n="projects.description">Organize your chats into projects with AI memory.</p>
+            </div>
+            <div class="projects-form">
+              <div class="projects-form-row">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+                <input id="project-name-input" type="text" data-i18n-placeholder="projects.name"
+                  placeholder="Project name" autocomplete="off" spellcheck="false" />
+              </div>
+              <div class="projects-form-row textarea-row">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" style="margin-top:3px">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+                <textarea id="project-details-input" rows="2" data-i18n-placeholder="projects.details"
+                  placeholder="Details (optional)..." spellcheck="false"></textarea>
+              </div>
+              <button id="btn-create-project" class="btn-primary projects-create-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span data-i18n="projects.create">Create Project</span>
+              </button>
+            </div>
+          </div>
+          <div class="projects-history-section">
+            <div class="projects-history-header">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span data-i18n="projects.history">Project History</span>
+            </div>
+            <div id="projects-list"><!-- populated dynamically --></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Project History View ──────────────────────────────────── -->
+    <div id="project-history-view" class="hidden">
+      <div id="project-history-container">
+        <div class="project-history-header">
+          <button id="btn-back-to-projects" class="projects-back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            <span data-i18n="projects.back">Back</span>
+          </button>
+          <span id="project-history-title" class="project-history-title-text"></span>
+          <button id="btn-project-new-chat" class="btn-primary project-new-chat-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span data-i18n="sidebar.newChat">New Chat</span>
+          </button>
+        </div>
+        <div class="project-history-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input id="project-search-input" type="text" data-i18n-placeholder="sidebar.search"
+            placeholder="Search chats..." autocomplete="off" spellcheck="false" />
+          <div style="position: relative; display: flex; align-items: center;">
+            <button id="btn-project-filters" class="search-filter-btn" title="Filters">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+                <line x1="11" y1="18" x2="13" y2="18" />
+              </svg>
+            </button>
+            <div id="project-filters-dropdown" class="hidden">
+              <p class="filter-dropdown-label" data-i18n="search.filterBy">Filter by</p>
+              <div class="filter-section">
+                <button class="project-filter-chip filter-chip" data-filter="onlymodel:true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 8c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z" />
+                    <path
+                      d="M3 12h1M20 12h1M12 3v1M12 20v1M5.6 5.6l.7.7M17.7 17.7l.7.7M5.6 18.4l.7-.7M17.7 6.3l.7-.7" />
+                  </svg>
+                  <span data-i18n="search.filterModel">Model Only</span>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </button>
+                <button class="project-filter-chip filter-chip" data-filter="onlyuser:true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span data-i18n="search.filterUser">User Only</span>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </button>
+                <button class="project-filter-chip filter-chip" data-filter="onlytitle:true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 6h16M4 12h10M4 18h6" />
+                  </svg>
+                  <span data-i18n="search.filterTitle">Title Only</span>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </button>
+              </div>
+              <div class="filter-divider"></div>
+              <div class="filter-section">
+                <button class="project-filter-chip filter-chip" data-filter="last:7d">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <span data-i18n="search.filterLast7">Last 7 Days</span>
+                  <svg class="filter-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="project-chats-list" class="project-chats-list"></div>
+      </div>
+    </div>
+
   </div> <!-- end right-column -->
 
   <div id="modal-overlay" class="hidden">
@@ -545,6 +812,14 @@
                 fill="currentColor" />
             </svg>
             <span data-i18n="settings.tabAgent">Agent</span>
+          </button>
+          <button class="tab-btn" data-tab="tab-tools">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path
+                d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+            </svg>
+            <span data-i18n="settings.tabTools">Plugin &amp; Tools</span>
           </button>
           <button class="tab-btn" data-tab="tab-themes">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -631,10 +906,13 @@
           <!-- TAB 2: Agent -->
           <div id="tab-agent" class="tab-panel hidden">
             <div class="settings-group">
-              <label data-i18n="settings.systemInstructions">System Instructions</label>
+              <label data-i18n="settings.customInstructions">Custom Instructions</label>
+              <p class="setting-desc" data-i18n="settings.customInstructionsDesc">These instructions are always sent to
+                the model in every chat. Saved automatically.</p>
               <div id="prompt-input-wrapper">
-                <textarea id="system-prompt-input" rows="5"
-                  placeholder="e.g., You are a senior software architect..."></textarea>
+                <textarea id="custom-instructions-input" rows="6"
+                  data-i18n-placeholder="settings.customInstructionsPlaceholder"
+                  placeholder="e.g., Always respond in Turkish. Use formal language..."></textarea>
               </div>
             </div>
 
@@ -667,8 +945,70 @@
             </div>
           </div>
 
+          <!-- TAB 2.5: Plugin & Tools -->
+          <div id="tab-tools" class="tab-panel hidden">
+            <div class="settings-group">
+              <label data-i18n="settings.tabTools">Plugin &amp; Tools</label>
+              <p class="setting-desc" data-i18n="settings.pluginToolsDesc">Install or update the Roblox Studio plugin to
+                the latest version.</p>
+
+              <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button id="btn-update-plugin" class="btn-primary"
+                  style="flex: 1; justify-content: center; height: 36px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                    <path d="M3 22v-6h6"></path>
+                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                  </svg>
+                  <span data-i18n="settings.updatePlugin">Update Plugin</span>
+                </button>
+
+                <button id="btn-install-plugin" class="btn-secondary"
+                  style="flex: 1; justify-content: center; height: 36px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span data-i18n="settings.installPlugin">Install Plugin</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- TAB 3: Themes -->
           <div id="tab-themes" class="tab-panel hidden">
+            <!-- Custom Themes Header / Actions -->
+            <div class="settings-group" style="padding-bottom: 0;">
+              <div class="theme-cards" style="margin-bottom: 24px;">
+                <button id="btn-import-theme" class="theme-action-card">
+                  <div class="theme-action-icon-wrapper">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                  </div>
+                  <span data-i18n="settings.importTheme">Import Theme</span>
+                </button>
+                <button id="btn-export-theme" class="theme-action-card">
+                  <div class="theme-action-icon-wrapper">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                  </div>
+                  <span data-i18n="settings.exportTheme">Export Theme</span>
+                </button>
+              </div>
+            </div>
+
             <div class="settings-group">
               <label data-i18n="settings.themesTitle">Appearance</label>
               <div class="theme-cards">
@@ -706,6 +1046,90 @@
                     </svg>
                   </div>
                 </button>
+                <button class="theme-card" data-theme-value="deep-orange.css">
+                  <div class="theme-card-preview theme-preview-dark"
+                    style="background:#191614; border-color: rgba(255,255,255,0.1);">
+                    <div class="theme-preview-bar" style="background:rgba(255,255,255,0.04);"></div>
+                    <div class="theme-preview-body">
+                      <div class="theme-preview-bubble" style="background:#2c211a;"></div>
+                      <div class="theme-preview-bubble short"
+                        style="background:transparent; border: 1px solid rgba(255,255,255,0.1);"></div>
+                      <div class="theme-preview-bubble" style="background:#2c211a;"></div>
+                    </div>
+                  </div>
+                  <div class="theme-card-label">
+                    <span data-i18n="settings.themesDeepOrange">Deep Orange</span>
+                    <svg class="theme-card-check" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                </button>
+                <button class="theme-card" data-theme-value="amoled.css">
+                  <div class="theme-card-preview theme-preview-dark"
+                    style="background:#000000; border-color: rgba(255,255,255,0.2);">
+                    <div class="theme-preview-bar" style="background:rgba(255,255,255,0.04);"></div>
+                    <div class="theme-preview-body">
+                      <div class="theme-preview-bubble" style="background:#151515;"></div>
+                      <div class="theme-preview-bubble short"
+                        style="background:transparent; border: 1px solid rgba(255,255,255,0.1);"></div>
+                      <div class="theme-preview-bubble" style="background:#151515;"></div>
+                    </div>
+                  </div>
+                  <div class="theme-card-label">
+                    <span data-i18n="settings.themesAmoled">AMOLED</span>
+                    <svg class="theme-card-check" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                </button>
+                <button class="theme-card" data-theme-value="fir-green.css">
+                  <div class="theme-card-preview theme-preview-dark"
+                    style="background:#121a14; border-color: rgba(255,255,255,0.1);">
+                    <div class="theme-preview-bar" style="background:rgba(255,255,255,0.04);"></div>
+                    <div class="theme-preview-body">
+                      <div class="theme-preview-bubble" style="background:#1e2a20;"></div>
+                      <div class="theme-preview-bubble short"
+                        style="background:transparent; border: 1px solid rgba(255,255,255,0.1);"></div>
+                      <div class="theme-preview-bubble" style="background:#1e2a20;"></div>
+                    </div>
+                  </div>
+                  <div class="theme-card-label">
+                    <span data-i18n="settings.themesKoknar">Fir Green</span>
+                    <svg class="theme-card-check" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                </button>
+                <button class="theme-card" data-theme-value="blood-moon.css">
+                  <div class="theme-card-preview theme-preview-dark"
+                    style="background:#1a0f0f; border-color: rgba(255,255,255,0.1);">
+                    <div class="theme-preview-bar" style="background:rgba(255,255,255,0.04);"></div>
+                    <div class="theme-preview-body">
+                      <div class="theme-preview-bubble" style="background:#2c1818;"></div>
+                      <div class="theme-preview-bubble short"
+                        style="background:transparent; border: 1px solid rgba(255,255,255,0.1);"></div>
+                      <div class="theme-preview-bubble" style="background:#2c1818;"></div>
+                    </div>
+                  </div>
+                  <div class="theme-card-label">
+                    <span data-i18n="settings.themesKanliAy">Blood Moon</span>
+                    <svg class="theme-card-check" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+            <div class="settings-divider"></div>
+
+            <div class="settings-group">
+              <label data-i18n="settings.customThemes">CUSTOM THEMES</label>
+              <div class="theme-cards" id="custom-themes-list">
+                <!-- Dynamically populated -->
               </div>
             </div>
           </div>
@@ -714,7 +1138,8 @@
           <div id="tab-data" class="tab-panel hidden">
             <div class="data-section">
               <p class="data-section-title" data-i18n="settings.dataTitle">Data</p>
-              <p class="setting-desc" data-i18n="settings.dataDesc">Delete all saved chat history from the database.</p>
+              <p class="setting-desc" data-i18n="settings.dataDesc">Delete all saved chat history from the database.
+              </p>
               <button id="btn-clear-history" class="btn-danger btn-full">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                   stroke-linecap="round" stroke-linejoin="round">
@@ -727,7 +1152,8 @@
 
             <div class="data-section">
               <p class="data-section-title" data-i18n="settings.cookieTitle">Cookie &amp; Preferences</p>
-              <p class="setting-desc" data-i18n="settings.cookieDesc">Reset theme, language and other local preferences
+              <p class="setting-desc" data-i18n="settings.cookieDesc">Reset theme, language and other local
+                preferences
                 to defaults.</p>
               <button id="btn-reset-cookies" class="btn-danger btn-full">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"

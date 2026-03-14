@@ -25,6 +25,7 @@ export type MockWebSocketClient = {
 	Opened: RBXScriptSignal,
 	Closed: RBXScriptSignal,
 	MessageReceived: RBXScriptSignal,
+	AgentActivityChanged: RBXScriptSignal,
 	ConnectionState: typeof(EnumWebSocketState.Connecting),
 }
 
@@ -38,6 +39,7 @@ type MockWebSocketClientPrivate = MockWebSocketClient & {
 	_OpenedEvent: BindableEvent,
 	_ClosedEvent: BindableEvent,
 	_MessageReceivedEvent: BindableEvent,
+	_AgentActivityChangedEvent: BindableEvent,
 }
 
 function MockWebSocketClient.new(uri: string): MockWebSocketClient
@@ -56,6 +58,9 @@ function MockWebSocketClient.new(uri: string): MockWebSocketClient
 
 	self._MessageReceivedEvent = Instance.new("BindableEvent")
 	self.MessageReceived = self._MessageReceivedEvent.Event
+
+	self._AgentActivityChangedEvent = Instance.new("BindableEvent")
+	self.AgentActivityChanged = self._AgentActivityChangedEvent.Event
 
 	self.ConnectionState = EnumWebSocketState.Connecting
 
@@ -87,19 +92,37 @@ function MockWebSocketClient._OpenImpl(self: MockWebSocketClientPrivate)
 	self._OpenedEvent:Fire()
 
 	self._pollTask = task.spawn(function()
+		local lastPollTick = 0
+		local lastAgentStatus = false
+		local lastAgentTool: string? = nil
+		
 		while self.ConnectionState == EnumWebSocketState.Open do
-			local response = doRequest(self._uri .. self._receiveEndpoint, "GET")
-
-			if response then
-				if response.StatusCode == 200 and response.Success then
-					self._MessageReceivedEvent:Fire(response.Body)
-					continue
-				elseif response.StatusCode == 423 then
-					continue
+			if tick() - lastPollTick >= POLL_WAIT_TIME then
+				-- Poll main message queue
+				local messageResponse = doRequest(self._uri .. self._receiveEndpoint, "GET")
+				if messageResponse and messageResponse.StatusCode == 200 and messageResponse.Success then
+					self._MessageReceivedEvent:Fire(messageResponse.Body)
 				end
+				
+				-- Poll agent activity
+				local agentResponse = doRequest(self._uri .. "/agent_status", "GET")
+				if agentResponse and agentResponse.Success and agentResponse.StatusCode == 200 then
+					local body = HttpService:JSONDecode(agentResponse.Body :: string)
+					if body and type(body.is_working) == "boolean" then
+						local currentAgentStatus = body.is_working
+						local currentTool = body.current_tool  -- may be nil
+						if currentAgentStatus ~= lastAgentStatus or currentTool ~= lastAgentTool then
+							self._AgentActivityChangedEvent:Fire(currentAgentStatus, currentTool)
+							lastAgentStatus = currentAgentStatus
+							lastAgentTool = currentTool
+						end
+					end
+				end
+				
+				lastPollTick = tick()
 			end
-
-			task.wait(POLL_WAIT_TIME)
+			
+			task.wait(0.2)
 		end
 	end)
 end

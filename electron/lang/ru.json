@@ -40,7 +40,15 @@
     "cookieDesc": "Сбросить тему, язык и другие локальные настройки к значениям по умолчанию.",
     "resetCookies": "Сбросить настройки",
     "oauthError": "OAuth не настроен. Добавьте oauth_config.json.",
-    "resetCookiesConfirm": "Тема, язык и другие локальные настройки будут сброшены. Приложение будет перезапущено."
+    "resetCookiesConfirm": "Тема, язык и другие локальные настройки будут сброшены. Приложение будет перезапущено.",
+    "customInstructions": "Пользовательские инструкции",
+    "customInstructionsDesc": "Эти инструкции отправляются модели в каждом чате. Сохраняются автоматически.",
+    "customInstructionsPlaceholder": "Напр., Всегда отвечай на русском. Используй формальный язык...",
+    "systemInstructionsDesc": "Инструкции для текущей сессии. Не сохраняются между сессиями.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Настройки",
@@ -265,10 +273,35 @@
     "audioRecording": "Аудиозапись",
     "attachment": "Вложение"
   },
+  "projects": {
+    "title": "Проекты",
+    "description": "Организуйте чаты в проекты с памятью ИИ.",
+    "name": "Название проекта",
+    "details": "Детали (необязательно)",
+    "create": "Создать проект",
+    "history": "История проекта",
+    "checkHistory": "Смотреть историю",
+    "back": "Назад",
+    "empty": "Проектов пока нет.",
+    "chats": "чатов",
+    "activeProject": "Активный проект",
+    "exitProject": "Выйти из проекта",
+    "noContext": "Памяти пока нет — появится после первого чата.",
+    "deleteProject": "Удалить проект",
+    "confirmDelete": "Вы уверены, что хотите удалить \"{name}\"? Все чаты будут перемещены в общую историю."
+  },
   "artifact": {
     "commentTriggerTitle": "Добавить комментарий к этому разделу",
     "commentPlaceholder": "Напишите ваш отзыв об этом разделе...",
     "commentCancel": "Отмена",
     "commentSave": "Сохранить"
+  },
+  "aiMode": {
+    "fast": "Быстрый",
+    "fastDesc": "Прямое выполнение, без планирования",
+    "planning": "Планирование",
+    "planningDesc": "Сначала создаёт план, потом выполняет",
+    "imaginer": "Аналитик",
+    "imaginerDesc": "Анализирует структуру, вносит изменения вдумчиво"
   }
 }

@@ -6,6 +6,7 @@ local MockWebSocketService = require(Main.MockWebSocketService)
 local PluginUtils = require(Main.Utils.PluginUtils)
 local ToolDispatcher = require(Main.Utils.ToolDispatcher)
 local Types = require(Main.Types)
+local AgentActivityUI = require(Main.UI.AgentActivityUI)
 
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local HttpService = game:GetService("HttpService")
@@ -53,7 +54,9 @@ local function toolCallHandler(args: Types.ToolArgs): string
 	end
 
 	local recording = ChangeHistoryService:TryBeginRecording("StudioMCP")
+	AgentActivityUI.show(toolName)
 	local success, response = pcall(ToolDispatcher.dispatchTool, toolName, toolArgs)
+	AgentActivityUI.hide()
 	if recording then
 		ChangeHistoryService:FinishRecording(recording, Enum.FinishRecordingOperation.Commit)
 	end
@@ -104,6 +107,7 @@ local function connectWebSocket()
 
 		log("[MCP] Successfully handled request")
 	end)
+
 
 	return client
 end

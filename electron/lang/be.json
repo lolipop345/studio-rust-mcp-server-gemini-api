@@ -40,7 +40,15 @@
     "cookieDesc": "Скінуць тэму, мову і іншыя лакальныя налады па змаўчанні.",
     "resetCookies": "Скінуць налады",
     "oauthError": "OAuth не настроены. Дадайце oauth_config.json.",
-    "resetCookiesConfirm": "Тэма, мова і іншыя лакальныя налады будуць скінуты. Праграма будзе перазапушчана."
+    "resetCookiesConfirm": "Тэма, мова і іншыя лакальныя налады будуць скінуты. Праграма будзе перазапушчана.",
+    "customInstructions": "Карыстальніцкія інструкцыі",
+    "customInstructionsDesc": "Гэтыя інструкцыі адпраўляюцца мадэлі ў кожным чаце. Захоўваюцца аўтаматычна.",
+    "customInstructionsPlaceholder": "Напр., Заўсёды адказвай па-беларуску. Выкарыстоўвай афіцыйную мову...",
+    "systemInstructionsDesc": "Інструкцыі сесіі. Не захоўваюцца паміж сесіямі.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Налады",
@@ -265,10 +273,35 @@
     "audioRecording": "Аўдыёзапіс",
     "attachment": "Укладанне"
   },
+  "projects": {
+    "title": "Праекты",
+    "description": "Арганізуйце свае чаты ў праекты з памяццю ШІ.",
+    "name": "Назва праекта",
+    "details": "Падрабязнасці (неабавязкова)",
+    "create": "Стварыць праект",
+    "history": "Гісторыя праекта",
+    "checkHistory": "Глядзець гісторыю",
+    "back": "Назад",
+    "empty": "Праектаў пакуль няма.",
+    "chats": "чатаў",
+    "activeProject": "Актыўны праект",
+    "exitProject": "Выйсці з праекта",
+    "noContext": "Памяці пакуль няма — з'явіцца пасля першага чату.",
+    "deleteProject": "Выдаліць праект",
+    "confirmDelete": "Вы ўпэўнены, што хочаце выдаліць \"{name}\"? Усе чаты будуць перамешчаны ў агульную гісторыю."
+  },
   "artifact": {
     "commentTriggerTitle": "Дадаць каментар да гэтага раздзела",
     "commentPlaceholder": "Напішыце водгук аб гэтым раздзеле...",
     "commentCancel": "Адмена",
     "commentSave": "Захаваць"
+  },
+  "aiMode": {
+    "fast": "Хуткі",
+    "fastDesc": "Прамое выкананне, без планавання",
+    "planning": "Планаванне",
+    "planningDesc": "Спачатку стварае план, потым выконвае",
+    "imaginer": "Мысляр",
+    "imaginerDesc": "Аналізуе структуру, змяняе абдумана"
   }
 }

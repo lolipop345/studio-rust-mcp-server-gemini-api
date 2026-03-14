@@ -66,6 +66,8 @@ async fn main() -> Result<()> {
             .route("/chat/events/{id}", get(chat_events_handler))
             .route("/chat/api-key", post(api_key_handler))
             .route("/chat/status", get(status_handler))
+            .route("/agent_status", get(agent_status_handler))
+            .route("/plugin/install", post(plugin_install_handler))
             .route("/chat/models", get(models_handler))
             .route("/history/list", get(history_list_handler))
             .route("/history/load/{id}", get(history_load_handler))
@@ -75,6 +77,11 @@ async fn main() -> Result<()> {
             .route("/history/update_title", post(history_update_title_handler))
             .route("/history/toggle_pin", post(history_toggle_pin_handler))
             .route("/history/search", get(history_search_handler))
+            .route("/projects", get(projects_list_handler))
+            .route("/projects", post(project_create_handler))
+            .route("/projects/{id}", axum::routing::delete(project_delete_handler))
+            .route("/projects/{id}/context", post(project_update_context_handler))
+            .route("/projects/{id}/memory", get(project_memory_handler))
             .with_state(server_state_clone);
             
         tracing::info!("HTTP server listening on port {STUDIO_PLUGIN_PORT}");

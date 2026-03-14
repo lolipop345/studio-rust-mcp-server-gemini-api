@@ -1,4 +1,4 @@
-const { app, BrowserWindow, safeStorage, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, safeStorage, ipcMain, shell, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
@@ -39,25 +39,40 @@ function createWindow() {
     ? path.join(__dirname, 'icons', 'AppLogo.ico')
     : path.join(__dirname, 'icons', 'AppLogo.png');
 
-  mainWindow = new BrowserWindow({
+  const isMac = process.platform === 'darwin';
+  const isWin = process.platform === 'win32';
+
+  const winOptions = {
     width: 1050,
     height: 750,
     minWidth: 600,
     minHeight: 500,
     title: "GeminiStudio",
     icon: iconPath,
-    titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 16, y: 16 },
-    backgroundColor: "#00000000",
-    transparent: true,
-    vibrancy: "fullscreen-ui", // macOS glassmorphism
-    visualEffectState: "active",
     show: false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
     },
-  });
+  };
+
+  if (isMac) {
+    winOptions.titleBarStyle = "hiddenInset";
+    winOptions.trafficLightPosition = { x: 16, y: 16 };
+    winOptions.backgroundColor = "#00000000";
+    winOptions.transparent = true;
+    winOptions.vibrancy = "fullscreen-ui";
+    winOptions.visualEffectState = "active";
+  } else if (isWin) {
+    winOptions.frame = false;
+    winOptions.backgroundColor = "#1a1a1a";
+  } else {
+    // Linux
+    winOptions.frame = false;
+    winOptions.backgroundColor = "#1a1a1a";
+  }
+
+  mainWindow = new BrowserWindow(winOptions);
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
@@ -92,6 +107,15 @@ function createWindow() {
     systemPreferences.askForMediaAccess('microphone');
   }
 }
+
+// IPC: Window controls (Windows/Linux)
+ipcMain.on("window-minimize", () => { if (mainWindow) mainWindow.minimize(); });
+ipcMain.on("window-maximize", () => {
+  if (mainWindow) {
+    mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
+  }
+});
+ipcMain.on("window-close", () => { if (mainWindow) mainWindow.close(); });
 
 // IPC: Save API key encrypted with OS-level encryption
 ipcMain.handle("save-api-key", async (_event, key) => {
@@ -495,6 +519,85 @@ ipcMain.handle("google-fetch-userinfo", async (_event, accessToken) => {
     req.on("error", () => resolve({ success: false }));
     req.end();
   });
+});
+
+// ── Themes Import/Export ─────────────────────────────────────────────────────
+
+ipcMain.handle("theme:export", async () => {
+  try {
+    const defaultDarkPath = path.join(__dirname, "themes", "dark.css");
+    if (!fs.existsSync(defaultDarkPath)) throw new Error("dark.css not found.");
+
+    const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+      title: "Export Theme",
+      defaultPath: "dark.css",
+      filters: [{ name: "CSS Files", extensions: ["css"] }]
+    });
+
+    if (canceled || !filePath) return { success: false, canceled: true };
+
+    fs.copyFileSync(defaultDarkPath, filePath);
+    return { success: true, filePath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("theme:import", async () => {
+  try {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      title: "Import Theme",
+      filters: [{ name: "CSS Files", extensions: ["css"] }],
+      properties: ["openFile"]
+    });
+
+    if (canceled || filePaths.length === 0) return { success: false, canceled: true };
+
+    const sourcePath = filePaths[0];
+    const fileName = path.basename(sourcePath);
+
+    // Safety check
+    if (fileName === "dark.css" || fileName === "light.css") {
+      return { success: false, error: "Cannot overwrite core theme files." };
+    }
+
+    const userThemesDir = path.join(__dirname, "user-themes");
+    if (!fs.existsSync(userThemesDir)) fs.mkdirSync(userThemesDir, { recursive: true });
+
+    const destPath = path.join(userThemesDir, fileName);
+    fs.copyFileSync(sourcePath, destPath);
+
+    return { success: true, fileName };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("theme:get-custom", async () => {
+  try {
+    const userThemesDir = path.join(__dirname, "user-themes");
+    if (!fs.existsSync(userThemesDir)) return { themes: [] };
+
+    const files = fs.readdirSync(userThemesDir).filter(f => f.endsWith(".css"));
+
+    return { themes: files };
+  } catch (err) {
+    return { themes: [] };
+  }
+});
+
+ipcMain.handle("theme:delete", async (event, fileName) => {
+  try {
+    const userThemesDir = path.join(__dirname, "user-themes");
+    const filePath = path.join(userThemesDir, fileName);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      return { success: true };
+    }
+    return { success: false, error: "File not found" };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 });
 
 // Focus window if a second instance is launched

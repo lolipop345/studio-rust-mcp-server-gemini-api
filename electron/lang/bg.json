@@ -40,7 +40,15 @@
     "cookieDesc": "Нулиране на тема, език и други локални предпочитания по подразбиране.",
     "resetCookies": "Нулиране на предпочитанията",
     "oauthError": "OAuth не е конфигуриран. Добавете oauth_config.json.",
-    "resetCookiesConfirm": "Темата, езикът и други локални предпочитания ще бъдат нулирани. Приложението ще се рестартира."
+    "resetCookiesConfirm": "Темата, езикът и други локални предпочитания ще бъдат нулирани. Приложението ще се рестартира.",
+    "customInstructions": "Персонализирани инструкции",
+    "customInstructionsDesc": "Тези инструкции се изпращат на модела във всеки чат. Записват се автоматично.",
+    "customInstructionsPlaceholder": "Напр., Винаги отговаряй на български. Използвай официален език...",
+    "systemInstructionsDesc": "Инструкции за сесията. Не се запазват между сесиите.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Настройки",
@@ -265,10 +273,35 @@
     "audioRecording": "Аудио запис",
     "attachment": "Прикачен файл"
   },
+  "projects": {
+    "title": "Проекти",
+    "description": "Организирайте чатовете си в проекти с AI памет.",
+    "name": "Име на проекта",
+    "details": "Подробности (по избор)",
+    "create": "Създай проект",
+    "history": "История на проекта",
+    "checkHistory": "Виж историята",
+    "back": "Назад",
+    "empty": "Все още няма проекти.",
+    "chats": "чата",
+    "activeProject": "Активен проект",
+    "exitProject": "Излез от проекта",
+    "noContext": "Все още няма памет — ще се създаде след първия чат.",
+    "deleteProject": "Изтрий проект",
+    "confirmDelete": "Сигурни ли сте, че искате да изтриете \"{name}\"? Всички чатове ще бъдат преместени в общата история."
+  },
   "artifact": {
     "commentTriggerTitle": "Добавяне на коментар към тази секция",
     "commentPlaceholder": "Напишете отзива си за тази секция...",
     "commentCancel": "Отказ",
     "commentSave": "Запазване"
+  },
+  "aiMode": {
+    "fast": "Бързо",
+    "fastDesc": "Директно изпълнение, без планиране",
+    "planning": "Планиране",
+    "planningDesc": "Първо създава план, после изпълнява",
+    "imaginer": "Мислител",
+    "imaginerDesc": "Анализира структурата, променя внимателно"
   }
 }

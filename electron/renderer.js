@@ -1,11 +1,55 @@
 const { Marked } = require("marked");
 const { markedHighlight } = require("marked-highlight");
 const hljs = require("highlight.js");
-const { shell, ipcRenderer } = require("electron");
+const { shell, ipcRenderer, clipboard } = require("electron");
 const os = require("os");
 const path = require("path");
 const { exec } = require("child_process");
 const fs = require("fs");
+
+// Set platform attribute for CSS
+const platform = os.platform(); // "darwin" | "win32" | "linux"
+document.documentElement.setAttribute("data-platform", platform);
+
+// Robust clipboard copy that works in Electron
+function copyToClipboard(text) {
+    try {
+        clipboard.writeText(text);
+    } catch {
+        // Fallback: hidden textarea + execCommand
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.cssText = "position:fixed;left:-9999px;top:-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+    }
+}
+
+// Windows/Linux custom window controls
+if (platform !== "darwin") {
+    const { remote } = (() => {
+        try { return require("@electron/remote"); } catch { return {}; }
+    })();
+    const currentWindow = remote ? remote.getCurrentWindow() : null;
+
+    document.getElementById("btn-minimize")?.addEventListener("click", () => {
+        if (currentWindow) currentWindow.minimize();
+        else ipcRenderer.send("window-minimize");
+    });
+    document.getElementById("btn-maximize")?.addEventListener("click", () => {
+        if (currentWindow) {
+            currentWindow.isMaximized() ? currentWindow.unmaximize() : currentWindow.maximize();
+        } else {
+            ipcRenderer.send("window-maximize");
+        }
+    });
+    document.getElementById("btn-close-window")?.addEventListener("click", () => {
+        if (currentWindow) currentWindow.close();
+        else ipcRenderer.send("window-close");
+    });
+}
 
 window.addEventListener('error', (e) => {
     try { fs.appendFileSync('/tmp/renderer.log', (e.error ? e.error.stack : e.message) + '\n'); } catch (err) { }
@@ -69,6 +113,22 @@ function getSystemFullName() {
     return cachedFullName || "User";
 }
 
+function updateHeroGreeting() {
+    const greetingEl = document.getElementById("hero-greeting");
+    if (greetingEl) {
+        try {
+            // If logged in with Google, prefer the Google account display name
+            const googleUsername = (isGoogleLoggedIn && googleUserInfo?.name)
+                ? googleUserInfo.name
+                : null;
+            const name = googleUsername || getSystemFullName();
+            greetingEl.textContent = t("landing.hello", { name });
+        } catch (e) {
+            greetingEl.textContent = t("landing.hello", { name: os.hostname().split(".")[0] || "User" });
+        }
+    }
+}
+
 // Apply translations to all elements with data-i18n attribute
 function applyTranslations() {
     document.querySelectorAll("[data-i18n]").forEach((el) => {
@@ -107,15 +167,7 @@ function applyTranslations() {
         }
     }
 
-    const greetingEl = document.getElementById("hero-greeting");
-    if (greetingEl) {
-        try {
-            const name = getSystemFullName();
-            greetingEl.textContent = t("landing.hello", { name });
-        } catch (e) {
-            greetingEl.textContent = t("landing.hello", { name: os.hostname().split(".")[0] || "User" });
-        }
-    }
+    updateHeroGreeting();
 }
 
 function detectOSLanguage() {
@@ -173,6 +225,8 @@ const hljsThemeLink = document.getElementById("hljs-theme");
 
 // New UI Elements
 const btnAttach = document.getElementById("btn-attach");
+const btnImportTheme = document.getElementById("btn-import-theme");
+const btnExportTheme = document.getElementById("btn-export-theme");
 const artifactSidebar = document.getElementById("artifact-sidebar");
 const artifactContentArea = document.getElementById("artifact-content-area");
 const btnArtifactProceed = document.getElementById("btn-artifact-proceed");
@@ -194,10 +248,24 @@ const imageUpload = document.getElementById("image-upload");
 const imagePreview = document.getElementById("image-preview");
 const previewImg = document.getElementById("preview-img");
 const btnRemoveImg = document.getElementById("btn-remove-img");
+const btnInstallPlugin = document.getElementById("btn-install-plugin");
+const btnUpdatePlugin = document.getElementById("btn-update-plugin");
 
-const systemPromptInput = document.getElementById("system-prompt-input");
+const customInstructionsInput = document.getElementById("custom-instructions-input");
 const tempSlider = document.getElementById("temp-slider");
 const tempVal = document.getElementById("temp-val");
+
+// Load & persist custom instructions
+if (customInstructionsInput) {
+    customInstructionsInput.value = localStorage.getItem("custom_system_instructions") || "";
+    let ciDebounce = null;
+    customInstructionsInput.addEventListener("input", () => {
+        clearTimeout(ciDebounce);
+        ciDebounce = setTimeout(() => {
+            localStorage.setItem("custom_system_instructions", customInstructionsInput.value);
+        }, 400);
+    });
+}
 
 const btnOpenSearch = document.getElementById("btn-open-search");
 const searchView = document.getElementById("search-view");
@@ -218,6 +286,7 @@ let googleUserInfo = null; // { email, picture, access_token }
 let isProcessing = false;
 let currentModel = "";
 let currentThinkingLevel = "none"; // Disabled by default until toggle is checked
+let currentAIMode = "fast"; // "fast" | "planning" | "imaginer"
 let useSearch = true; // Web Grounding default ON
 let useCode = false;
 let attachedFiles = []; // Array of {base64, mimeType, name, dataUrl}
@@ -230,6 +299,12 @@ let currentArtifactComments = {}; // block_index -> comment string
 let activeArtifactTx = null; // store the chat ID waiting for the plan
 let isPlanningMode = false; // true when model is in planning/Q&A phase
 let isTemporarySession = false; // true when in temporary (unsaved) chat mode
+
+// ─── Project State ──────────────────────────────────────────────────────────
+let currentProjectId = null;
+let currentProjectName = "";
+let currentProjectContext = "";
+let _currentProjectData = null; // full project row for reference
 
 // ─── Processing State & Abort ──────────────────────────────────────
 function setProcessingState(processing) {
@@ -389,11 +464,15 @@ function isLikelyBinary(base64) {
 async function loadUserAvatar() {
     return new Promise((resolve) => {
         if (os.platform() === 'darwin') {
-            const username = os.userInfo().username;
-            exec(`dscl . -read /Users/${username} JPEGPhoto | tail -n +2 | xxd -r -p | base64`, (err, stdout) => {
+            const cmd = `/usr/bin/dscl . -read /Users/$(/usr/bin/id -un) JPEGPhoto | /usr/bin/tail -n +2 | /usr/bin/xxd -r -p | /usr/bin/base64 | /usr/bin/tr -d '[:space:]'`;
+            try { fs.appendFileSync('/tmp/renderer.log', `loadUserAvatar (darwin) executing cmd\n`); } catch (e) { }
+            exec(cmd, (err, stdout) => {
                 const b64 = stdout ? stdout.trim() : "";
                 if (!err && b64.length > 100) {
                     userAvatarBase64 = `data:image/jpeg;base64,${b64}`;
+                    try { fs.appendFileSync('/tmp/renderer.log', `Avatar loaded: ${b64.length} chars. Prefix: ${b64.substring(0, 30)}\n`); } catch (e) { }
+                } else {
+                    try { fs.appendFileSync('/tmp/renderer.log', `Avatar load failed. err: ${err}, length: ${b64.length}, stdout_start: ${b64.substring(0, 20)}\n`); } catch (e) { }
                 }
                 resolve();
             });
@@ -421,6 +500,130 @@ async function loadUserAvatar() {
     });
 }
 
+function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+    updateThemeIcons(theme);
+    updateHljsTheme(theme);
+
+    let customLink = document.getElementById("custom-theme-style");
+    if (theme.endsWith(".css")) {
+        if (!customLink) {
+            customLink = document.createElement("link");
+            customLink.id = "custom-theme-style";
+            customLink.rel = "stylesheet";
+            document.head.appendChild(customLink);
+        }
+
+        let basePath = "themes/";
+        const builtInThemes = ["deep-orange.css", "amoled.css", "fir-green.css", "blood-moon.css"];
+        if (!builtInThemes.includes(theme)) {
+            basePath = "user-themes/";
+        }
+
+        customLink.href = `${basePath}${theme}?t=${Date.now()}`;
+    } else {
+        if (customLink) customLink.remove();
+    }
+}
+
+async function loadCustomThemes(currentTheme) {
+    const customList = document.getElementById("custom-themes-list");
+    if (!customList) return;
+
+    try {
+        const result = await ipcRenderer.invoke("theme:get-custom");
+        customList.innerHTML = "";
+
+        let foundCurrent = false;
+
+        for (const themeFile of result.themes) {
+            const btn = document.createElement("button");
+            btn.className = "theme-card";
+            btn.dataset.themeValue = themeFile;
+
+            const isActive = currentTheme === themeFile;
+            if (isActive) foundCurrent = true;
+
+            const name = themeFile.replace('.css', '');
+
+            // Fetch CSS to get real preview colors instead of hardcoded CSS variables
+            let bgPrimary = 'var(--bg-primary)';
+            let bgTertiary = 'var(--bg-tertiary)';
+            let bgInput = 'var(--bg-input)';
+            try {
+                const cssPath = path.join(__dirname, "user-themes", themeFile);
+                if (fs.existsSync(cssPath)) {
+                    const cssText = fs.readFileSync(cssPath, "utf-8");
+                    const matchPrimary = cssText.match(/--bg-primary:\s*([^;]+);/);
+                    const matchTertiary = cssText.match(/--bg-tertiary:\s*([^;]+);/);
+                    const matchInput = cssText.match(/--bg-input:\s*([^;]+);/);
+
+                    if (matchPrimary) bgPrimary = matchPrimary[1];
+                    if (matchTertiary) bgTertiary = matchTertiary[1];
+                    if (matchInput) bgInput = matchInput[1];
+                }
+            } catch (e) { console.error('Could not read theme CSS for preview', e); }
+
+            btn.innerHTML = `
+                <button class="delete-theme-btn" title="Delete Theme">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+                <div class="theme-card-preview theme-preview-dark" style="background:${bgPrimary}; border-color: rgba(255,255,255,0.1);">
+                    <div class="theme-preview-bar" style="background:${bgTertiary};"></div>
+                    <div class="theme-preview-body">
+                      <div class="theme-preview-bubble" style="background:${bgInput};"></div>
+                      <div class="theme-preview-bubble short" style="background:transparent; border: 1px solid rgba(255,255,255,0.1);"></div>
+                      <div class="theme-preview-bubble" style="background:${bgInput};"></div>
+                    </div>
+                </div>
+                <div class="theme-card-label">
+                    <span>${name}</span>
+                    <svg class="theme-card-check" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                </div>
+            `;
+
+            const deleteBtn = btn.querySelector('.delete-theme-btn');
+            deleteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const title = t('settings.deleteThemeTitle', { default: 'Delete Theme' });
+                const message = (currentLang.settings?.deleteThemeConfirm || "Are you sure you want to delete the theme '{name}'?").replace('{name}', name);
+                const confirmed = await showConfirm(title, message);
+                if (confirmed) {
+                    const res = await ipcRenderer.invoke("theme:delete", themeFile);
+                    if (res.success) {
+                        if (isActive) {
+                            // Revert to dark theme if active theme is deleted
+                            applyTheme('dark');
+                        }
+                        await loadCustomThemes(localStorage.getItem('theme') || 'dark');
+                    } else {
+                        console.error('Failed to delete theme:', res.error);
+                    }
+                }
+            });
+
+            btn.addEventListener("click", () => {
+                applyTheme(themeFile);
+                document.querySelectorAll("#custom-themes-list .theme-card").forEach(c => c.classList.remove("active"));
+                btn.classList.add("active");
+            });
+
+            customList.appendChild(btn);
+        }
+
+        if (foundCurrent) applyTheme(currentTheme);
+    } catch (e) {
+        console.error("Failed to load custom themes", e);
+    }
+}
+
 function initTheme() {
     const saved = localStorage.getItem("theme");
     let theme;
@@ -430,22 +633,16 @@ function initTheme() {
         // Detect OS color scheme (works on macOS & Windows)
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         theme = prefersDark ? "dark" : "light";
-        localStorage.setItem("theme", theme);
     }
-    document.documentElement.setAttribute("data-theme", theme);
-    updateThemeIcons(theme);
-    updateHljsTheme(theme);
+
+    applyTheme(theme);
+    loadCustomThemes(theme);
 
     // Listen for OS theme changes in real-time
     if (window.matchMedia) {
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             const newTheme = e.matches ? "dark" : "light";
-            document.documentElement.setAttribute("data-theme", newTheme);
-            localStorage.setItem("theme", newTheme);
-            updateThemeIcons(newTheme);
-            updateHljsTheme(newTheme);
-            updateThemeIcons(newTheme);
-            updateHljsTheme(newTheme);
+            applyTheme(newTheme);
         });
     }
 }
@@ -453,10 +650,7 @@ function initTheme() {
 function toggleTheme() {
     const current = document.documentElement.getAttribute("data-theme") || "dark";
     const next = current === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-    updateThemeIcons(next);
-    updateHljsTheme(next);
+    applyTheme(next);
 }
 
 function updateThemeIcons(theme) {
@@ -467,7 +661,7 @@ function updateThemeIcons(theme) {
 }
 
 function updateHljsTheme(theme) {
-    if (theme === "dark") {
+    if (theme === "dark" || theme === "deep-orange" || theme === "amoled" || theme.endsWith(".css")) {
         hljsThemeLink.href = "node_modules/highlight.js/styles/github-dark.min.css";
     } else {
         hljsThemeLink.href = "node_modules/highlight.js/styles/github.min.css";
@@ -658,6 +852,7 @@ ipcRenderer.on("google-oauth-code", async (_event, data) => {
     await fetchModels();
     updateGoogleLoginUI();
     updateSidebarProfile();
+    updateHeroGreeting();
     // Focus window
     mainWindow && mainWindow.focus && mainWindow.focus();
 });
@@ -679,38 +874,66 @@ if (btnGoogleLogout) {
         await checkStatus();
         updateGoogleLoginUI();
         updateSidebarProfile();
+        updateHeroGreeting();
     });
 }
 
-// Restore Google login on startup
+// Restore Google login on startup (also used to refresh token dynamically)
+async function ensureValidToken() {
+    if (!isGoogleLoggedIn || !googleUserInfo) return true; // not using OAuth
+
+    let token = googleUserInfo;
+    if (!token.expires_at) return true; // Just in case
+
+    const isExpired = Date.now() > token.expires_at - 300000; // 5 min buffer
+    if (!isExpired) return true;
+
+    if (!token.refresh_token) {
+        await ipcRenderer.invoke("google-delete-token");
+        isGoogleLoggedIn = false;
+        googleUserInfo = null;
+        updateGoogleLoginUI();
+        return false;
+    }
+
+    try {
+        const refreshResult = await ipcRenderer.invoke("google-refresh-token", token.refresh_token);
+        if (!refreshResult.success) {
+            await ipcRenderer.invoke("google-delete-token");
+            isGoogleLoggedIn = false;
+            googleUserInfo = null;
+            updateGoogleLoginUI();
+            return false;
+        }
+
+        token = {
+            ...token,
+            access_token: refreshResult.access_token,
+            expires_at: Date.now() + (refreshResult.expires_in * 1000),
+        };
+
+        await ipcRenderer.invoke("google-save-token", JSON.stringify(token));
+        googleUserInfo = token;
+        await setGoogleToken(token.access_token);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 async function restoreGoogleLogin() {
     try {
         const result = await ipcRenderer.invoke("google-load-token");
         if (!result.token || !result.token.access_token) return;
 
         let token = result.token;
+        googleUserInfo = token;
+        isGoogleLoggedIn = true;
 
-        // Check if access token is expired (5 min buffer)
-        const isExpired = token.expires_at && Date.now() > token.expires_at - 300000;
-        if (isExpired) {
-            if (!token.refresh_token) {
-                // No refresh token — force re-login
-                await ipcRenderer.invoke("google-delete-token");
-                return;
-            }
-            const refreshResult = await ipcRenderer.invoke("google-refresh-token", token.refresh_token);
-            if (!refreshResult.success) {
-                // Refresh failed — force re-login
-                await ipcRenderer.invoke("google-delete-token");
-                return;
-            }
-            token = {
-                ...token,
-                access_token: refreshResult.access_token,
-                expires_at: Date.now() + (refreshResult.expires_in * 1000),
-            };
-            await ipcRenderer.invoke("google-save-token", JSON.stringify(token));
-        }
+        const valid = await ensureValidToken();
+        if (!valid) return;
+
+        token = googleUserInfo; // ensureValidToken might have updated it
 
         // If name is missing (old session), try to fetch it
         if (!token.name && token.access_token) {
@@ -723,11 +946,12 @@ async function restoreGoogleLogin() {
                 }
             } catch { }
         }
+
         googleUserInfo = token;
-        isGoogleLoggedIn = true;
         await setGoogleToken(token.access_token);
         updateGoogleLoginUI();
         updateSidebarProfile();
+        updateHeroGreeting();
     } catch { }
 }
 
@@ -840,9 +1064,33 @@ function updateTopbar(liveTokens = 0) {
     }
 }
 
+function updateSidebarActiveState() {
+    // Clear ALL active states — both action buttons and history items
+    document.querySelectorAll(".sidebar-action-btn.active").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".sidebar-item.active").forEach(i => i.classList.remove("active"));
+
+    if (isTemporarySession) {
+        // Temp chat mode — highlight temp chat button only
+        document.getElementById("btn-temp-chat")?.classList.add("active");
+    } else if (currentSessionId) {
+        // Active saved session — highlight only the matching history item
+        document.querySelectorAll(".sidebar-item").forEach(item => {
+            if (item.dataset.chatId === currentSessionId) {
+                item.classList.add("active");
+            }
+        });
+    } else {
+        // New blank chat (no session yet) — highlight new chat button only
+        document.getElementById("btn-new-chat")?.classList.add("active");
+    }
+}
+
 async function loadSidebarHistory() {
     try {
-        const res = await fetch(`${API_BASE}/history/list`);
+        const url = currentProjectId
+            ? `${API_BASE}/history/list?project_id=${encodeURIComponent(currentProjectId)}`
+            : `${API_BASE}/history/list`;
+        const res = await fetch(url);
         if (!res.ok) return;
         const chats = await res.json();
 
@@ -858,7 +1106,7 @@ async function loadSidebarHistory() {
         chats.forEach(chat => {
             const item = document.createElement("div");
             item.className = "sidebar-item";
-            if (chat.id === currentSessionId) item.classList.add("active");
+            item.dataset.chatId = chat.id;
 
             const titleEl = document.createElement("div");
             titleEl.className = "sidebar-item-title";
@@ -936,7 +1184,8 @@ async function loadSidebarHistory() {
             delBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> ${t("actions.delete")}`;
             delBtn.onclick = async (e) => {
                 e.stopPropagation();
-                if (confirm(t("sidebar.confirmDelete", { default: "Are you sure you want to delete this chat?" }))) {
+                const confirmed = await showConfirm(t("actions.delete", { default: "Delete" }), t("sidebar.confirmDelete", { default: "Are you sure you want to delete this chat?" }));
+                if (confirmed) {
                     await fetch(`${API_BASE}/history/delete/${chat.id}`, { method: "POST" });
                     if (chat.id === currentSessionId) {
                         startNewSession(); // switch to blank session
@@ -958,9 +1207,13 @@ async function loadSidebarHistory() {
             ellipsisBtn.onclick = (e) => {
                 e.stopPropagation();
                 document.querySelectorAll('.sidebar-item-menu').forEach(m => {
-                    if (m !== menu) m.classList.add('hidden');
+                    if (m !== menu) {
+                        m.classList.add('hidden');
+                        m.parentElement.classList.remove('menu-open');
+                    }
                 });
-                menu.classList.toggle("hidden");
+                const isOpen = menu.classList.toggle("hidden");
+                actions.classList.toggle("menu-open", !menu.classList.contains("hidden"));
             };
 
             item.appendChild(titleEl);
@@ -975,6 +1228,7 @@ async function loadSidebarHistory() {
         });
 
         sectionPinned.style.display = hasPinned ? "block" : "none";
+        updateSidebarActiveState();
 
     } catch (e) {
         console.error("Failed to load sidebar history:", e);
@@ -1002,7 +1256,8 @@ async function autoSaveSession() {
                 pinned: isSessionPinned,
                 updated_at: Date.now(),
                 active_node_id: activeNodeId,
-                tree_data: JSON.stringify(chatTree)
+                tree_data: JSON.stringify(chatTree),
+                project_id: currentProjectId
             })
         });
         loadSidebarHistory();
@@ -1013,6 +1268,12 @@ async function autoSaveSession() {
 
 async function loadSession(id) {
     if (isProcessing) return; // don't load while generating
+
+    // Exit temp mode if active
+    if (isTemporarySession) {
+        isTemporarySession = false;
+        updateTempChatUI();
+    }
 
     try {
         const res = await fetch(`${API_BASE}/history/load/${id}`);
@@ -1072,6 +1333,7 @@ async function generateSessionTitle(prompt) {
             message: `Generate a very short, concise 3-5 word title for a conversation that starts with the following prompt. ONLY output the title, no quotes or additional text. Prompt: ${prompt}`
         };
         console.log("Generating title using payload:", payload);
+        await ensureValidToken();
         const res = await fetch(`${API_BASE}/chat/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1777,7 +2039,7 @@ function createActionBar(node, role) {
         copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
         copyBtn.title = t("actions.copy");
         copyBtn.onclick = (e) => {
-            navigator.clipboard.writeText(node.content);
+            copyToClipboard(node.content);
             showToast(t("actions.copiedToClipboard"), "info");
         };
 
@@ -1968,6 +2230,7 @@ function showToast(message, type = 'info') {
 }
 
 async function fetchModels() {
+    await ensureValidToken(); // Ensure token is fresh before querying API
     try {
         const res = await fetch(`${API_BASE}/chat/models`);
         if (!res.ok) {
@@ -2347,7 +2610,7 @@ function addCopyButtons(el) {
     el.querySelectorAll("pre code").forEach((block) => {
         block.parentElement.addEventListener("dblclick", () => {
             const text = block.textContent;
-            navigator.clipboard.writeText(text);
+            copyToClipboard(text);
             showToast(t("actions.copiedToClipboard"), "info");
         });
     });
@@ -2356,7 +2619,7 @@ function addCopyButtons(el) {
 window.copyCode = function (btn) {
     const pre = btn.closest("pre");
     const code = pre.querySelector("code");
-    navigator.clipboard.writeText(code.textContent);
+    copyToClipboard(code.textContent);
     btn.textContent = t("actions.copied");
     setTimeout(() => {
         btn.textContent = t("actions.copy");
@@ -2420,6 +2683,7 @@ async function explainErrorWithAI(errorCode, toastMsg, rawError) {
     const prompt = t("errors.aiExplainPrompt", { errorCode, toastMsg, rawError });
 
     try {
+        await ensureValidToken();
         const explainRes = await fetch(`${API_BASE}/chat/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2566,10 +2830,34 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
         history: historyPayload
     };
 
-    const sysPrompt = systemPromptInput.value.trim();
+    const customInstr = localStorage.getItem("custom_system_instructions") || "";
     const memoryDirective = `\n\n[SYSTEM DIRECTIVE: At the very end of your response, you MUST include a <memory> tag containing 3-5 concise keywords or a short summary of the important concepts from this specific interaction. Example: <memory>Roblox Studio, Script injection, Event handling</memory>]`;
 
-    payload.system_instruction = sysPrompt ? (sysPrompt + memoryDirective) : memoryDirective;
+    // Build: custom instructions (global) + memory directive
+    let combinedPrompt = "";
+    if (customInstr.trim()) combinedPrompt += customInstr.trim() + "\n\n";
+    let baseInstruction = combinedPrompt ? (combinedPrompt + memoryDirective) : memoryDirective;
+
+    // Inject project details as system instruction if in project mode
+    if (currentProjectId && _currentProjectData && _currentProjectData.details) {
+        baseInstruction = `[PROJECT INSTRUCTIONS – Custom instructions for this project:\n${_currentProjectData.details}]\n\n` + baseInstruction;
+    }
+
+    // Inject project memory context if in project mode
+    if (currentProjectId && currentProjectContext) {
+        baseInstruction = `[PROJECT MEMORY – Recent work in this project:\n${currentProjectContext}]\n\n` + baseInstruction;
+    }
+
+    // Inject AI mode directive
+    const debugInstructions = `\n\n### Debugging Requirements (Thoughtful/Planning Mode)\n- **ALWAYS** use \`debug_script\` after writing or modifying code to verify it works correctly.\n- \`debug_script\` runs code in a sandbox, tracks all Instance.new() calls, captures output, and reports errors.\n- After debug, all sandbox instances are automatically cleaned up (set cleanup=false to inspect).\n- If debug reveals errors, fix the code and debug again until it passes.\n`;
+
+    if (currentAIMode === "planning") {
+        baseInstruction = `[AI MODE: PLANNING] Before doing anything, first create a detailed step-by-step plan. Outline what you will do, what files/areas are involved, and the order of operations. Present the plan clearly, then ask the user for confirmation before proceeding with execution.\n\n` + baseInstruction + debugInstructions;
+    } else if (currentAIMode === "imaginer") {
+        baseInstruction = `[AI MODE: IMAGINER] Before making any changes, first carefully analyze the existing project structure, files, and architecture. Identify what needs to be modified and why. Present your analysis and proposed changes, then implement them thoughtfully with attention to consistency and best practices.\n\n` + baseInstruction + debugInstructions;
+    }
+
+    payload.system_instruction = baseInstruction;
 
     if (sendFiles.length > 0) {
         payload.file_base64 = sendFiles.map(f => f.base64);
@@ -2579,6 +2867,7 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
     let infoData = null;
 
     try {
+        await ensureValidToken();
         const res = await fetch(`${API_BASE}/chat/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2827,6 +3116,10 @@ async function sendMessage(overrideText = null, overrideImages = null, isAiRerun
                 currentChatId = null;
                 finishGenerationHandler = null;
                 inputEl.focus();
+                // Update project memory after each chat in project mode
+                if (currentProjectId) {
+                    updateProjectContext();
+                }
             }
         };
 
@@ -2915,6 +3208,52 @@ document.querySelectorAll(".think-btn").forEach(btn => {
         }
     });
 });
+
+// ── AI Mode Selector ────────────────────────────────────────────────────────
+const btnAIMode = document.getElementById("btn-ai-mode");
+const aiModePopover = document.getElementById("ai-mode-popover");
+const aiModeLabel = document.getElementById("ai-mode-label");
+const aiModeIcon = document.getElementById("ai-mode-icon");
+
+const AI_MODE_ICONS = {
+    fast: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+    planning: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+    imaginer: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'
+};
+
+if (btnAIMode && aiModePopover) {
+    btnAIMode.addEventListener("click", (e) => {
+        e.stopPropagation();
+        aiModePopover.classList.toggle("hidden");
+    });
+
+    document.querySelectorAll(".ai-mode-option").forEach(opt => {
+        opt.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const mode = opt.dataset.mode;
+            currentAIMode = mode;
+
+            // Update active state
+            document.querySelectorAll(".ai-mode-option").forEach(o => o.classList.remove("active"));
+            opt.classList.add("active");
+
+            // Update button label & icon
+            const nameEl = opt.querySelector(".ai-mode-option-name");
+            if (nameEl) aiModeLabel.textContent = nameEl.textContent;
+            if (aiModeIcon && AI_MODE_ICONS[mode]) {
+                aiModeIcon.innerHTML = AI_MODE_ICONS[mode];
+            }
+
+            aiModePopover.classList.add("hidden");
+        });
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!aiModePopover.contains(e.target) && !btnAIMode.contains(e.target)) {
+            aiModePopover.classList.add("hidden");
+        }
+    });
+}
 
 document.addEventListener("click", (e) => {
     if (!modelPopover.contains(e.target) && e.target !== modelBtn) {
@@ -3062,51 +3401,396 @@ btnCloseSuggestedMenu.addEventListener("click", closeSuggestedMenu);
 settingsBtn.addEventListener("click", showModal);
 
 // Theme card click handlers (inside settings modal)
-document.querySelectorAll(".theme-card").forEach(card => {
+document.querySelectorAll("#tab-themes > .settings-group > .theme-cards > .theme-card").forEach(card => {
     card.addEventListener("click", () => {
         const theme = card.dataset.themeValue;
-        document.documentElement.setAttribute("data-theme", theme);
-        localStorage.setItem("theme", theme);
-        updateThemeIcons(theme);
-        updateHljsTheme(theme);
+        applyTheme(theme);
     });
 });
 
-// ─── Sidebar new buttons ────────────────────────────────────────
+if (btnImportTheme) {
+    btnImportTheme.addEventListener("click", async () => {
+        const result = await ipcRenderer.invoke("theme:import");
+        if (result.success) {
+            const current = document.documentElement.getAttribute("data-theme") || "dark";
+            await loadCustomThemes(current);
+            applyTheme(result.fileName);
+        } else if (result.error) {
+            alert(t("settings.importError", { default: "Failed to import theme: " }) + result.error);
+        }
+    });
+}
+
+if (btnExportTheme) {
+    btnExportTheme.addEventListener("click", async () => {
+        const result = await ipcRenderer.invoke("theme:export");
+        if (result.error) {
+            alert(t("settings.exportError", { default: "Failed to export theme: " }) + result.error);
+        }
+    });
+}
+
+// ─── Sidebar Tab System ────────────────────────────────────────
 
 const btnTempChat = document.getElementById("btn-temp-chat");
+const btnProjects = document.getElementById("btn-projects");
 const btnToggleHistory = document.getElementById("btn-toggle-history");
 const sidebarHistoryContent = document.getElementById("sidebar-history-content");
+
+let currentSidebarTab = "new-chat"; // "temp-chat" | "new-chat" | "projects" | "search"
+
+function updateSidebarActiveBtn(tabName) {
+    // Clear all active states first
+    document.querySelectorAll(".sidebar-action-btn.active").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".sidebar-item.active").forEach(i => i.classList.remove("active"));
+    const map = {
+        "temp-chat": "btn-temp-chat",
+        "new-chat": "btn-new-chat",
+        "projects": "btn-projects",
+        "search": "btn-open-search"
+    };
+    const id = map[tabName];
+    if (id) {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.add("active");
+    }
+}
+
+function switchSidebarTab(tabName) {
+    currentSidebarTab = tabName;
+    updateSidebarActiveBtn(tabName);
+
+    // Hide all overlay views first
+    projectsView.classList.add("hidden");
+    projectHistoryView.classList.add("hidden");
+    searchView.classList.add("hidden");
+
+    if (tabName === "temp-chat") {
+        if (!isTemporarySession) {
+            const hasMessages = Object.values(chatTree).some(n => n.role === "user");
+            if (hasMessages || currentSessionId) {
+                autoSaveSession();
+            }
+            isTemporarySession = true;
+            updateTempChatUI();
+            startNewSession();
+        }
+    } else if (tabName === "new-chat") {
+        if (isTemporarySession) {
+            isTemporarySession = false;
+            updateTempChatUI();
+        }
+        startNewSession();
+    } else if (tabName === "projects") {
+        openProjectsView();
+    } else if (tabName === "search") {
+        searchView.classList.remove("hidden");
+        if (activeSearchInput) activeSearchInput.focus();
+        const q = getSearchQuery();
+        if (q) triggerSearch(q);
+    }
+}
 
 function updateTempChatUI() {
     document.body.classList.toggle("temp-mode", isTemporarySession);
     btnTempChat.classList.toggle("temp-active", isTemporarySession);
 }
 
-btnTempChat.addEventListener("click", async () => {
-    if (!isTemporarySession) {
-        // Only save current session if it actually has content —
-        // avoids creating a blank "Yeni Sohbet" entry when on an empty screen
-        const hasMessages = Object.values(chatTree).some(n => n.role === "user");
-        if (hasMessages || currentSessionId) {
-            await autoSaveSession();
-        }
-        isTemporarySession = true;
-        updateTempChatUI();
-        startNewSession();
-    } else {
-        // Leaving temp mode: discard temp session, go fresh
-        isTemporarySession = false;
-        updateTempChatUI();
-        startNewSession();
-    }
-});
-
+btnTempChat.addEventListener("click", () => switchSidebarTab("temp-chat"));
+btnProjects.addEventListener("click", () => switchSidebarTab("projects"));
 
 btnToggleHistory.addEventListener("click", () => {
     btnToggleHistory.classList.toggle("sidebar-history-collapsed");
     sidebarHistoryContent.classList.toggle("collapsed");
 });
+
+// ─── Projects ────────────────────────────────────────────────────────────────
+
+const projectsView = document.getElementById("projects-view");
+const projectHistoryView = document.getElementById("project-history-view");
+const projectModeBanner = document.getElementById("project-mode-banner");
+const projectModeNameEl = document.getElementById("project-mode-name");
+const btnExitProject = document.getElementById("btn-exit-project");
+const btnCloseProjects = document.getElementById("btn-close-projects");
+const btnBackToProjects = document.getElementById("btn-back-to-projects");
+const btnCreateProject = document.getElementById("btn-create-project");
+const projectNameInput = document.getElementById("project-name-input");
+const projectDetailsInput = document.getElementById("project-details-input");
+const projectsList = document.getElementById("projects-list");
+const projectChatsList = document.getElementById("project-chats-list");
+const projectHistoryTitle = document.getElementById("project-history-title");
+const projectSearchInput = document.getElementById("project-search-input");
+const btnProjectNewChat = document.getElementById("btn-project-new-chat");
+
+function openProjectsView() {
+    projectsView.classList.remove("hidden");
+    projectHistoryView.classList.add("hidden");
+    loadProjects();
+}
+
+function closeProjectsView() {
+    projectsView.classList.add("hidden");
+}
+
+function openProjectHistoryView(project) {
+    _currentProjectData = project;
+    projectHistoryView.classList.remove("hidden");
+    projectsView.classList.add("hidden");
+    projectHistoryTitle.textContent = project.name;
+    loadProjectChats(project.id);
+    projectSearchInput.value = "";
+    projectSearchInput.focus();
+}
+
+function closeProjectHistoryView() {
+    projectHistoryView.classList.add("hidden");
+}
+
+function updateProjectBanner(active) {
+    if (active && currentProjectId) {
+        projectModeBanner.classList.remove("hidden");
+        projectModeNameEl.textContent = currentProjectName;
+    } else {
+        projectModeBanner.classList.add("hidden");
+    }
+}
+
+async function loadProjects() {
+    projectsList.innerHTML = "";
+    try {
+        const res = await fetch(`${API_BASE}/projects`);
+        if (!res.ok) return;
+        const projects = await res.json();
+        if (projects.length === 0) {
+            projectsList.innerHTML = `<div class="projects-empty">${t("projects.empty")}</div>`;
+            return;
+        }
+        projects.forEach(p => {
+            const card = document.createElement("div");
+            card.className = "project-card";
+            card.innerHTML = `
+                <div class="project-card-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                    </svg>
+                </div>
+                <div class="project-card-info">
+                    <div class="project-card-name">${escapeHtml(p.name)}</div>
+                    <div class="project-card-meta">${p.chat_count} ${t("projects.chats")}${p.details ? " · " + escapeHtml(p.details.split(/\s+/).length > 50 ? p.details.split(/\s+/).slice(0, 50).join(" ") + "..." : p.details) : ""}</div>
+                </div>
+                <div class="project-card-actions">
+                    <button class="project-card-check-btn" data-id="${escapeHtml(p.id)}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        ${t("projects.checkHistory")}
+                    </button>
+                    <button class="project-card-delete-btn" data-id="${escapeHtml(p.id)}" title="${t("projects.deleteProject")}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            card.querySelector(".project-card-check-btn").addEventListener("click", (e) => {
+                e.stopPropagation();
+                openProjectHistoryView(p);
+            });
+            card.querySelector(".project-card-delete-btn").addEventListener("click", (e) => {
+                e.stopPropagation();
+                deleteProject(p.id, p.name);
+            });
+            card.addEventListener("click", () => {
+                enterProjectMode(p);
+            });
+            projectsList.appendChild(card);
+        });
+    } catch (err) {
+        console.error("Failed to load projects:", err);
+    }
+}
+
+async function deleteProject(projectId, projectName) {
+    const msg = t("projects.confirmDelete", { default: `Are you sure you want to delete "${projectName}"? All chats inside will also be deleted.` }).replace("{name}", projectName);
+    const confirmed = await showConfirm(
+        t("projects.deleteProject", { default: "Delete Project" }),
+        msg
+    );
+    if (!confirmed) return;
+    try {
+        const res = await fetch(`${API_BASE}/projects/${encodeURIComponent(projectId)}`, { method: "DELETE" });
+        if (res.ok) {
+            if (currentProjectId === projectId) {
+                exitProject();
+            }
+            loadProjects();
+            loadSidebarHistory();
+        }
+    } catch (err) {
+        console.error("Failed to delete project:", err);
+    }
+}
+
+async function createProject(name, details) {
+    if (!name.trim()) return;
+    try {
+        const res = await fetch(`${API_BASE}/projects`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name.trim(), details: details.trim() || null })
+        });
+        if (res.ok) {
+            projectNameInput.value = "";
+            projectDetailsInput.value = "";
+            loadProjects();
+        }
+    } catch (err) {
+        console.error("Failed to create project:", err);
+    }
+}
+
+function highlightText(text, query) {
+    if (!query) return escapeHtml(text);
+    // Extract only real search words (skip filter tokens like onlymodel:true, last:7d)
+    const words = query.split(/\s+/).filter(w => !w.includes(":"));
+    if (words.length === 0) return escapeHtml(text);
+    const escaped = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const regex = new RegExp(`(${escaped.join("|")})`, "gi");
+    return escapeHtml(text).replace(regex, '<mark class="search-highlight">$1</mark>');
+}
+
+async function loadProjectChats(projectId, query = "") {
+    projectChatsList.innerHTML = "";
+    try {
+        const url = query
+            ? `${API_BASE}/history/search?q=${encodeURIComponent(query)}&project_id=${encodeURIComponent(projectId)}`
+            : `${API_BASE}/history/list?project_id=${encodeURIComponent(projectId)}`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const chats = await res.json();
+        if (chats.length === 0) {
+            projectChatsList.innerHTML = `<div class="projects-empty">${t("search.noResults")}</div>`;
+            return;
+        }
+        chats.forEach(chat => {
+            const item = document.createElement("div");
+            item.className = "project-chat-item";
+            const date = new Date(chat.updated_at);
+            const dateStr = date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+            const titleHtml = highlightText(chat.title || t("chat.newChat"), query);
+            const snippetHtml = chat.snippet ? `<div class="project-chat-snippet">${highlightText(chat.snippet, query)}</div>` : "";
+            item.innerHTML = `
+                <div class="project-chat-content">
+                    <span class="project-chat-title">${titleHtml}</span>
+                    ${snippetHtml}
+                </div>
+                <span class="project-chat-date">${dateStr}</span>
+            `;
+            item.addEventListener("click", () => {
+                openProjectChat(chat.id, _currentProjectData);
+            });
+            projectChatsList.appendChild(item);
+        });
+    } catch (err) {
+        console.error("Failed to load project chats:", err);
+    }
+}
+
+async function openProjectChat(chatId, project) {
+    currentProjectId = project.id;
+    currentProjectName = project.name;
+    currentProjectContext = project.context || "";
+    _currentProjectData = project;
+    closeProjectsView();
+    closeProjectHistoryView();
+    updateProjectBanner(true);
+    await loadSession(chatId);
+    // Refresh memory from all project chats
+    await updateProjectContext();
+}
+
+async function enterProjectMode(project) {
+    currentProjectId = project.id;
+    currentProjectName = project.name;
+    currentProjectContext = project.context || "";
+    _currentProjectData = project;
+    closeProjectsView();
+    closeProjectHistoryView();
+    startNewSession();
+    updateProjectBanner(true);
+    // Refresh memory from all project chats
+    await updateProjectContext();
+}
+
+function exitProject() {
+    currentProjectId = null;
+    currentProjectName = "";
+    currentProjectContext = "";
+    _currentProjectData = null;
+    updateProjectBanner(false);
+    startNewSession();
+}
+
+async function updateProjectContext() {
+    if (!currentProjectId) return;
+    try {
+        // Fetch aggregated memory from ALL project chats (last 7 days) via backend
+        const res = await fetch(`${API_BASE}/projects/${encodeURIComponent(currentProjectId)}/memory`);
+        if (!res.ok) return;
+        const memories = await res.json();
+        if (!memories || memories.length === 0) return;
+        const context = memories.slice(-30).join("\n");
+        // Persist to project
+        await fetch(`${API_BASE}/projects/${encodeURIComponent(currentProjectId)}/context`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ context })
+        });
+        currentProjectContext = context;
+    } catch (err) {
+        console.error("Failed to update project context:", err);
+    }
+}
+
+// Event listeners for project UI
+if (btnCloseProjects) btnCloseProjects.addEventListener("click", closeProjectsView);
+btnBackToProjects.addEventListener("click", () => {
+    closeProjectHistoryView();
+    openProjectsView();
+});
+btnExitProject.addEventListener("click", exitProject);
+projectModeNameEl.addEventListener("click", () => {
+    if (_currentProjectData) openProjectHistoryView(_currentProjectData);
+});
+
+btnCreateProject.addEventListener("click", () => {
+    createProject(projectNameInput.value, projectDetailsInput.value);
+});
+
+projectNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") createProject(projectNameInput.value, projectDetailsInput.value);
+});
+
+btnProjectNewChat.addEventListener("click", () => {
+    if (_currentProjectData) enterProjectMode(_currentProjectData);
+});
+
+let projectSearchDebounce = null;
+projectSearchInput.addEventListener("input", () => {
+    clearTimeout(projectSearchDebounce);
+    projectSearchDebounce = setTimeout(() => {
+        if (_currentProjectData) {
+            const q = typeof getProjectSearchQuery === "function" ? getProjectSearchQuery() : projectSearchInput.value;
+            loadProjectChats(_currentProjectData.id, q);
+        }
+    }, 280);
+});
+
+// Helper
+function escapeHtml(str) {
+    if (!str) return "";
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 
 // ─── Sidebar profile footer ─────────────────────────────────────
 
@@ -3124,13 +3808,22 @@ function updateSidebarProfile() {
             avatarEl.textContent = initial;
             avatarEl.style.background = "var(--accent)";
         }
-        nameEl.textContent = googleUserInfo.email || "";
+        nameEl.textContent = googleUserInfo.name || googleUserInfo.email || "";
     } else {
-        // System user: show first letter of username
+        // System user: show profile photo if available, otherwise first letter
         const username = (typeof require !== "undefined")
             ? (() => { try { return require("os").userInfo().username; } catch { return "User"; } })()
             : "User";
-        avatarEl.textContent = username[0].toUpperCase();
+
+        if (userAvatarBase64) {
+            try { fs.appendFileSync('/tmp/renderer.log', `Rendering system avatar img\n`); } catch (e) { }
+            avatarEl.innerHTML = `<img src="${userAvatarBase64}" alt="">`;
+        } else {
+            try { fs.appendFileSync('/tmp/renderer.log', `No system avatar base64 found\n`); } catch (e) { }
+            avatarEl.textContent = username[0].toUpperCase();
+            avatarEl.innerHTML = "";
+            avatarEl.style.background = "var(--accent)";
+        }
         nameEl.textContent = username;
     }
 }
@@ -3798,7 +4491,10 @@ document.addEventListener("keydown", (e) => {
 });
 
 document.addEventListener("click", () => {
-    document.querySelectorAll('.sidebar-item-menu').forEach(m => m.classList.add('hidden'));
+    document.querySelectorAll('.sidebar-item-menu').forEach(m => {
+        m.classList.add('hidden');
+        m.parentElement.classList.remove('menu-open');
+    });
 });
 
 btnRemoveImg.addEventListener("click", () => {
@@ -3813,6 +4509,33 @@ btnRemoveImg.addEventListener("click", () => {
     const multiContainer = document.getElementById("multi-preview-container");
     if (multiContainer) multiContainer.innerHTML = "";
 });
+
+async function handlePluginInstall(e) {
+    if (e) e.preventDefault();
+    const btn = e.currentTarget;
+    const oldText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> <span data-i18n="settings.installing">Installing...</span>`;
+
+    try {
+        const res = await fetch(`${API_BASE}/plugin/install`, { method: "POST" });
+        const data = await res.json();
+        if (data.success) {
+            showToast(data.message, "success");
+        } else {
+            showToast(data.message || "Install Failed.", "error");
+        }
+    } catch (err) {
+        showToast("Error connecting to local server.", "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = oldText;
+        applyTranslations();
+    }
+}
+
+if (btnInstallPlugin) btnInstallPlugin.addEventListener("click", handlePluginInstall);
+if (btnUpdatePlugin) btnUpdatePlugin.addEventListener("click", handlePluginInstall);
 
 btnSearch.addEventListener("click", () => {
     useSearch = !useSearch;
@@ -3839,25 +4562,15 @@ if (btnSidebarToggle) {
 }
 if (btnNewChat) {
     btnNewChat.addEventListener("click", () => {
-        // Exit temporary session mode if active
-        if (isTemporarySession) {
-            isTemporarySession = false;
-            updateTempChatUI();
-        }
-        startNewSession();
+        switchSidebarTab("new-chat");
         if (window.innerWidth < 768) {
-            sidebar.classList.add("sidebar-closed"); // close on mobile
+            sidebar.classList.add("sidebar-closed");
         }
     });
 }
 if (btnOpenSearch) {
     btnOpenSearch.addEventListener("click", () => {
-        searchView.classList.remove("hidden");
-        activeSearchInput.focus();
-        const q = getSearchQuery();
-        if (q) {
-            triggerSearch(q);
-        }
+        switchSidebarTab("search");
     });
 }
 if (btnCloseSearch) {
@@ -3868,7 +4581,7 @@ if (btnCloseSearch) {
 if (searchView) {
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && !searchView.classList.contains("hidden")) {
-            closeSearchView();
+            searchView.classList.add("hidden");
         } else if (e.key === "Escape" && !artifactSidebar.classList.contains("hidden")) {
             // Optional: prevent closing artifact via escape if it's blocking?
             // closeArtifactSidebar();
@@ -4210,7 +4923,7 @@ btnArtifactProceed.addEventListener("click", async () => {
 });
 function getSearchQuery() {
     let q = activeSearchInput ? activeSearchInput.value.trim() : "";
-    const chips = document.querySelectorAll(".filter-chip.active");
+    const chips = document.querySelectorAll("#search-filters-dropdown .filter-chip.active");
     chips.forEach(chip => {
         q += " " + chip.dataset.filter;
     });
@@ -4233,16 +4946,54 @@ if (btnSearchFilters && searchFiltersDropdown) {
     });
 }
 
-document.querySelectorAll(".filter-chip").forEach(chip => {
+document.querySelectorAll("#search-filters-dropdown .filter-chip").forEach(chip => {
     chip.addEventListener("click", (e) => {
         e.stopPropagation(); // keep dropdown open when clicking a filter
         chip.classList.toggle("active");
         // Update filter button highlight
-        const anyActive = document.querySelectorAll(".filter-chip.active").length > 0;
+        const anyActive = document.querySelectorAll("#search-filters-dropdown .filter-chip.active").length > 0;
         btnSearchFilters.classList.toggle("has-active", anyActive);
         const q = getSearchQuery();
         if (q) triggerSearch(q);
         else searchViewResults.innerHTML = '';
+    });
+});
+
+// ── Project filters ──────────────────────────────────────────────────────
+const btnProjectFilters = document.getElementById("btn-project-filters");
+const projectFiltersDropdown = document.getElementById("project-filters-dropdown");
+
+if (btnProjectFilters && projectFiltersDropdown) {
+    btnProjectFilters.addEventListener("click", (e) => {
+        e.stopPropagation();
+        projectFiltersDropdown.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!projectFiltersDropdown.contains(e.target) && e.target !== btnProjectFilters) {
+            projectFiltersDropdown.classList.add("hidden");
+        }
+    });
+}
+
+function getProjectSearchQuery() {
+    let q = projectSearchInput ? projectSearchInput.value.trim() : "";
+    document.querySelectorAll("#project-filters-dropdown .filter-chip.active").forEach(chip => {
+        q += " " + chip.dataset.filter;
+    });
+    return q.trim();
+}
+
+document.querySelectorAll("#project-filters-dropdown .filter-chip").forEach(chip => {
+    chip.addEventListener("click", (e) => {
+        e.stopPropagation();
+        chip.classList.toggle("active");
+        const anyActive = document.querySelectorAll("#project-filters-dropdown .filter-chip.active").length > 0;
+        if (btnProjectFilters) btnProjectFilters.classList.toggle("has-active", anyActive);
+        if (_currentProjectData) {
+            const q = getProjectSearchQuery();
+            loadProjectChats(_currentProjectData.id, q);
+        }
     });
 });
 

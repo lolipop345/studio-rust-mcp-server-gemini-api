@@ -41,6 +41,7 @@ pub struct AppState {
     pub chat_receivers: HashMap<String, mpsc::Receiver<SsePayload>>,
     pub active_generations: HashMap<String, tokio::task::AbortHandle>,
     pub plan_waiters: HashMap<String, tokio::sync::oneshot::Sender<String>>,
+    pub current_tool: Option<String>,
     pub db: crate::db::DbClient,
 }
 
@@ -87,6 +88,7 @@ impl AppState {
             chat_receivers: HashMap::new(),
             active_generations: HashMap::new(),
             plan_waiters: HashMap::new(),
+            current_tool: None,
             db,
         }
     }
@@ -149,6 +151,132 @@ pub struct AskPlanningQuestion {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ReadFile {
+    pub path: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ReadLines {
+    pub path: String,
+    #[serde(rename = "startLine")]
+    pub start_line: u32,
+    #[serde(rename = "endLine")]
+    pub end_line: u32,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct GetHierarchy {
+    #[serde(rename = "includeBaseParts")]
+    pub include_base_parts: Option<bool>,
+    #[serde(rename = "maxDepth")]
+    pub max_depth: Option<u32>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct GetHierarchyOf {
+    pub path: String,
+    #[serde(rename = "includeBaseParts")]
+    pub include_base_parts: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct GetProperties {
+    pub path: String,
+    pub properties: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct FindInstances {
+    pub name: Option<String>,
+    #[serde(rename = "className")]
+    pub class_name: Option<String>,
+    pub root: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct AddInstance {
+    #[serde(rename = "className")]
+    pub class_name: String,
+    pub parent: String,
+    pub properties: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct RemoveInstance {
+    pub path: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct AddJsonInstance {
+    pub json: serde_json::Value,
+    pub parent: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ReplaceLinesWith {
+    pub path: String,
+    #[serde(rename = "startLine")]
+    pub start_line: u32,
+    #[serde(rename = "endLine")]
+    pub end_line: u32,
+    #[serde(rename = "newContent")]
+    pub new_content: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ReplaceWith {
+    pub path: String,
+    #[serde(rename = "newSource")]
+    pub new_source: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct MoveInstance {
+    pub path: String,
+    #[serde(rename = "newParent")]
+    pub new_parent: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct CloneInstance {
+    pub path: String,
+    #[serde(rename = "newParent")]
+    pub new_parent: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ImportFromHttp {
+    pub url: String,
+    pub parent: String,
+    #[serde(rename = "instanceType")]
+    pub instance_type: String,
+    pub name: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ImportFromWally {
+    pub package: String,
+    pub parent: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub json: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct CreateScript {
+    #[serde(rename = "scriptType")]
+    pub script_type: String,
+    pub name: String,
+    pub source: String,
+    pub parent: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct DebugScript {
+    pub code: String,
+    pub cleanup: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum ToolArgumentValues {
     RunCode(RunCode),
     InsertModel(InsertModel),
@@ -158,6 +286,23 @@ pub enum ToolArgumentValues {
     GetStudioMode(GetStudioMode),
     ProposePlan(ProposePlan),
     AskPlanningQuestion(AskPlanningQuestion),
+    ReadFile(ReadFile),
+    ReadLines(ReadLines),
+    GetHierarchy(GetHierarchy),
+    GetHierarchyOf(GetHierarchyOf),
+    GetProperties(GetProperties),
+    FindInstances(FindInstances),
+    AddInstance(AddInstance),
+    RemoveInstance(RemoveInstance),
+    AddJsonInstance(AddJsonInstance),
+    ReplaceLinesWith(ReplaceLinesWith),
+    ReplaceWith(ReplaceWith),
+    MoveInstance(MoveInstance),
+    CloneInstance(CloneInstance),
+    ImportFromHttp(ImportFromHttp),
+    ImportFromWally(ImportFromWally),
+    CreateScript(CreateScript),
+    DebugScript(DebugScript),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -413,21 +558,407 @@ pub fn build_tool_declarations() -> Vec<ToolDeclaration> {
                     "required": ["question", "options"]
                 })),
             },
+            // ── Agent Tools ──────────────────────────────────────────
+            FunctionDeclaration {
+                name: "read_file".to_string(),
+                description: "Read the full source code of a Script, LocalScript, or ModuleScript. Returns the entire Source property. Use this before making edits to understand current code.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Dot-separated path to the script (e.g. 'ServerScriptService.MainScript')"
+                        }
+                    },
+                    "required": ["path"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "read_lines".to_string(),
+                description: "Read specific lines from a Script/LocalScript/ModuleScript source. Returns numbered lines in the given range. Use this to inspect a portion of a large script.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Dot-separated path to the script"
+                        },
+                        "startLine": {
+                            "type": "integer",
+                            "description": "First line number to read (1-based)"
+                        },
+                        "endLine": {
+                            "type": "integer",
+                            "description": "Last line number to read (1-based, inclusive)"
+                        }
+                    },
+                    "required": ["path", "startLine", "endLine"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "get_hierarchy".to_string(),
+                description: "Get the overall hierarchy of the game as JSON. Returns top-level services (Workspace, ServerScriptService, ReplicatedStorage, etc.) and their children up to maxDepth. BaseParts are excluded by default (only count shown) to keep output manageable.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "includeBaseParts": {
+                            "type": "boolean",
+                            "description": "Whether to include BasePart instances in the output (default: false, only shows count)"
+                        },
+                        "maxDepth": {
+                            "type": "integer",
+                            "description": "Maximum depth to traverse (default: 3)"
+                        }
+                    }
+                })),
+            },
+            FunctionDeclaration {
+                name: "get_hierarchy_of".to_string(),
+                description: "Get the hierarchy of a specific instance and its descendants as JSON. Returns the instance tree up to depth 10.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Dot-separated path to the instance (e.g. 'Workspace.Map')"
+                        },
+                        "includeBaseParts": {
+                            "type": "boolean",
+                            "description": "Whether to include BasePart instances (default: false)"
+                        }
+                    },
+                    "required": ["path"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "get_properties".to_string(),
+                description: "Read properties of an instance. If specific property names are given, returns only those. Otherwise returns common properties (Name, ClassName, Parent, Position, Size, Color, etc.).".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Dot-separated path to the instance"
+                        },
+                        "properties": {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "Optional list of specific property names to read"
+                        }
+                    },
+                    "required": ["path"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "find_instances".to_string(),
+                description: "Search for instances by name pattern and/or ClassName. Returns up to 50 matching instances with their full paths. At least one of name or className must be provided.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Name or pattern to search for (case-insensitive substring match)"
+                        },
+                        "className": {
+                            "type": "string",
+                            "description": "ClassName to filter by (exact match)"
+                        },
+                        "root": {
+                            "type": "string",
+                            "description": "Dot-separated path to search root (default: searches entire game)"
+                        }
+                    }
+                })),
+            },
+            FunctionDeclaration {
+                name: "add_instance".to_string(),
+                description: "Create a new Instance and parent it. Supports setting properties with automatic type conversion (arrays → Vector3/Color3/UDim2, strings → Enum values).".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "className": {
+                            "type": "string",
+                            "description": "The ClassName of the instance to create (e.g. 'Part', 'Script', 'Folder')"
+                        },
+                        "parent": {
+                            "type": "string",
+                            "description": "Dot-separated path to the parent instance"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "description": "Optional properties to set. Values can be: number, string, boolean, [x,y,z] for Vector3, [r,g,b] for Color3, [sx,ox,sy,oy] for UDim2, 'EnumType.Value' for enums"
+                        }
+                    },
+                    "required": ["className", "parent"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "remove_instance".to_string(),
+                description: "Remove (Destroy) an instance at the given path. This action is undoable via Ctrl+Z.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Dot-separated path to the instance to remove"
+                        }
+                    },
+                    "required": ["path"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "add_json_instance".to_string(),
+                description: "Create a tree of instances from a JSON definition. Each node: { \"ClassName\": string, \"Name\"?: string, \"Properties\"?: {}, \"Children\"?: [] }. Useful for building complex hierarchies in one call.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "json": {
+                            "type": "object",
+                            "description": "JSON tree definition. Format: { ClassName: string, Name?: string, Properties?: { prop: value }, Children?: [same format] }"
+                        },
+                        "parent": {
+                            "type": "string",
+                            "description": "Dot-separated path to the parent instance"
+                        }
+                    },
+                    "required": ["json", "parent"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "replace_lines_with".to_string(),
+                description: "Replace specific lines in a Script/LocalScript/ModuleScript source. You MUST use read_file or read_lines first to see the current content before using this tool.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Dot-separated path to the script"
+                        },
+                        "startLine": {
+                            "type": "integer",
+                            "description": "First line to replace (1-based)"
+                        },
+                        "endLine": {
+                            "type": "integer",
+                            "description": "Last line to replace (1-based, inclusive)"
+                        },
+                        "newContent": {
+                            "type": "string",
+                            "description": "The new content to insert in place of the specified lines"
+                        }
+                    },
+                    "required": ["path", "startLine", "endLine", "newContent"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "replace_with".to_string(),
+                description: "Replace the entire Source of a Script/LocalScript/ModuleScript. You MUST use read_file first to see the current content before using this tool.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Dot-separated path to the script"
+                        },
+                        "newSource": {
+                            "type": "string",
+                            "description": "The new full source code"
+                        }
+                    },
+                    "required": ["path", "newSource"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "move_instance".to_string(),
+                description: "Move an instance to a new parent. The instance keeps its properties and children.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Dot-separated path to the instance to move"
+                        },
+                        "newParent": {
+                            "type": "string",
+                            "description": "Dot-separated path to the new parent"
+                        }
+                    },
+                    "required": ["path", "newParent"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "clone_instance".to_string(),
+                description: "Clone an instance (deep copy including children). Optionally place the clone under a different parent.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Dot-separated path to the instance to clone"
+                        },
+                        "newParent": {
+                            "type": "string",
+                            "description": "Dot-separated path to the parent for the clone (default: same parent as original)"
+                        }
+                    },
+                    "required": ["path"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "import_from_http".to_string(),
+                description: "Download content from a URL and create a Script/LocalScript/ModuleScript with that content as its Source. Useful for importing libraries from GitHub raw URLs.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "URL to fetch the source code from"
+                        },
+                        "parent": {
+                            "type": "string",
+                            "description": "Dot-separated path to the parent instance"
+                        },
+                        "instanceType": {
+                            "type": "string",
+                            "description": "Type of script to create: Script, LocalScript, or ModuleScript",
+                            "enum": ["Script", "LocalScript", "ModuleScript"]
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "Name for the new script instance"
+                        }
+                    },
+                    "required": ["url", "parent", "instanceType", "name"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "import_from_wally".to_string(),
+                description: "Import a Wally package into the game. Downloads the package using the Wally CLI and creates ModuleScript instances from the package files. Requires Wally to be installed on the system.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "package": {
+                            "type": "string",
+                            "description": "Wally package identifier (e.g. 'jsdotlua/react@17.1.0')"
+                        },
+                        "parent": {
+                            "type": "string",
+                            "description": "Dot-separated path to the parent instance where the package will be placed"
+                        }
+                    },
+                    "required": ["package", "parent"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "create_script".to_string(),
+                description: "Create a new Script, LocalScript, or ModuleScript with the given source code under the specified parent. Use this instead of add_instance when you need to create a script with source code.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "scriptType": {
+                            "type": "string",
+                            "description": "Type of script to create",
+                            "enum": ["Script", "LocalScript", "ModuleScript"]
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "Name of the new script"
+                        },
+                        "source": {
+                            "type": "string",
+                            "description": "The Luau source code for the script"
+                        },
+                        "parent": {
+                            "type": "string",
+                            "description": "Dot-separated path to the parent instance (e.g. 'ServerScriptService', 'ReplicatedStorage.Modules')"
+                        }
+                    },
+                    "required": ["scriptType", "name", "source", "parent"]
+                })),
+            },
+            FunctionDeclaration {
+                name: "debug_script".to_string(),
+                description: "Debug/test Luau code in a sandbox environment. Runs the code, captures all output (print/warn/error), tracks every Instance created via Instance.new(), reports runtime errors with details, then automatically cleans up (destroys) all created instances. Use this to verify code correctness before deploying it. Set cleanup=false to keep created instances alive for inspection.".to_string(),
+                parameters: Some(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "code": {
+                            "type": "string",
+                            "description": "The Luau code to debug/test in sandbox mode"
+                        },
+                        "cleanup": {
+                            "type": "boolean",
+                            "description": "Whether to destroy all created instances after execution (default: true)"
+                        }
+                    },
+                    "required": ["code"]
+                })),
+            },
         ]),
         google_search: None,
         code_execution: None,
     }]
 }
 
-pub fn build_system_instruction(custom_prompt: Option<String>) -> GeminiContent {
+pub fn build_system_instruction(custom_prompt: Option<String>, thinking_level: Option<&str>) -> GeminiContent {
     let mut text = "You are a Roblox Studio assistant. You must be aware of the current studio mode before using any tools. Infer the mode from conversation context or use get_studio_mode.\n\
-        Use run_code to query data from Roblox Studio place or to change it.\n\
+        \n\
+        ## Tool Usage Guidelines\n\
+        \n\
+        ### Reading & Exploring\n\
+        - Use `get_hierarchy` first to understand the game structure. BaseParts are excluded by default (only count shown).\n\
+        - Use `get_hierarchy_of` to inspect a specific subtree in detail.\n\
+        - Use `find_instances` to search by name/className across the game.\n\
+        - Use `get_properties` to read specific properties of an instance.\n\
+        - Use `read_file` to read a script's full source. Use `read_lines` for specific line ranges.\n\
+        \n\
+        ### Editing Scripts\n\
+        - **ALWAYS** use `read_file` or `read_lines` BEFORE using `replace_lines_with` or `replace_with`. Never edit blindly.\n\
+        - Use `replace_lines_with` for surgical edits (specific line ranges).\n\
+        - Use `replace_with` only when rewriting the entire script source.\n\
+        \n\
+        ### Creating & Modifying Instances\n\
+        - Use `add_instance` for single instances with properties.\n\
+        - Use `add_json_instance` for complex hierarchies. JSON format: `{ \"ClassName\": \"Frame\", \"Name\": \"MyFrame\", \"Properties\": { \"Size\": [0, 200, 0, 100] }, \"Children\": [...] }`\n\
+        - Property value conversion: `[x,y,z]` → Vector3, `[r,g,b]` → Color3, `[sx,ox,sy,oy]` → UDim2, `[x,y]` → Vector2/UDim, `\"EnumType.Value\"` → Enum.\n\
+        - Use `move_instance` to reparent, `clone_instance` to duplicate, `remove_instance` to delete.\n\
+        \n\
+        ### Importing\n\
+        - Use `import_from_http` to download and import Luau/Lua scripts from any URL directly into the game tree.\n\
+        - When you find useful open-source Roblox libraries or utilities online, use `import_from_http` with the raw GitHub URL to bring them in.\n\
+        - The backend fetches the file content, so provide the **raw** URL (e.g., `https://raw.githubusercontent.com/...`).\n\
+        - After importing, you can use `read_file` + `replace_with` to adapt the code if needed (e.g., fix require paths, rename, etc.).\n\
+        - Use `import_from_wally` to install Wally packages. Wally is auto-downloaded if missing.\n\
+        \n\
+        ### Creating Scripts\n\
+        - Use `create_script` to create Script, LocalScript, or ModuleScript with source code under a parent.\n\
+        \n\
+        ### Legacy Tools\n\
+        - Use `run_code` for ad-hoc Luau execution, querying data, or operations not covered by structured tools.\n\
+        - Prefer structured tools over `run_code` when available.\n\
         After calling run_script_in_play_mode, the datamodel status will be reset to stop mode.\n\
         Prefer using start_stop_play tool instead of run_script_in_play_mode. Only use run_script_in_play_mode to run one time unit test code on server datamodel.\n\
+        \n\
+        ### Planning\n\
         When receiving a request, evaluate its scope:\n\
         - For SIMPLE commands, minor bug fixes, or isolated code edits: proceed normally.\n\
         - For COMPLEX tasks (new systems, full UI layouts, cross-script logic): first use `ask_planning_question` (at most 2 times) to clarify ambiguous choices, THEN use `propose_plan` to show a structured markdown plan before writing any code.\n\
         `ask_planning_question` opens an interactive card in the UI — keep questions short and options concrete (e.g., 'Fusion / React-Lua / Plain ScreenGui').".to_string();
+
+    // Debugging instructions only for thoughtful/planning modes (not fast/none)
+    let is_thinking = thinking_level
+        .map(|l| !l.is_empty() && l != "none")
+        .unwrap_or(false);
+
+    if is_thinking {
+        text.push_str("\n\
+        \n\
+        ### Debugging (Thoughtful Mode)\n\
+        - **ALWAYS** use `debug_script` after writing or modifying code to verify it works correctly.\n\
+        - `debug_script` runs code in a sandbox, tracks all Instance.new() calls, captures output, and reports errors.\n\
+        - After debug, all sandbox instances are automatically cleaned up (set cleanup=false to inspect).\n\
+        - If debug reveals errors, fix the code and debug again until it passes.");
+    }
 
     if let Some(custom) = custom_prompt {
         text.push_str("\n\n");
@@ -574,8 +1105,341 @@ pub fn convert_function_call_to_tool_args(
                 .unwrap_or_default();
             Ok(ToolArgumentValues::AskPlanningQuestion(AskPlanningQuestion { question, options }))
         }
+        // ── Agent Tools ──────────────────────────────────────────
+        "read_file" => {
+            let path = fc.args.get("path").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("read_file missing 'path'"))?.to_string();
+            Ok(ToolArgumentValues::ReadFile(ReadFile { path }))
+        }
+        "read_lines" => {
+            let path = fc.args.get("path").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("read_lines missing 'path'"))?.to_string();
+            let start_line = fc.args.get("startLine").and_then(|v| v.as_u64())
+                .ok_or_else(|| eyre!("read_lines missing 'startLine'"))? as u32;
+            let end_line = fc.args.get("endLine").and_then(|v| v.as_u64())
+                .ok_or_else(|| eyre!("read_lines missing 'endLine'"))? as u32;
+            Ok(ToolArgumentValues::ReadLines(ReadLines { path, start_line, end_line }))
+        }
+        "get_hierarchy" => {
+            let include_base_parts = fc.args.get("includeBaseParts").and_then(|v| v.as_bool());
+            let max_depth = fc.args.get("maxDepth").and_then(|v| v.as_u64()).map(|v| v as u32);
+            Ok(ToolArgumentValues::GetHierarchy(GetHierarchy { include_base_parts, max_depth }))
+        }
+        "get_hierarchy_of" => {
+            let path = fc.args.get("path").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("get_hierarchy_of missing 'path'"))?.to_string();
+            let include_base_parts = fc.args.get("includeBaseParts").and_then(|v| v.as_bool());
+            Ok(ToolArgumentValues::GetHierarchyOf(GetHierarchyOf { path, include_base_parts }))
+        }
+        "get_properties" => {
+            let path = fc.args.get("path").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("get_properties missing 'path'"))?.to_string();
+            let properties = fc.args.get("properties").and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect::<Vec<_>>());
+            Ok(ToolArgumentValues::GetProperties(GetProperties { path, properties }))
+        }
+        "find_instances" => {
+            let name = fc.args.get("name").and_then(|v| v.as_str()).map(|s| s.to_string());
+            let class_name = fc.args.get("className").and_then(|v| v.as_str()).map(|s| s.to_string());
+            let root = fc.args.get("root").and_then(|v| v.as_str()).map(|s| s.to_string());
+            Ok(ToolArgumentValues::FindInstances(FindInstances { name, class_name, root }))
+        }
+        "add_instance" => {
+            let class_name = fc.args.get("className").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("add_instance missing 'className'"))?.to_string();
+            let parent = fc.args.get("parent").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("add_instance missing 'parent'"))?.to_string();
+            let properties = fc.args.get("properties").cloned();
+            Ok(ToolArgumentValues::AddInstance(AddInstance { class_name, parent, properties }))
+        }
+        "remove_instance" => {
+            let path = fc.args.get("path").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("remove_instance missing 'path'"))?.to_string();
+            Ok(ToolArgumentValues::RemoveInstance(RemoveInstance { path }))
+        }
+        "add_json_instance" => {
+            let json = fc.args.get("json").cloned()
+                .ok_or_else(|| eyre!("add_json_instance missing 'json'"))?;
+            let parent = fc.args.get("parent").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("add_json_instance missing 'parent'"))?.to_string();
+            Ok(ToolArgumentValues::AddJsonInstance(AddJsonInstance { json, parent }))
+        }
+        "replace_lines_with" => {
+            let path = fc.args.get("path").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("replace_lines_with missing 'path'"))?.to_string();
+            let start_line = fc.args.get("startLine").and_then(|v| v.as_u64())
+                .ok_or_else(|| eyre!("replace_lines_with missing 'startLine'"))? as u32;
+            let end_line = fc.args.get("endLine").and_then(|v| v.as_u64())
+                .ok_or_else(|| eyre!("replace_lines_with missing 'endLine'"))? as u32;
+            let new_content = fc.args.get("newContent").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("replace_lines_with missing 'newContent'"))?.to_string();
+            Ok(ToolArgumentValues::ReplaceLinesWith(ReplaceLinesWith { path, start_line, end_line, new_content }))
+        }
+        "replace_with" => {
+            let path = fc.args.get("path").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("replace_with missing 'path'"))?.to_string();
+            let new_source = fc.args.get("newSource").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("replace_with missing 'newSource'"))?.to_string();
+            Ok(ToolArgumentValues::ReplaceWith(ReplaceWith { path, new_source }))
+        }
+        "move_instance" => {
+            let path = fc.args.get("path").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("move_instance missing 'path'"))?.to_string();
+            let new_parent = fc.args.get("newParent").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("move_instance missing 'newParent'"))?.to_string();
+            Ok(ToolArgumentValues::MoveInstance(MoveInstance { path, new_parent }))
+        }
+        "clone_instance" => {
+            let path = fc.args.get("path").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("clone_instance missing 'path'"))?.to_string();
+            let new_parent = fc.args.get("newParent").and_then(|v| v.as_str()).map(|s| s.to_string());
+            Ok(ToolArgumentValues::CloneInstance(CloneInstance { path, new_parent }))
+        }
+        "import_from_http" => {
+            let url = fc.args.get("url").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("import_from_http missing 'url'"))?.to_string();
+            let parent = fc.args.get("parent").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("import_from_http missing 'parent'"))?.to_string();
+            let instance_type = fc.args.get("instanceType").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("import_from_http missing 'instanceType'"))?.to_string();
+            let name = fc.args.get("name").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("import_from_http missing 'name'"))?.to_string();
+            Ok(ToolArgumentValues::ImportFromHttp(ImportFromHttp { url, parent, instance_type, name }))
+        }
+        "import_from_wally" => {
+            let package = fc.args.get("package").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("import_from_wally missing 'package'"))?.to_string();
+            let parent = fc.args.get("parent").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("import_from_wally missing 'parent'"))?.to_string();
+            Ok(ToolArgumentValues::ImportFromWally(ImportFromWally { package, parent, json: None }))
+        }
+        "create_script" => {
+            let script_type = fc.args.get("scriptType").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("create_script missing 'scriptType'"))?.to_string();
+            let name = fc.args.get("name").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("create_script missing 'name'"))?.to_string();
+            let source = fc.args.get("source").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("create_script missing 'source'"))?.to_string();
+            let parent = fc.args.get("parent").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("create_script missing 'parent'"))?.to_string();
+            Ok(ToolArgumentValues::CreateScript(CreateScript { script_type, name, source, parent }))
+        }
+        "debug_script" => {
+            let code = fc.args.get("code").and_then(|v| v.as_str())
+                .ok_or_else(|| eyre!("debug_script missing 'code'"))?.to_string();
+            let cleanup = fc.args.get("cleanup").and_then(|v| v.as_bool());
+            Ok(ToolArgumentValues::DebugScript(DebugScript { code, cleanup }))
+        }
         other => Err(eyre!("Unknown function call: {}", other)),
     }
+}
+
+/// Runs `wally install` for a given package, reads the resulting files, and returns a JSON file tree.
+async fn run_wally_install(package: &str) -> color_eyre::Result<serde_json::Value> {
+    // Check if wally is available
+    let wally_check = tokio::process::Command::new("which")
+        .arg("wally")
+        .output()
+        .await;
+
+    let working_dir = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+    let projects_dir = working_dir.join("Projects");
+    let tmp_path = projects_dir.join("auto_wally");
+    
+    std::fs::create_dir_all(&tmp_path)?;
+
+    // Determine Wally paths
+    let has_global_wally = wally_check.is_ok() && wally_check.unwrap().status.success();
+    let local_wally_bin = if std::env::consts::OS == "windows" {
+        tmp_path.join("wally.exe")
+    } else {
+        tmp_path.join("wally")
+    };
+
+    // Auto-download Wally if missing globally
+    if !has_global_wally && !local_wally_bin.exists() {
+        let os_str = match (std::env::consts::OS, std::env::consts::ARCH) {
+            ("macos", _) => "macos",
+            ("windows", _) => "windows",
+            _ => "linux",
+        };
+        let download_url = format!("https://github.com/UpliftGames/wally/releases/download/v0.3.2/wally-v0.3.2-{}.zip", os_str);
+        
+        // Download zip
+        let _ = tokio::process::Command::new("curl")
+            .args(&["-L", "-o", "wally.zip", &download_url])
+            .current_dir(&tmp_path)
+            .output()
+            .await;
+            
+        // Unzip
+        if std::env::consts::OS == "windows" {
+            let _ = tokio::process::Command::new("powershell")
+                .args(&["-Command", "Expand-Archive -Path wally.zip -DestinationPath . -Force"])
+                .current_dir(&tmp_path)
+                .output()
+                .await;
+        } else {
+            let _ = tokio::process::Command::new("unzip")
+                .args(&["-o", "wally.zip"])
+                .current_dir(&tmp_path)
+                .output()
+                .await;
+                
+            let _ = tokio::process::Command::new("chmod")
+                .args(&["+x", "wally"])
+                .current_dir(&tmp_path)
+                .output()
+                .await;
+        }
+    }
+
+
+
+    // Parse package name for wally.toml (e.g., "jsdotlua/react@17.1.0" → name = "react", dep = "jsdotlua/react@17.1.0")
+    let pkg_name = package
+        .split('/')
+        .last()
+        .unwrap_or(package)
+        .split('@')
+        .next()
+        .unwrap_or("package");
+
+    let wally_toml = format!(
+        r#"[package]
+name = "temp/wally-import"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
+{} = "{}"
+"#,
+        pkg_name, package
+    );
+
+    std::fs::write(tmp_path.join("wally.toml"), &wally_toml)?;
+    
+    // Determine which wally executable to run
+    let wally_cmd = if has_global_wally {
+        "wally".to_string()
+    } else {
+        local_wally_bin.to_string_lossy().to_string()
+    };
+
+    // Run wally install
+    let output = tokio::process::Command::new(&wally_cmd)
+        .arg("install")
+        .current_dir(&tmp_path)
+        .output()
+        .await?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(eyre!("wally install failed: {}", stderr));
+    }
+
+    // Read the Packages directory and build a file tree
+    let packages_dir = tmp_path.join("Packages");
+    if !packages_dir.exists() {
+        return Err(eyre!("Packages directory not created by wally install"));
+    }
+
+    fn read_dir_to_json(dir: &std::path::Path) -> color_eyre::Result<Vec<serde_json::Value>> {
+        let mut files = Vec::new();
+
+        // Skip known non-source directories
+        let skip_dirs = ["docs", "test", "tests", "spec", ".github", "node_modules", "testez-cli"];
+
+        for entry in std::fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            let name = entry.file_name().to_string_lossy().to_string();
+
+            // Skip hidden files/dirs
+            if name.starts_with('.') {
+                continue;
+            }
+
+            if path.is_dir() {
+                // Skip known non-source directories
+                let name_lower = name.to_lowercase();
+                if skip_dirs.iter().any(|s| name_lower == *s) {
+                    continue;
+                }
+
+                let children = read_dir_to_json(&path)?;
+
+                // Check if there's an init.luau or init.lua inside
+                let init_source = std::fs::read_to_string(path.join("init.luau"))
+                    .or_else(|_| std::fs::read_to_string(path.join("init.lua")))
+                    .ok();
+
+                // Filter out init files from children
+                let filtered_children: Vec<_> = children.into_iter().filter(|c| {
+                    let n = c.get("Name").and_then(|v| v.as_str()).unwrap_or("");
+                    n != "init" && n != "init.luau" && n != "init.lua"
+                }).collect();
+
+                // Only create a node if there's an init source or Lua children
+                if init_source.is_none() && filtered_children.is_empty() {
+                    continue; // Skip empty directories with no Lua content
+                }
+
+                let class_name = if init_source.is_some() { "ModuleScript" } else { "Folder" };
+
+                let mut node = serde_json::json!({
+                    "ClassName": class_name,
+                    "Name": name,
+                });
+
+                if let Some(source) = init_source {
+                    node["Source"] = serde_json::Value::String(source);
+                }
+
+                if !filtered_children.is_empty() {
+                    node["Children"] = serde_json::Value::Array(filtered_children);
+                }
+
+                files.push(node);
+            } else if name.ends_with(".luau") || name.ends_with(".lua") {
+                // Skip spec/test files
+                if name.contains(".spec.") || name.contains(".test.") || name.contains("_spec.") || name.contains("_test.") {
+                    continue;
+                }
+
+                let source = std::fs::read_to_string(&path)?;
+                let script_name = name.trim_end_matches(".luau").trim_end_matches(".lua");
+
+                // Determine script type from filename
+                let class_name = if name.ends_with(".server.lua") || name.ends_with(".server.luau") {
+                    "Script"
+                } else if name.ends_with(".client.lua") || name.ends_with(".client.luau") {
+                    "LocalScript"
+                } else {
+                    "ModuleScript"
+                };
+
+                // Clean up script name (remove .server/.client suffix)
+                let clean_name = script_name
+                    .trim_end_matches(".server")
+                    .trim_end_matches(".client");
+
+                files.push(serde_json::json!({
+                    "ClassName": class_name,
+                    "Name": clean_name,
+                    "Source": source,
+                }));
+            }
+            // Skip all non-Lua files (README.md, .toml, .json, etc.)
+        }
+
+        Ok(files)
+    }
+
+    let file_tree = read_dir_to_json(&packages_dir)?;
+
+    Ok(serde_json::json!({ "files": file_tree }))
 }
 
 pub async fn dispatch_function_call(
@@ -596,6 +1460,61 @@ pub async fn dispatch_function_call(
         return Ok(result);
     }
 
+    // Special backend handler for Wally: run CLI, build file tree, then dispatch as ImportFromWally with json payload
+    if fc.name == "import_from_wally" {
+        let package = fc.args.get("package").and_then(|v| v.as_str())
+            .ok_or_else(|| eyre!("import_from_wally missing 'package'"))?.to_string();
+        let parent = fc.args.get("parent").and_then(|v| v.as_str())
+            .ok_or_else(|| eyre!("import_from_wally missing 'parent'"))?.to_string();
+
+        let wally_result = run_wally_install(&package).await;
+        match wally_result {
+            Ok(file_tree_json) => {
+                // Log the file tree summary for debugging
+                if let Some(files) = file_tree_json.get("files").and_then(|f| f.as_array()) {
+                    let has_source_count = files.iter().filter(|f| f.get("Source").is_some()).count();
+                    tracing::info!("Wally file tree: {} total nodes, {} with Source", files.len(), has_source_count);
+                    for f in files.iter().take(3) {
+                        let name = f.get("Name").and_then(|n| n.as_str()).unwrap_or("?");
+                        let has_src = f.get("Source").is_some();
+                        let has_children = f.get("Children").is_some();
+                        tracing::info!("  - {} (Source: {}, Children: {})", name, has_src, has_children);
+                    }
+                }
+
+                // Send the file tree to the plugin as ImportFromWally with the json payload embedded
+                let tool_args = ToolArgumentValues::ImportFromWally(ImportFromWally {
+                    package: package.clone(),
+                    parent: parent.clone(),
+                    json: Some(file_tree_json),
+                });
+                let (command, id) = ToolArguments::new(tool_args);
+
+                let (tx, mut rx) = mpsc::unbounded_channel::<Result<String>>();
+                let trigger = {
+                    let mut app_state = state.lock().await;
+                    app_state.process_queue.push_back(command);
+                    app_state.output_map.insert(id, tx);
+                    app_state.trigger.clone()
+                };
+                trigger.send(()).map_err(|e| eyre!("Unable to trigger send: {}", e))?;
+                let result = rx.recv().await
+                    .ok_or_else(|| eyre!("Couldn't receive response from Roblox Studio"))?;
+                {
+                    let mut app_state = state.lock().await;
+                    app_state.output_map.remove_entry(&id);
+                }
+                return match result {
+                    Ok(response) => Ok(response),
+                    Err(err) => Ok(format!("Error: {}", err)),
+                };
+            }
+            Err(e) => {
+                return Ok(format!("Error installing Wally package: {}", e));
+            }
+        }
+    }
+
     let tool_args = convert_function_call_to_tool_args(fc)?;
     let (command, id) = ToolArguments::new(tool_args);
     tracing::debug!("Dispatching function call to Roblox Studio: {:?}", command);
@@ -604,6 +1523,7 @@ pub async fn dispatch_function_call(
 
     let trigger = {
         let mut app_state = state.lock().await;
+        app_state.current_tool = Some(fc.name.clone());
         app_state.process_queue.push_back(command);
         app_state.output_map.insert(id, tx);
         app_state.trigger.clone()
@@ -619,6 +1539,7 @@ pub async fn dispatch_function_call(
     {
         let mut app_state = state.lock().await;
         app_state.output_map.remove_entry(&id);
+        app_state.current_tool = None;
     }
 
     match result {
@@ -786,7 +1707,7 @@ async fn process_chat(
         });
     }
     
-    let system_instruction = build_system_instruction(opts.system_instruction);
+    let system_instruction = build_system_instruction(opts.system_instruction, opts.thinking_level.as_deref());
     
     let mut generation_config = GenerationConfig::default();
     let mut has_gen_config = false;
@@ -1171,6 +2092,32 @@ pub async fn status_handler(
     }))
 }
 
+#[derive(Serialize)]
+pub struct AgentStatusResponse {
+    pub is_working: bool,
+    pub current_tool: Option<String>,
+}
+
+pub async fn agent_status_handler(
+    State(state): State<PackedState>,
+) -> Result<impl IntoResponse> {
+    let app_state = state.lock().await;
+    Ok(Json(AgentStatusResponse {
+        is_working: !app_state.active_generations.is_empty(),
+        current_tool: app_state.current_tool.clone(),
+    }))
+}
+
+pub async fn plugin_install_handler() -> Result<impl IntoResponse> {
+    match crate::install::do_install().await {
+        Ok(msg) => Ok(Json(serde_json::json!({
+            "success": true,
+            "message": msg
+        }))),
+        Err(e) => Err(eyre!("Failed to install plugin: {}", e).into()),
+    }
+}
+
 pub async fn models_handler(
     State(state): State<PackedState>,
 ) -> Result<impl IntoResponse> {
@@ -1344,11 +2291,17 @@ pub async fn dud_proxy_loop(state: PackedState, exit: Receiver<()>) {
 
 // --- History Operations ---
 
-use crate::db::{ChatSession, ChatSessionFull};
+use crate::db::{ChatSession, ChatSessionFull, ProjectRow, CreateProjectRequest};
 
 #[derive(Deserialize)]
 pub struct SearchQuery {
     pub q: String,
+    pub project_id: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ListQuery {
+    pub project_id: Option<String>,
 }
 
 pub async fn history_search_handler(
@@ -1356,7 +2309,7 @@ pub async fn history_search_handler(
     axum::extract::Query(query): axum::extract::Query<SearchQuery>,
 ) -> Result<Json<Vec<ChatSession>>, axum::http::StatusCode> {
     let state = state.lock().await;
-    match state.db.search_chats(&query.q) {
+    match state.db.search_chats(&query.q, query.project_id.as_deref()) {
         Ok(chats) => Ok(Json(chats)),
         Err(e) => {
             tracing::error!("Failed to search chats: {}", e);
@@ -1367,9 +2320,15 @@ pub async fn history_search_handler(
 
 pub async fn history_list_handler(
     State(state): State<PackedState>,
+    axum::extract::Query(query): axum::extract::Query<ListQuery>,
 ) -> Result<Json<Vec<ChatSession>>, axum::http::StatusCode> {
     let state = state.lock().await;
-    match state.db.list_chats() {
+    let result = if let Some(pid) = query.project_id.as_deref() {
+        state.db.list_chats_by_project(pid)
+    } else {
+        state.db.list_chats()
+    };
+    match result {
         Ok(chats) => Ok(Json(chats)),
         Err(e) => {
             tracing::error!("Failed to list chats: {}", e);
@@ -1469,6 +2428,88 @@ pub async fn history_toggle_pin_handler(
         Ok(_) => Ok(axum::http::StatusCode::OK),
         Err(e) => {
             tracing::error!("Failed to toggle pin: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+// ── Projects ──────────────────────────────────────────────────────────────────
+
+pub async fn projects_list_handler(
+    State(state): State<PackedState>,
+) -> Result<Json<Vec<ProjectRow>>, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.list_projects() {
+        Ok(projects) => Ok(Json(projects)),
+        Err(e) => {
+            tracing::error!("Failed to list projects: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+pub async fn project_create_handler(
+    State(state): State<PackedState>,
+    Json(req): Json<CreateProjectRequest>,
+) -> Result<Json<serde_json::Value>, axum::http::StatusCode> {
+    let id = uuid::Uuid::new_v4().to_string();
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0);
+    let state = state.lock().await;
+    match state.db.create_project(&id, &req.name, req.details.as_deref(), now) {
+        Ok(_) => Ok(Json(serde_json::json!({ "id": id }))),
+        Err(e) => {
+            tracing::error!("Failed to create project: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+pub async fn project_delete_handler(
+    State(state): State<PackedState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Result<axum::http::StatusCode, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.delete_project(&id) {
+        Ok(_) => Ok(axum::http::StatusCode::OK),
+        Err(e) => {
+            tracing::error!("Failed to delete project: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+pub async fn project_memory_handler(
+    State(state): State<PackedState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Result<Json<Vec<String>>, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.get_project_memory(&id) {
+        Ok(memories) => Ok(Json(memories)),
+        Err(e) => {
+            tracing::error!("Failed to get project memory: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+#[derive(serde::Deserialize)]
+pub struct UpdateProjectContextRequest {
+    pub context: String,
+}
+
+pub async fn project_update_context_handler(
+    State(state): State<PackedState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<UpdateProjectContextRequest>,
+) -> Result<axum::http::StatusCode, axum::http::StatusCode> {
+    let state = state.lock().await;
+    match state.db.update_project_context(&id, &req.context) {
+        Ok(_) => Ok(axum::http::StatusCode::OK),
+        Err(e) => {
+            tracing::error!("Failed to update project context: {}", e);
             Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
         }
     }

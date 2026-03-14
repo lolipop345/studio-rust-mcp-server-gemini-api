@@ -30,6 +30,17 @@
     "themesTitle": "Appearance",
     "themesDark": "Dark",
     "themesLight": "Light",
+    "themesDeepOrange": "Deep Orange",
+    "themesAmoled": "AMOLED",
+    "importTheme": "Import Theme",
+    "exportTheme": "Export Theme",
+    "customThemes": "Custom Appearances",
+    "themesKoknar": "Fir Green",
+    "themesKanliAy": "Blood Moon",
+    "deleteThemeConfirm": "Are you sure you want to delete the theme '{name}'?",
+    "deleteThemeTitle": "Delete Theme",
+    "importError": "Failed to import theme: ",
+    "exportError": "Failed to export theme: ",
     "googleAccountLabel": "Google Account",
     "signInWithGoogle": "Sign in with Google",
     "googleConnected": "Connected via Google",
@@ -40,7 +51,15 @@
     "cookieDesc": "Reset theme, language and other local preferences to defaults.",
     "resetCookies": "Reset Preferences",
     "oauthError": "OAuth not configured. Add oauth_config.json.",
-    "resetCookiesConfirm": "Theme, language, and other local preferences will be reset to defaults. The app will reload."
+    "resetCookiesConfirm": "Theme, language, and other local preferences will be reset to defaults. The app will reload.",
+    "customInstructions": "Custom Instructions",
+    "customInstructionsDesc": "These instructions are always sent to the model in every chat. Saved automatically.",
+    "customInstructionsPlaceholder": "e.g., Always respond in Turkish. Use formal language...",
+    "systemInstructionsDesc": "Per-session instructions. Not saved between sessions.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Settings",
@@ -279,5 +298,30 @@
   "media": {
     "audioRecording": "Audio Recording",
     "attachment": "Attachment"
+  },
+  "projects": {
+    "title": "Projects",
+    "description": "Organize your chats into projects with AI memory.",
+    "name": "Project name",
+    "details": "Details (optional)",
+    "create": "Create Project",
+    "history": "Project History",
+    "checkHistory": "Check history",
+    "back": "Back",
+    "empty": "No projects yet.",
+    "chats": "chats",
+    "activeProject": "Active Project",
+    "exitProject": "Exit Project",
+    "noContext": "No memory yet — will be created after the first chat.",
+    "deleteProject": "Delete Project",
+    "confirmDelete": "Are you sure you want to delete \"{name}\"? All chats will be moved to global history."
+  },
+  "aiMode": {
+    "fast": "Fast",
+    "fastDesc": "Direct execution, no planning",
+    "planning": "Planning",
+    "planningDesc": "Creates a plan first, then executes",
+    "imaginer": "Imaginer",
+    "imaginerDesc": "Analyzes structure, then modifies thoughtfully"
   }
 }

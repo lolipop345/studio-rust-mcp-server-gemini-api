@@ -40,7 +40,15 @@
     "cookieDesc": "Design, Sprache und andere lokale Einstellungen auf Standard zurücksetzen.",
     "resetCookies": "Einstellungen zurücksetzen",
     "oauthError": "OAuth nicht konfiguriert. Füge oauth_config.json hinzu.",
-    "resetCookiesConfirm": "Design, Sprache und andere lokale Einstellungen werden zurückgesetzt. Die App wird neu geladen."
+    "resetCookiesConfirm": "Design, Sprache und andere lokale Einstellungen werden zurückgesetzt. Die App wird neu geladen.",
+    "customInstructions": "Benutzerdefinierte Anweisungen",
+    "customInstructionsDesc": "Diese Anweisungen werden in jedem Chat an das Modell gesendet. Automatisch gespeichert.",
+    "customInstructionsPlaceholder": "Z.B., Antworte immer auf Deutsch. Verwende formelle Sprache...",
+    "systemInstructionsDesc": "Sitzungsbezogene Anweisungen. Nicht zwischen Sitzungen gespeichert.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Einstellungen",
@@ -265,10 +273,35 @@
     "audioRecording": "Audioaufnahme",
     "attachment": "Anhang"
   },
+  "projects": {
+    "title": "Projekte",
+    "description": "Organisiere deine Chats in Projekten mit KI-Gedächtnis.",
+    "name": "Projektname",
+    "details": "Details (optional)",
+    "create": "Projekt erstellen",
+    "history": "Projektverlauf",
+    "checkHistory": "Verlauf anzeigen",
+    "back": "Zurück",
+    "empty": "Noch keine Projekte.",
+    "chats": "Chats",
+    "activeProject": "Aktives Projekt",
+    "exitProject": "Projekt verlassen",
+    "noContext": "Noch kein Gedächtnis — wird nach dem ersten Chat erstellt.",
+    "deleteProject": "Projekt löschen",
+    "confirmDelete": "Möchten Sie \"{name}\" wirklich löschen? Alle Chats werden in den allgemeinen Verlauf verschoben."
+  },
   "artifact": {
     "commentTriggerTitle": "Kommentar zu diesem Abschnitt hinzufügen",
     "commentPlaceholder": "Schreiben Sie Ihr Feedback zu diesem Abschnitt...",
     "commentCancel": "Abbrechen",
     "commentSave": "Speichern"
+  },
+  "aiMode": {
+    "fast": "Schnell",
+    "fastDesc": "Direkte Ausführung, keine Planung",
+    "planning": "Planung",
+    "planningDesc": "Erstellt zuerst einen Plan, dann führt aus",
+    "imaginer": "Denker",
+    "imaginerDesc": "Analysiert die Struktur, ändert durchdacht"
   }
 }

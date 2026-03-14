@@ -40,7 +40,15 @@
     "cookieDesc": "Réinitialiser le thème, la langue et d'autres préférences locales par défaut.",
     "resetCookies": "Réinitialiser les préférences",
     "oauthError": "OAuth non configuré. Ajoutez oauth_config.json.",
-    "resetCookiesConfirm": "Le thème, la langue et d'autres préférences locales seront réinitialisés. L'application va redémarrer."
+    "resetCookiesConfirm": "Le thème, la langue et d'autres préférences locales seront réinitialisés. L'application va redémarrer.",
+    "customInstructions": "Instructions Personnalisées",
+    "customInstructionsDesc": "Ces instructions sont envoyées au modèle dans chaque chat. Sauvegardées automatiquement.",
+    "customInstructionsPlaceholder": "Ex: Réponds toujours en français. Utilise un langage formel...",
+    "systemInstructionsDesc": "Instructions par session. Non sauvegardées entre les sessions.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Paramètres",
@@ -265,10 +273,35 @@
     "audioRecording": "Enregistrement audio",
     "attachment": "Pièce jointe"
   },
+  "projects": {
+    "title": "Projets",
+    "description": "Organisez vos chats en projets avec mémoire IA.",
+    "name": "Nom du projet",
+    "details": "Détails (optionnel)",
+    "create": "Créer un projet",
+    "history": "Historique du projet",
+    "checkHistory": "Voir l'historique",
+    "back": "Retour",
+    "empty": "Aucun projet pour l'instant.",
+    "chats": "chats",
+    "activeProject": "Projet actif",
+    "exitProject": "Quitter le projet",
+    "noContext": "Pas encore de mémoire — sera créée après le premier chat.",
+    "deleteProject": "Supprimer le projet",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer \"{name}\" ? Tous les chats seront déplacés vers l'historique général."
+  },
   "artifact": {
     "commentTriggerTitle": "Ajouter un commentaire à cette section",
     "commentPlaceholder": "Écrivez vos commentaires sur cette section...",
     "commentCancel": "Annuler",
     "commentSave": "Enregistrer"
+  },
+  "aiMode": {
+    "fast": "Rapide",
+    "fastDesc": "Exécution directe, sans planification",
+    "planning": "Planification",
+    "planningDesc": "Crée un plan d'abord, puis exécute",
+    "imaginer": "Penseur",
+    "imaginerDesc": "Analyse la structure, modifie avec soin"
   }
 }

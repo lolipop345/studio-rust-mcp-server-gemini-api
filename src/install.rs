@@ -16,13 +16,22 @@ fn get_message() -> String {
      - start_stop_play\n\
      - run_script_in_play_mode\n\
      - get_studio_mode\n\
+     - read_file / read_lines\n\
+     - get_hierarchy / get_hierarchy_of\n\
+     - get_properties / find_instances\n\
+     - add_instance / add_json_instance\n\
+     - remove_instance / move_instance / clone_instance\n\
+     - replace_lines_with / replace_with\n\
+     - import_from_http / import_from_wally\n\
+     - create_script\n\
+     - debug_script\n\
      \n\
      To use the agent, set the GEMINI_API_KEY environment variable and run the binary without flags.\n\
      To uninstall, delete the MCPStudioPlugin.rbxm from your Plugins directory."
         .to_string()
 }
 
-async fn install_internal() -> Result<String> {
+pub async fn do_install() -> Result<String> {
     let plugin_bytes = include_bytes!(concat!(env!("OUT_DIR"), "/MCPStudioPlugin.rbxm"));
     let studio = RobloxStudio::locate()?;
     let plugins = studio.plugins_path();
@@ -54,7 +63,7 @@ async fn install_internal() -> Result<String> {
 #[cfg(target_os = "windows")]
 pub async fn install() -> Result<()> {
     use std::process::Command;
-    if let Err(e) = install_internal().await {
+    if let Err(e) = do_install().await {
         tracing::error!("Failed to install Roblox Studio plugin: {:#}", e);
     }
     let _ = Command::new("cmd.exe").arg("/c").arg("pause").status();
@@ -64,7 +73,7 @@ pub async fn install() -> Result<()> {
 #[cfg(target_os = "macos")]
 pub async fn install() -> Result<()> {
     use native_dialog::{DialogBuilder, MessageLevel};
-    let alert_builder = match install_internal().await {
+    let alert_builder = match do_install().await {
         Err(e) => DialogBuilder::message()
             .set_level(MessageLevel::Error)
             .set_text(format!("Errors occurred: {e:#}")),
@@ -81,6 +90,6 @@ pub async fn install() -> Result<()> {
 
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 pub async fn install() -> Result<()> {
-    install_internal().await?;
+    do_install().await?;
     Ok(())
 }

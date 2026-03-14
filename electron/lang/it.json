@@ -40,7 +40,15 @@
     "cookieDesc": "Reimposta tema, lingua e altre preferenze locali ai valori predefiniti.",
     "resetCookies": "Reimposta preferenze",
     "oauthError": "OAuth non configurato. Aggiungi oauth_config.json.",
-    "resetCookiesConfirm": "Tema, lingua e altre preferenze locali verranno ripristinate. L'app verrà ricaricata."
+    "resetCookiesConfirm": "Tema, lingua e altre preferenze locali verranno ripristinate. L'app verrà ricaricata.",
+    "customInstructions": "Istruzioni Personalizzate",
+    "customInstructionsDesc": "Queste istruzioni vengono inviate al modello in ogni chat. Salvate automaticamente.",
+    "customInstructionsPlaceholder": "Es., Rispondi sempre in italiano. Usa un linguaggio formale...",
+    "systemInstructionsDesc": "Istruzioni per sessione. Non salvate tra le sessioni.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Impostazioni",
@@ -265,10 +273,35 @@
     "audioRecording": "Registrazione audio",
     "attachment": "Allegato"
   },
+  "projects": {
+    "title": "Progetti",
+    "description": "Organizza le tue chat in progetti con memoria IA.",
+    "name": "Nome progetto",
+    "details": "Dettagli (opzionale)",
+    "create": "Crea progetto",
+    "history": "Cronologia progetto",
+    "checkHistory": "Vedi cronologia",
+    "back": "Indietro",
+    "empty": "Nessun progetto ancora.",
+    "chats": "chat",
+    "activeProject": "Progetto attivo",
+    "exitProject": "Esci dal progetto",
+    "noContext": "Ancora nessuna memoria — verrà creata dopo la prima chat.",
+    "deleteProject": "Elimina Progetto",
+    "confirmDelete": "Sei sicuro di voler eliminare \"{name}\"? Tutte le chat verranno spostate nella cronologia generale."
+  },
   "artifact": {
     "commentTriggerTitle": "Aggiungi un commento a questa sezione",
     "commentPlaceholder": "Scrivi il tuo feedback su questa sezione...",
     "commentCancel": "Annulla",
     "commentSave": "Salva"
+  },
+  "aiMode": {
+    "fast": "Veloce",
+    "fastDesc": "Esecuzione diretta, senza pianificazione",
+    "planning": "Pianificazione",
+    "planningDesc": "Crea prima un piano, poi esegue",
+    "imaginer": "Pensatore",
+    "imaginerDesc": "Analizza la struttura, modifica con cura"
   }
 }

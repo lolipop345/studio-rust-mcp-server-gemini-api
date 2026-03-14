@@ -8,3 +8,5 @@ electron/node_modules
 electron/oauth_config.json
 gemini_studio.db
 .claude/
+electron/user-themes
+Projects

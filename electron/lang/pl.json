@@ -40,7 +40,15 @@
     "cookieDesc": "Zresetuj motyw, język i inne ustawienia lokalne do domyślnych.",
     "resetCookies": "Zresetuj preferencje",
     "oauthError": "OAuth nieskonfigurowane. Dodaj oauth_config.json.",
-    "resetCookiesConfirm": "Motyw, język i inne ustawienia lokalne zostaną zresetowane. Aplikacja zostanie załadowana ponownie."
+    "resetCookiesConfirm": "Motyw, język i inne ustawienia lokalne zostaną zresetowane. Aplikacja zostanie załadowana ponownie.",
+    "customInstructions": "Niestandardowe Instrukcje",
+    "customInstructionsDesc": "Te instrukcje są wysyłane do modelu w każdym czacie. Zapisywane automatycznie.",
+    "customInstructionsPlaceholder": "Np., Zawsze odpowiadaj po polsku. Używaj formalnego języka...",
+    "systemInstructionsDesc": "Instrukcje sesji. Nie zapisywane między sesjami.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Ustawienia",
@@ -265,10 +273,35 @@
     "audioRecording": "Nagranie audio",
     "attachment": "Załącznik"
   },
+  "projects": {
+    "title": "Projekty",
+    "description": "Organizuj swoje czaty w projektach z pamięcią AI.",
+    "name": "Nazwa projektu",
+    "details": "Szczegóły (opcjonalne)",
+    "create": "Utwórz projekt",
+    "history": "Historia projektu",
+    "checkHistory": "Zobacz historię",
+    "back": "Wstecz",
+    "empty": "Brak projektów.",
+    "chats": "czatów",
+    "activeProject": "Aktywny projekt",
+    "exitProject": "Wyjdź z projektu",
+    "noContext": "Brak pamięci — zostanie utworzona po pierwszym czacie.",
+    "deleteProject": "Usuń Projekt",
+    "confirmDelete": "Czy na pewno chcesz usunąć \"{name}\"? Wszystkie czaty zostaną przeniesione do ogólnej historii."
+  },
   "artifact": {
     "commentTriggerTitle": "Dodaj komentarz do tej sekcji",
     "commentPlaceholder": "Napisz swoją opinię o tej sekcji...",
     "commentCancel": "Anuluj",
     "commentSave": "Zapisz"
+  },
+  "aiMode": {
+    "fast": "Szybki",
+    "fastDesc": "Bezpośrednie wykonanie, bez planowania",
+    "planning": "Planowanie",
+    "planningDesc": "Najpierw tworzy plan, potem wykonuje",
+    "imaginer": "Myśliciel",
+    "imaginerDesc": "Analizuje strukturę, zmienia przemyślanie"
   }
 }

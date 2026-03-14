@@ -40,7 +40,15 @@
     "cookieDesc": "Redefinir tema, idioma e outras preferências locais para os padrões.",
     "resetCookies": "Redefinir preferências",
     "oauthError": "OAuth não configurado. Adicione oauth_config.json.",
-    "resetCookiesConfirm": "O tema, o idioma e outras preferências locais serão redefinidos. O aplicativo será recarregado."
+    "resetCookiesConfirm": "O tema, o idioma e outras preferências locais serão redefinidos. O aplicativo será recarregado.",
+    "customInstructions": "Instruções Personalizadas",
+    "customInstructionsDesc": "Estas instruções são sempre enviadas ao modelo em cada chat. Salvas automaticamente.",
+    "customInstructionsPlaceholder": "Ex: Sempre responda em português. Use linguagem formal...",
+    "systemInstructionsDesc": "Instruções por sessão. Não salvas entre sessões.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Configurações",
@@ -265,10 +273,35 @@
     "audioRecording": "Gravação de áudio",
     "attachment": "Anexo"
   },
+  "projects": {
+    "title": "Projetos",
+    "description": "Organize seus chats em projetos com memória de IA.",
+    "name": "Nome do projeto",
+    "details": "Detalhes (opcional)",
+    "create": "Criar projeto",
+    "history": "Histórico do projeto",
+    "checkHistory": "Ver histórico",
+    "back": "Voltar",
+    "empty": "Nenhum projeto ainda.",
+    "chats": "chats",
+    "activeProject": "Projeto ativo",
+    "exitProject": "Sair do projeto",
+    "noContext": "Sem memória ainda — será criada após o primeiro chat.",
+    "deleteProject": "Excluir Projeto",
+    "confirmDelete": "Tem certeza de que deseja excluir \"{name}\"? Todos os chats serão movidos para o histórico geral."
+  },
   "artifact": {
     "commentTriggerTitle": "Adicionar um comentário a esta seção",
     "commentPlaceholder": "Escreva seu feedback sobre esta seção...",
     "commentCancel": "Cancelar",
     "commentSave": "Salvar"
+  },
+  "aiMode": {
+    "fast": "Rápido",
+    "fastDesc": "Execução direta, sem planejamento",
+    "planning": "Planejamento",
+    "planningDesc": "Cria um plano primeiro, depois executa",
+    "imaginer": "Imaginador",
+    "imaginerDesc": "Analisa a estrutura, modifica com cuidado"
   }
 }

@@ -40,7 +40,15 @@
     "cookieDesc": "Resetuj temu, jezik i ostala lokalna podešavanja na podrazumevano.",
     "resetCookies": "Resetuj Podešavanja",
     "oauthError": "OAuth nije konfigurisan. Dodajte oauth_config.json.",
-    "resetCookiesConfirm": "Tema, jezik i ostala lokalna podešavanja biće resetovana. Aplikacija će se ponovo učitati."
+    "resetCookiesConfirm": "Tema, jezik i ostala lokalna podešavanja biće resetovana. Aplikacija će se ponovo učitati.",
+    "customInstructions": "Прилагођена упутства",
+    "customInstructionsDesc": "Ова упутства се шаљу моделу у сваком ћаскању. Аутоматски се чувају.",
+    "customInstructionsPlaceholder": "Нпр., Увек одговарај на српском. Користи формални језик...",
+    "systemInstructionsDesc": "Упутства за сесију. Не чувају се између сесија.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Подешавања",
@@ -265,10 +273,35 @@
     "audioRecording": "Audio snimak",
     "attachment": "Prilog"
   },
+  "projects": {
+    "title": "Пројекти",
+    "description": "Организујте своје разговоре у пројекте са AI меморијом.",
+    "name": "Назив пројекта",
+    "details": "Детаљи (опционо)",
+    "create": "Креирај пројекат",
+    "history": "Историја пројекта",
+    "checkHistory": "Погледај историју",
+    "back": "Назад",
+    "empty": "Нема пројеката.",
+    "chats": "разговора",
+    "activeProject": "Активни пројекат",
+    "exitProject": "Изађи из пројекта",
+    "noContext": "Нема меморије — биће креирана након првог разговора.",
+    "deleteProject": "Обриши пројекат",
+    "confirmDelete": "Да ли сте сигурни да желите да обришете \"{name}\"? Сви ћаскања ће бити премештени у општу историју."
+  },
   "artifact": {
     "commentTriggerTitle": "Dodaj komentar ovom odeljku",
     "commentPlaceholder": "Napišite povratne informacije o ovom odeljku...",
     "commentCancel": "Otkaži",
     "commentSave": "Sačuvaj"
+  },
+  "aiMode": {
+    "fast": "Брзо",
+    "fastDesc": "Директно извршавање, без планирања",
+    "planning": "Планирање",
+    "planningDesc": "Прво прави план, затим извршава",
+    "imaginer": "Мислилац",
+    "imaginerDesc": "Анализира структуру, мења промишљено"
   }
 }

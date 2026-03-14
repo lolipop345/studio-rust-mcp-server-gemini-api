@@ -1,0 +1,46 @@
+:root {
+    --bg-primary: #121a14;
+    --bg-secondary: #121a14;
+    --bg-tertiary: #182019;
+
+    --bg-input: #1e2a20;
+    --bg-input-focus: #1e2a20;
+    --bg-hover: rgba(255, 255, 255, 0.08);
+    --bg-message-user: #1a2b1d;
+    --bg-message-assistant: transparent;
+
+    --bg-tool-call: rgba(255, 255, 255, 0.04);
+    --bg-modal: #1a2a1c;
+    --bg-modal-overlay: rgba(0, 0, 0, 0.6);
+    --bg-code: #111a12;
+    --bg-code-inline: rgba(255, 255, 255, 0.1);
+    --bg-blockquote: rgba(255, 255, 255, 0.05);
+
+    --border-primary: rgba(255, 255, 255, 0.1);
+    --border-input: rgba(255, 255, 255, 0.08);
+    --border-input-focus: rgba(255, 255, 255, 0.15);
+    --border-tool: rgba(255, 255, 255, 0.1);
+    --border-blockquote: #888;
+
+    --text-primary: #e8f5ea;
+    --text-secondary: #9dbfa1;
+    --text-tertiary: #6e8f72;
+    --text-link: #e8f5ea;
+    --text-code: #c8e6c9;
+
+    --accent: #4CAF50;
+    --accent-hover: #388E3C;
+    --accent-glow: rgba(76, 175, 80, 0.2);
+
+    --status-connected: #34d399;
+    --status-disconnected: #f87171;
+    --status-warning: #fbbf24;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+    --shadow-popover: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 10px 30px rgba(0, 0, 0, 0.4);
+
+    --select-chevron-filter: none;
+    --media-invert-amount: 100%;
+}

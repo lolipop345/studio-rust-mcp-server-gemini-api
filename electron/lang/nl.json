@@ -40,7 +40,15 @@
     "cookieDesc": "Thema, taal en andere lokale voorkeuren resetten naar standaardinstellingen.",
     "resetCookies": "Voorkeuren resetten",
     "oauthError": "OAuth niet geconfigureerd. Voeg oauth_config.json toe.",
-    "resetCookiesConfirm": "Thema, taal en andere lokale voorkeuren worden gereset. De app wordt opnieuw geladen."
+    "resetCookiesConfirm": "Thema, taal en andere lokale voorkeuren worden gereset. De app wordt opnieuw geladen.",
+    "customInstructions": "Aangepaste Instructies",
+    "customInstructionsDesc": "Deze instructies worden bij elke chat naar het model gestuurd. Automatisch opgeslagen.",
+    "customInstructionsPlaceholder": "Bijv., Antwoord altijd in het Nederlands. Gebruik formele taal...",
+    "systemInstructionsDesc": "Sessie-instructies. Niet opgeslagen tussen sessies.",
+    "tabTools": "Plugin & Tools",
+    "updatePlugin": "Update Plugin",
+    "installPlugin": "Install Plugin",
+    "pluginToolsDesc": "Install or update the Roblox Studio plugin to the latest version."
   },
   "titlebar": {
     "settingsTitle": "Instellingen",
@@ -265,10 +273,35 @@
     "audioRecording": "Audio-opname",
     "attachment": "Bijlage"
   },
+  "projects": {
+    "title": "Projecten",
+    "description": "Organiseer je chats in projecten met AI-geheugen.",
+    "name": "Projectnaam",
+    "details": "Details (optioneel)",
+    "create": "Project aanmaken",
+    "history": "Projectgeschiedenis",
+    "checkHistory": "Geschiedenis bekijken",
+    "back": "Terug",
+    "empty": "Nog geen projecten.",
+    "chats": "chats",
+    "activeProject": "Actief project",
+    "exitProject": "Project verlaten",
+    "noContext": "Nog geen geheugen — wordt aangemaakt na de eerste chat.",
+    "deleteProject": "Project verwijderen",
+    "confirmDelete": "Weet u zeker dat u \"{name}\" wilt verwijderen? Alle chats worden naar de algemene geschiedenis verplaatst."
+  },
   "artifact": {
     "commentTriggerTitle": "Opmerking toevoegen aan dit gedeelte",
     "commentPlaceholder": "Schrijf uw feedback over dit gedeelte...",
     "commentCancel": "Annuleren",
     "commentSave": "Opslaan"
+  },
+  "aiMode": {
+    "fast": "Snel",
+    "fastDesc": "Directe uitvoering, geen planning",
+    "planning": "Planning",
+    "planningDesc": "Maakt eerst een plan, voert dan uit",
+    "imaginer": "Denker",
+    "imaginerDesc": "Analyseert structuur, wijzigt doordacht"
   }
 }

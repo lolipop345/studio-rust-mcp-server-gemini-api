@@ -17,5 +17,19 @@ fn main() {
         }),
     };
     options.run().unwrap();
-    println!("cargo:rerun-if-changed=plugin");
+
+    // Recursively watch ALL files under plugin/ so that any .luau/.json change
+    // triggers a rebuild of the embedded .rbxm
+    fn emit_rerun(dir: &std::path::Path) {
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                println!("cargo:rerun-if-changed={}", path.display());
+                if path.is_dir() {
+                    emit_rerun(&path);
+                }
+            }
+        }
+    }
+    emit_rerun(std::path::Path::new("plugin"));
 }
