@@ -76,6 +76,39 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
+  // ── Security: Content Security Policy ──────────────────────────────────────
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; " +
+          "script-src 'self'; " +
+          "style-src 'self' 'unsafe-inline'; " +
+          "img-src 'self' data: https:; " +
+          "connect-src 'self' http://127.0.0.1:* https://generativelanguage.googleapis.com https://oauth2.googleapis.com https://www.googleapis.com; " +
+          "font-src 'self'; " +
+          "object-src 'none'; " +
+          "frame-src 'none';"
+        ]
+      }
+    });
+  });
+
+  // Block navigation to external URLs (prevent phishing/redirect attacks)
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (!url.startsWith('file://')) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  });
+
+  // Block new window creation (popup attacks)
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
   });
@@ -107,6 +140,11 @@ function createWindow() {
     systemPreferences.askForMediaAccess('microphone');
   }
 }
+
+// IPC: Get userData path (for onboarding persistence)
+ipcMain.handle("get-user-data-path", async () => {
+  return app.getPath("userData");
+});
 
 // IPC: Window controls (Windows/Linux)
 ipcMain.on("window-minimize", () => { if (mainWindow) mainWindow.minimize(); });
@@ -608,7 +646,34 @@ app.on("second-instance", () => {
   }
 });
 
-app.whenReady().then(createWindow);
+// ── macOS .app first-run: start backend server if bundled ──────────────────
+function startBundledServer() {
+  const serverPath = process.platform === 'darwin'
+    ? path.join(process.resourcesPath, 'server', 'rbx-studio-mcp')
+    : path.join(process.resourcesPath, 'server', process.platform === 'win32' ? 'rbx-studio-mcp.exe' : 'rbx-studio-mcp');
+
+  if (fs.existsSync(serverPath)) {
+    const { spawn } = require('child_process');
+    const server = spawn(serverPath, [], {
+      stdio: 'ignore',
+      detached: false,
+      env: { ...process.env, ELECTRON_MANAGED: '1' }
+    });
+    server.unref();
+
+    // Give server time to start
+    return new Promise(resolve => setTimeout(resolve, 1500));
+  }
+  return Promise.resolve();
+}
+
+app.whenReady().then(async () => {
+  // If running from a packaged app (.app / .exe), start the bundled server
+  if (app.isPackaged) {
+    await startBundledServer();
+  }
+  createWindow();
+});
 
 app.on("window-all-closed", () => {
   app.quit();

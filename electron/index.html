@@ -10,6 +10,196 @@
 </head>
 
 <body>
+  <!-- ── Onboarding Tutorial Overlay ──────────────────────────────────────── -->
+  <div id="onboarding-overlay" class="hidden">
+    <div id="onboarding-container">
+      <div id="onboarding-header">
+        <div class="onboarding-logo">
+          <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M60.2773 12.3887L50.8877 60.2773L3 50.8877L12.3887 3L60.2773 12.3887ZM32.9424 18.6465C32.6268 17.7606 31.3732 17.7606 31.0576 18.6465L29.7109 22.4297C28.5015 25.8277 25.8277 28.5015 22.4297 29.7109L18.6465 31.0576C17.7606 31.3732 17.7606 32.6268 18.6465 32.9424L22.4297 34.2891C25.8277 35.4985 28.5015 38.1723 29.7109 41.5703L31.0576 45.3535C31.3732 46.2394 32.6268 46.2394 32.9424 45.3535L34.2891 41.5703C35.4985 38.1723 38.1723 35.4985 41.5703 34.2891L45.3535 32.9424C46.2394 32.6268 46.2394 31.3732 45.3535 31.0576L41.5703 29.7109C38.1723 28.5015 35.4985 25.8277 34.2891 22.4297L32.9424 18.6465Z" fill="var(--accent)"/>
+          </svg>
+          <span>GeminiStudio</span>
+        </div>
+        <button id="onboarding-skip" class="onboarding-skip-btn">Skip Tutorial</button>
+      </div>
+
+      <div id="onboarding-progress">
+        <div class="onboarding-progress-bar">
+          <div id="onboarding-progress-fill"></div>
+        </div>
+        <span id="onboarding-step-label">1 / 5</span>
+      </div>
+
+      <!-- Step 1: Language Selection -->
+      <div class="onboarding-step active" data-step="1">
+        <div class="onboarding-step-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </div>
+        <h2 id="onboarding-lang-title">What is your language?</h2>
+        <p id="onboarding-lang-desc">Choose your preferred language for the interface.</p>
+        <div id="onboarding-lang-grid" class="onboarding-lang-grid">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Step 2: Customize Agent -->
+      <div class="onboarding-step" data-step="2">
+        <div class="onboarding-step-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+          </svg>
+        </div>
+        <h2 id="onboarding-agent-title">Customize your Agent</h2>
+        <p id="onboarding-agent-desc">Give your AI assistant custom instructions and adjust creativity.</p>
+        <div class="onboarding-form-group">
+          <label id="onboarding-instructions-label">System Instructions</label>
+          <textarea id="onboarding-instructions" rows="4" placeholder="e.g., You are a senior software architect. Always explain your reasoning..."></textarea>
+          <span class="onboarding-hint" id="onboarding-instructions-hint">This tells the model how to behave. You can change this later in Settings.</span>
+        </div>
+        <div class="onboarding-form-group">
+          <label id="onboarding-temp-label">Temperature</label>
+          <div class="onboarding-slider-row">
+            <span class="onboarding-slider-label" id="onboarding-temp-precise">Precise</span>
+            <input type="range" id="onboarding-temperature" min="0" max="1" step="0.05" value="0.7">
+            <span class="onboarding-slider-label" id="onboarding-temp-creative">Creative</span>
+          </div>
+          <div class="onboarding-temp-value">
+            <span id="onboarding-temp-display">0.70</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Login / API Key -->
+      <div class="onboarding-step" data-step="3">
+        <div class="onboarding-step-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <h2 id="onboarding-auth-title">Connect your Account</h2>
+        <p id="onboarding-auth-desc">Sign in with Google or enter an API key to get started.</p>
+        <div class="onboarding-auth-options">
+          <button id="onboarding-google-btn" class="onboarding-auth-btn google">
+            <svg width="20" height="20" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            <span id="onboarding-google-text">Sign in with Google</span>
+          </button>
+          <div class="onboarding-divider">
+            <span id="onboarding-or-text">or</span>
+          </div>
+          <div class="onboarding-apikey-section">
+            <label id="onboarding-apikey-label">Enter API Key</label>
+            <div class="onboarding-apikey-row">
+              <input type="password" id="onboarding-apikey-input" placeholder="AIza...">
+              <button id="onboarding-apikey-save" class="onboarding-btn-small">Save</button>
+            </div>
+            <a href="https://aistudio.google.com/apikey" id="onboarding-apikey-link" class="onboarding-link" target="_blank">Get API Key</a>
+          </div>
+        </div>
+        <button id="onboarding-auth-skip" class="onboarding-text-btn">Skip for now</button>
+      </div>
+
+      <!-- Step 4: Feature Tour -->
+      <div class="onboarding-step" data-step="4">
+        <div class="onboarding-step-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+        </div>
+        <h2 id="onboarding-tour-title">Quick Tour</h2>
+        <p id="onboarding-tour-desc">Here's what you can do with GeminiStudio.</p>
+        <div class="onboarding-features">
+          <div class="onboarding-feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+              </svg>
+            </div>
+            <div>
+              <h4 id="tour-sidebar-title">Sidebar</h4>
+              <p id="tour-sidebar-desc">Access your chat history, projects, and search through conversations.</p>
+            </div>
+          </div>
+          <div class="onboarding-feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6V3a2 2 0 0 1 4 0v.09c.09.55.44 1.02 1 1.27a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.25.56.72.91 1.27 1H21a2 2 0 0 1 0 4h-.09c-.55.09-1.02.44-1.27 1z"/>
+              </svg>
+            </div>
+            <div>
+              <h4 id="tour-settings-title">Settings</h4>
+              <p id="tour-settings-desc">Configure API keys, themes, system instructions, and more.</p>
+            </div>
+          </div>
+          <div class="onboarding-feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h4 id="tour-projects-title">Projects</h4>
+              <p id="tour-projects-desc">Organize chats into projects with persistent AI memory.</p>
+            </div>
+          </div>
+          <div class="onboarding-feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+            <div>
+              <h4 id="tour-models-title">Model Selection</h4>
+              <p id="tour-models-desc">Switch between different Gemini models and thinking modes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: All Done -->
+      <div class="onboarding-step" data-step="5">
+        <div class="onboarding-step-icon onboarding-done-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <h2 id="onboarding-done-title">You're all set!</h2>
+        <p id="onboarding-done-desc">Start chatting with your AI assistant. You can always change these settings later.</p>
+        <button id="onboarding-finish" class="onboarding-primary-btn">Get Started</button>
+      </div>
+
+      <!-- Navigation -->
+      <div id="onboarding-nav">
+        <button id="onboarding-prev" class="onboarding-nav-btn" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span id="onboarding-prev-text">Previous</span>
+        </button>
+        <button id="onboarding-next" class="onboarding-nav-btn onboarding-next-primary">
+          <span id="onboarding-next-text">Next</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="sidebar" class="sidebar-closed">
     <!-- Title -->
     <div class="sidebar-title-row">
@@ -1191,6 +1381,26 @@
   </div>
 
   <div id="toast-container"></div>
+
+  <!-- Auto-update notification -->
+  <div id="update-notification" class="update-notification hidden">
+    <div class="update-notification-content">
+      <div class="update-notification-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </div>
+      <div class="update-notification-text">
+        <span class="update-notification-title">New version available!</span>
+        <span id="update-version-info" class="update-notification-version"></span>
+      </div>
+      <button id="update-download-btn" class="update-download-btn">Download</button>
+      <button id="update-dismiss-btn" class="update-dismiss-btn" title="Dismiss">&times;</button>
+    </div>
+  </div>
+
   <script src="renderer.js"></script>
 </body>
 

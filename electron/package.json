@@ -1,18 +1,33 @@
 {
-  "name": "gemini-studio-app",
-  "productName": "GeminiStudio",
-  "version": "1.1.0",
-  "description": "Gemini-powered chat interface for Roblox Studio",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron ."
+  "author": {
+    "name": "Chat Toolkit Community",
+    "url": "https://github.com/studio-toolkit/chat-toolkit-rust-mcp"
   },
   "dependencies": {
+    "dompurify": "^3.3.3",
     "highlight.js": "^11.9.0",
     "marked": "^12.0.0",
     "marked-highlight": "^2.1.0"
   },
+  "description": "Gemini-powered chat interface for Roblox Studio",
   "devDependencies": {
-    "electron": "^33.0.0"
-  }
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "license": "MIT",
+  "main": "main.js",
+  "name": "gemini-studio-app",
+  "productName": "GeminiStudio",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/studio-toolkit/chat-toolkit-rust-mcp.git"
+  },
+  "scripts": {
+    "build:all": "electron-builder --win --mac --linux --config electron-builder.json",
+    "build:linux": "electron-builder --linux --config electron-builder.json",
+    "build:mac": "electron-builder --mac --config electron-builder.json",
+    "build:win": "electron-builder --win --config electron-builder.json",
+    "start": "electron ."
+  },
+  "version": "1.1.0"
 }

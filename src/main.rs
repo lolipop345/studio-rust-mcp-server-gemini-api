@@ -1,5 +1,6 @@
 use axum::routing::{get, post};
 use axum::extract::DefaultBodyLimit;
+use axum::http::{HeaderValue, Method};
 use clap::Parser;
 use color_eyre::eyre::Result;
 use rbx_studio_server::*;
@@ -60,7 +61,7 @@ async fn main() -> Result<()> {
             .route("/request", get(request_handler))
             .route("/response", post(response_handler))
             .route("/proxy", post(proxy_handler))
-            .route("/chat/send", post(chat_send_handler).layer(DefaultBodyLimit::max(50 * 1024 * 1024)))
+            .route("/chat/send", post(chat_send_handler).layer(DefaultBodyLimit::max(20 * 1024 * 1024)))
             .route("/chat/stop", post(chat_stop_handler))
             .route("/chat/plan_response", post(chat_plan_response_handler))
             .route("/chat/events/{id}", get(chat_events_handler))
@@ -82,7 +83,18 @@ async fn main() -> Result<()> {
             .route("/projects/{id}", axum::routing::delete(project_delete_handler))
             .route("/projects/{id}/context", post(project_update_context_handler))
             .route("/projects/{id}/memory", get(project_memory_handler))
-            .with_state(server_state_clone);
+            .with_state(server_state_clone)
+            // Security: restrict CORS to localhost only
+            .layer(
+                tower_http::cors::CorsLayer::new()
+                    .allow_origin([
+                        "http://127.0.0.1".parse::<HeaderValue>().unwrap(),
+                        "http://localhost".parse::<HeaderValue>().unwrap(),
+                        "file://".parse::<HeaderValue>().unwrap(),
+                    ])
+                    .allow_methods([Method::GET, Method::POST, Method::DELETE])
+                    .allow_headers(tower_http::cors::Any)
+            );
             
         tracing::info!("HTTP server listening on port {STUDIO_PLUGIN_PORT}");
         

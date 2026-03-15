@@ -1,0 +1,100 @@
+{
+  "appId": "com.chat-toolkit.gemini-studio",
+  "directories": {
+    "output": "../dist"
+  },
+  "dmg": {
+    "background": null,
+    "contents": [
+      {
+        "type": "file",
+        "x": 176,
+        "y": 192
+      },
+      {
+        "path": "/Applications",
+        "type": "link",
+        "x": 432,
+        "y": 192
+      }
+    ],
+    "icon": "icons/AppLogo.icns",
+    "iconSize": 128,
+    "title": "GeminiStudio",
+    "window": {
+      "height": 400,
+      "width": 660
+    }
+  },
+  "extraResources": [
+    {
+      "from": "../target/release/rbx-studio-mcp",
+      "to": "server"
+    }
+  ],
+  "files": [
+    "**/*",
+    "!user-themes",
+    "!oauth_config.json"
+  ],
+  "linux": {
+    "category": "Development",
+    "desktop": {
+      "Categories": "Development;IDE;",
+      "Comment": "Gemini-powered agent for Roblox Studio",
+      "Name": "GeminiStudio",
+      "Type": "Application"
+    },
+    "icon": "icons/AppLogo.png",
+    "target": [
+      "AppImage",
+      "deb"
+    ]
+  },
+  "mac": {
+    "category": "public.app-category.developer-tools",
+    "darkModeSupport": true,
+    "gatekeeperAssess": false,
+    "hardenedRuntime": true,
+    "icon": "icons/AppLogo.icns",
+    "target": [
+      {
+        "arch": [
+          "universal"
+        ],
+        "target": "dmg"
+      }
+    ]
+  },
+  "nsis": {
+    "allowElevation": true,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": "always",
+    "createStartMenuShortcut": true,
+    "deleteAppDataOnUninstall": false,
+    "include": "installer/nsis-custom.nsh",
+    "installerHeader": "icons/AppLogo.png",
+    "installerIcon": "icons/AppLogo.ico",
+    "installerSidebar": null,
+    "license": "../LICENSE",
+    "oneClick": false,
+    "perMachine": false,
+    "runAfterFinish": true,
+    "shortcutName": "GeminiStudio",
+    "uninstallDisplayName": "GeminiStudio",
+    "uninstallerIcon": "icons/AppLogo.ico"
+  },
+  "productName": "GeminiStudio",
+  "win": {
+    "icon": "icons/AppLogo.ico",
+    "publisherName": "Chat Toolkit Community",
+    "target": [
+      {
+        "arch": [
+          "x64"
+        ],
+        "target": "nsis"
+      }
+    ]
+  }
+}

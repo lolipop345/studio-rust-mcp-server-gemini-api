@@ -173,10 +173,15 @@ impl DbClient {
         }
 
         let clean_query = clean_query_parts.join(" ");
-        let like_query = if clean_query.is_empty() {
+        // Escape SQL LIKE special characters to prevent LIKE injection
+        let escaped_query = clean_query
+            .replace('\\', "\\\\")
+            .replace('%', "\\%")
+            .replace('_', "\\_");
+        let like_query = if escaped_query.is_empty() {
             "%%".to_string()
         } else {
-            format!("%{}%", clean_query)
+            format!("%{}%", escaped_query)
         };
 
         let mut sql = String::from(
@@ -190,9 +195,9 @@ impl DbClient {
         }
 
         if only_title {
-            sql.push_str(" AND title LIKE ?1");
+            sql.push_str(" AND title LIKE ?1 ESCAPE '\\'");
         } else {
-            sql.push_str(" AND (title LIKE ?1 OR tree_data LIKE ?1)");
+            sql.push_str(" AND (title LIKE ?1 ESCAPE '\\' OR tree_data LIKE ?1 ESCAPE '\\')");
         }
 
         if only_model {
@@ -202,7 +207,8 @@ impl DbClient {
             sql.push_str(" AND tree_data LIKE '%\"role\":\"user\"%'");
         }
         if let Some(ts) = min_timestamp {
-            sql.push_str(&format!(" AND updated_at >= {}", ts));
+            // Use parameterized query — ts is i64 so safe, but best practice
+            sql.push_str(&format!(" AND updated_at >= {}", ts as i64));
         }
 
         sql.push_str(" ORDER BY updated_at DESC LIMIT 50");

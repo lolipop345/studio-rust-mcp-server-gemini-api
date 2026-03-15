@@ -29,8 +29,9 @@ where
 impl IntoResponse for Report {
     fn into_response(self) -> Response {
         let err = self.0;
-        let err_string = format!("{err:?}");
-        tracing::error!("{err_string}");
+        // Log only the top-level error message, not the full debug trace
+        // to avoid leaking file paths, stack traces, or sensitive info
+        tracing::error!("Request error: {err}");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             "Something went wrong".to_string(),

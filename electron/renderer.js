@@ -1,11 +1,44 @@
 const { Marked } = require("marked");
 const { markedHighlight } = require("marked-highlight");
 const hljs = require("highlight.js");
+const DOMPurify = require("dompurify");
 const { shell, ipcRenderer, clipboard } = require("electron");
 const os = require("os");
 const path = require("path");
 const { exec } = require("child_process");
 const fs = require("fs");
+
+// ─── DOMPurify configuration ───────────────────────────────────
+// Allow safe HTML from marked.js but block script injection
+DOMPurify.setConfig({
+    ALLOWED_TAGS: [
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'hr',
+        'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'em', 'strong',
+        'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+        'del', 'ins', 'sup', 'sub', 'span', 'div', 'details', 'summary',
+        'mark', 'abbr', 'kbd', 'var', 'samp', 'small', 'figure', 'figcaption',
+        'dl', 'dt', 'dd', 'input', 'label',
+        'svg', 'path', 'polyline', 'circle', 'rect', 'line', 'polygon',
+        'button',
+    ],
+    ALLOWED_ATTR: [
+        'href', 'src', 'alt', 'title', 'class', 'id', 'target', 'rel',
+        'width', 'height', 'colspan', 'rowspan', 'style',
+        'viewBox', 'fill', 'stroke', 'stroke-width', 'stroke-linecap',
+        'stroke-linejoin', 'd', 'points', 'cx', 'cy', 'r', 'x', 'y',
+        'x1', 'y1', 'x2', 'y2', 'rx', 'ry', 'xmlns',
+        'type', 'checked', 'disabled', 'data-lang',
+    ],
+    ALLOW_DATA_ATTR: false,
+    ADD_ATTR: ['target'],
+    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'textarea', 'select'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
+});
+
+// Safe HTML sanitizer wrapper
+function sanitizeHTML(html) {
+    return DOMPurify.sanitize(html);
+}
 
 // Set platform attribute for CSS
 const platform = os.platform(); // "darwin" | "win32" | "linux"
@@ -52,13 +85,61 @@ if (platform !== "darwin") {
 }
 
 window.addEventListener('error', (e) => {
-    try { fs.appendFileSync('/tmp/renderer.log', (e.error ? e.error.stack : e.message) + '\n'); } catch (err) { }
+    console.error('[GeminiStudio Error]', e.error ? e.error.message : e.message);
 });
 window.addEventListener('unhandledRejection', (e) => {
-    try { fs.appendFileSync('/tmp/renderer.log', (e.reason ? (e.reason.stack || e.reason) : 'Promise rejection') + '\n'); } catch (err) { }
+    console.error('[GeminiStudio Rejection]', e.reason ? (e.reason.message || 'Promise rejection') : 'Promise rejection');
 });
 
 const API_BASE = "http://127.0.0.1:44755";
+
+// ─── Onboarding Persistence (survives cookie clearing) ─────────────────────
+// Uses a file in Electron's userData directory, not localStorage
+const ONBOARDING_FLAG_PATH = path.join(
+    (require('electron').app || require('@electron/remote')?.app || { getPath: () => '' }).getPath?.('userData') || '',
+    'onboarding_complete.json'
+);
+
+// Fallback: use ipcRenderer to ask main process for userData path
+let _onboardingFilePath = null;
+
+async function getOnboardingFilePath() {
+    if (_onboardingFilePath) return _onboardingFilePath;
+    try {
+        const userDataPath = await ipcRenderer.invoke('get-user-data-path');
+        if (userDataPath) {
+            _onboardingFilePath = path.join(userDataPath, 'onboarding_complete.json');
+            return _onboardingFilePath;
+        }
+    } catch {}
+    // Fallback
+    _onboardingFilePath = path.join(os.homedir(), '.gemini-studio-onboarding.json');
+    return _onboardingFilePath;
+}
+
+async function isOnboardingComplete() {
+    try {
+        const filePath = await getOnboardingFilePath();
+        if (!filePath) return false;
+        return fs.existsSync(filePath);
+    } catch {
+        return false;
+    }
+}
+
+async function markOnboardingComplete(data = {}) {
+    try {
+        const filePath = await getOnboardingFilePath();
+        if (!filePath) return;
+        fs.writeFileSync(filePath, JSON.stringify({
+            completed: true,
+            timestamp: new Date().toISOString(),
+            ...data
+        }, null, 2));
+    } catch (e) {
+        console.error('Failed to save onboarding state:', e);
+    }
+}
 
 // ─── i18n System ───────────────────────────────────────────────
 const SUPPORTED_LANGS = ["en", "tr", "ru", "pt", "de", "nl", "fr", "it", "es", "pl", "bg", "sr", "be"];
@@ -470,9 +551,7 @@ async function loadUserAvatar() {
                 const b64 = stdout ? stdout.trim() : "";
                 if (!err && b64.length > 100) {
                     userAvatarBase64 = `data:image/jpeg;base64,${b64}`;
-                    try { fs.appendFileSync('/tmp/renderer.log', `Avatar loaded: ${b64.length} chars. Prefix: ${b64.substring(0, 30)}\n`); } catch (e) { }
                 } else {
-                    try { fs.appendFileSync('/tmp/renderer.log', `Avatar load failed. err: ${err}, length: ${b64.length}, stdout_start: ${b64.substring(0, 20)}\n`); } catch (e) { }
                 }
                 resolve();
             });
@@ -2444,7 +2523,7 @@ function addThinkingSection(parentEl, thoughtText) {
         // Update existing
         const summaryEl = chainEl.querySelector(".thought-summary");
         const bodyEl = chainEl.querySelector(".thought-chain-body");
-        summaryEl.innerHTML = marked.parseInline(summaryLine);
+        summaryEl.innerHTML = sanitizeHTML(marked.parseInline(summaryLine));
         bodyEl.innerHTML = '';
         const timelineEl = buildTimeline(detailLines);
         bodyEl.appendChild(timelineEl);
@@ -2462,7 +2541,7 @@ function addThinkingSection(parentEl, thoughtText) {
 
     const summaryEl = document.createElement("span");
     summaryEl.className = "thought-summary";
-    summaryEl.innerHTML = marked.parseInline(summaryLine);
+    summaryEl.innerHTML = sanitizeHTML(marked.parseInline(summaryLine));
 
     const chevron = `<svg class="thought-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>`;
 
@@ -2517,7 +2596,7 @@ function buildTimeline(lines) {
 
         const textEl = document.createElement("div");
         textEl.className = "thought-timeline-text";
-        textEl.innerHTML = marked.parseInline(line.trim());
+        textEl.innerHTML = sanitizeHTML(marked.parseInline(line.trim()));
 
         item.appendChild(iconEl);
         item.appendChild(textEl);
@@ -2593,13 +2672,16 @@ function renderMarkdown(text) {
     let cleanText = text.replace(/<memory>[\s\S]*?(?:<\/memory>|$)/i, "").trim();
     let html = marked.parse(cleanText);
 
+    // Sanitize HTML to prevent XSS from AI responses
+    html = sanitizeHTML(html);
+
     html = html.replace(/<pre><code(.*?)>/g, (match, attrs) => {
         let lang = "";
         const langMatch = attrs.match(/class="hljs language-(\w+)"/);
         if (langMatch) {
             lang = langMatch[1];
         }
-        const header = `<div class="code-header"><span>${lang || "code"}</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>`;
+        const header = `<div class="code-header"><span>${lang || "code"}</span><button class="copy-btn" data-action="copy-code">Copy</button></div>`;
         return `<pre>${header}<code${attrs}>`;
     });
 
@@ -2625,6 +2707,12 @@ window.copyCode = function (btn) {
         btn.textContent = t("actions.copy");
     }, 2000);
 };
+
+// Event delegation for copy-code buttons (replaces inline onclick)
+document.addEventListener("click", (e) => {
+    const btn = e.target.closest('[data-action="copy-code"]');
+    if (btn) window.copyCode(btn);
+});
 
 function scrollToBottom() {
     requestAnimationFrame(() => {
@@ -5089,9 +5177,591 @@ if (btnClearHistory) {
     });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ONBOARDING TUTORIAL SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ONBOARDING_LANGUAGES = [
+    { code: 'en', name: 'English', flag: '\u{1F1FA}\u{1F1F8}' },
+    { code: 'tr', name: 'Türkçe', flag: '\u{1F1F9}\u{1F1F7}' },
+    { code: 'ru', name: 'Русский', flag: '\u{1F1F7}\u{1F1FA}' },
+    { code: 'pt', name: 'Português', flag: '\u{1F1E7}\u{1F1F7}' },
+    { code: 'de', name: 'Deutsch', flag: '\u{1F1E9}\u{1F1EA}' },
+    { code: 'nl', name: 'Nederlands', flag: '\u{1F1F3}\u{1F1F1}' },
+    { code: 'fr', name: 'Français', flag: '\u{1F1EB}\u{1F1F7}' },
+    { code: 'it', name: 'Italiano', flag: '\u{1F1EE}\u{1F1F9}' },
+    { code: 'es', name: 'Español', flag: '\u{1F1EA}\u{1F1F8}' },
+    { code: 'pl', name: 'Polski', flag: '\u{1F1F5}\u{1F1F1}' },
+    { code: 'bg', name: 'Български', flag: '\u{1F1E7}\u{1F1EC}' },
+    { code: 'sr', name: 'Srpski', flag: '\u{1F1F7}\u{1F1F8}' },
+    { code: 'be', name: 'Беларуская', flag: '\u{1F1E7}\u{1F1FE}' },
+];
+
+// Onboarding i18n strings (loaded dynamically when language changes)
+const ONBOARDING_I18N = {
+    en: {
+        langTitle: 'What is your language?',
+        langDesc: 'Choose your preferred language for the interface.',
+        agentTitle: 'Customize your Agent',
+        agentDesc: 'Give your AI assistant custom instructions and adjust creativity.',
+        instructionsLabel: 'System Instructions',
+        instructionsHint: 'This tells the model how to behave. You can change this later in Settings.',
+        tempLabel: 'Temperature',
+        precise: 'Precise',
+        creative: 'Creative',
+        authTitle: 'Connect your Account',
+        authDesc: 'Sign in with Google or enter an API key to get started.',
+        googleBtn: 'Sign in with Google',
+        or: 'or',
+        apiKeyLabel: 'Enter API Key',
+        getApiKey: 'Get API Key',
+        skipForNow: 'Skip for now',
+        tourTitle: 'Quick Tour',
+        tourDesc: "Here's what you can do with GeminiStudio.",
+        sidebarTitle: 'Sidebar',
+        sidebarDesc: 'Access your chat history, projects, and search through conversations.',
+        settingsTitle: 'Settings',
+        settingsDesc: 'Configure API keys, themes, system instructions, and more.',
+        projectsTitle: 'Projects',
+        projectsDesc: 'Organize chats into projects with persistent AI memory.',
+        modelsTitle: 'Model Selection',
+        modelsDesc: 'Switch between different Gemini models and thinking modes.',
+        doneTitle: "You're all set!",
+        doneDesc: 'Start chatting with your AI assistant. You can always change these settings later.',
+        getStarted: 'Get Started',
+        previous: 'Previous',
+        next: 'Next',
+        skipTutorial: 'Skip Tutorial',
+    },
+    tr: {
+        langTitle: 'Diliniz nedir?',
+        langDesc: 'Arayüz için tercih ettiğiniz dili seçin.',
+        agentTitle: 'Asistanınızı Özelleştirin',
+        agentDesc: 'Yapay zeka asistanınıza özel talimatlar verin ve yaratıcılığı ayarlayın.',
+        instructionsLabel: 'Sistem Talimatları',
+        instructionsHint: 'Bu, modelin nasıl davranacağını belirler. Daha sonra Ayarlar\'dan değiştirebilirsiniz.',
+        tempLabel: 'Sıcaklık',
+        precise: 'Hassas',
+        creative: 'Yaratıcı',
+        authTitle: 'Hesabınızı Bağlayın',
+        authDesc: 'Başlamak için Google ile giriş yapın veya API anahtarı girin.',
+        googleBtn: 'Google ile giriş yap',
+        or: 'veya',
+        apiKeyLabel: 'API Anahtarı Girin',
+        getApiKey: 'API Anahtarı Al',
+        skipForNow: 'Şimdilik atla',
+        tourTitle: 'Hızlı Tur',
+        tourDesc: 'GeminiStudio ile neler yapabilirsiniz?',
+        sidebarTitle: 'Kenar Çubuğu',
+        sidebarDesc: 'Sohbet geçmişinize, projelerinize erişin ve konuşmalarınızda arama yapın.',
+        settingsTitle: 'Ayarlar',
+        settingsDesc: 'API anahtarlarını, temaları, sistem talimatlarını ve daha fazlasını yapılandırın.',
+        projectsTitle: 'Projeler',
+        projectsDesc: 'Sohbetleri kalıcı yapay zeka belleğiyle projelerde düzenleyin.',
+        modelsTitle: 'Model Seçimi',
+        modelsDesc: 'Farklı Gemini modelleri ve düşünme modları arasında geçiş yapın.',
+        doneTitle: 'Hazırsınız!',
+        doneDesc: 'Yapay zeka asistanınızla sohbet etmeye başlayın. Bu ayarları daha sonra değiştirebilirsiniz.',
+        getStarted: 'Başla',
+        previous: 'Önceki',
+        next: 'Sonraki',
+        skipTutorial: 'Eğitimi Atla',
+    },
+    ru: {
+        langTitle: 'Какой ваш язык?',
+        langDesc: 'Выберите предпочитаемый язык интерфейса.',
+        agentTitle: 'Настройте вашего агента',
+        agentDesc: 'Дайте ИИ-помощнику пользовательские инструкции и настройте креативность.',
+        instructionsLabel: 'Системные инструкции',
+        instructionsHint: 'Это определяет поведение модели. Вы можете изменить это позже в Настройках.',
+        tempLabel: 'Температура',
+        precise: 'Точный',
+        creative: 'Креативный',
+        authTitle: 'Подключите аккаунт',
+        authDesc: 'Войдите через Google или введите API-ключ.',
+        googleBtn: 'Войти через Google',
+        or: 'или',
+        apiKeyLabel: 'Введите API-ключ',
+        getApiKey: 'Получить API-ключ',
+        skipForNow: 'Пропустить',
+        tourTitle: 'Быстрый тур',
+        tourDesc: 'Вот что вы можете делать с GeminiStudio.',
+        sidebarTitle: 'Боковая панель',
+        sidebarDesc: 'Доступ к истории чатов, проектам и поиску по разговорам.',
+        settingsTitle: 'Настройки',
+        settingsDesc: 'Настройка API-ключей, тем, системных инструкций и т.д.',
+        projectsTitle: 'Проекты',
+        projectsDesc: 'Организуйте чаты в проекты с памятью ИИ.',
+        modelsTitle: 'Выбор модели',
+        modelsDesc: 'Переключайтесь между моделями Gemini и режимами мышления.',
+        doneTitle: 'Всё готово!',
+        doneDesc: 'Начните общение с ИИ-помощником. Настройки можно изменить позже.',
+        getStarted: 'Начать',
+        previous: 'Назад',
+        next: 'Далее',
+        skipTutorial: 'Пропустить',
+    },
+    de: {
+        langTitle: 'Was ist Ihre Sprache?',
+        langDesc: 'Wählen Sie Ihre bevorzugte Sprache.',
+        agentTitle: 'Agent anpassen',
+        agentDesc: 'Geben Sie Ihrem KI-Assistenten Anweisungen und stellen Sie die Kreativität ein.',
+        instructionsLabel: 'Systemanweisungen',
+        instructionsHint: 'Dies bestimmt das Verhalten des Modells. Sie können es später ändern.',
+        tempLabel: 'Temperatur',
+        precise: 'Präzise',
+        creative: 'Kreativ',
+        authTitle: 'Konto verbinden',
+        authDesc: 'Melden Sie sich mit Google an oder geben Sie einen API-Schlüssel ein.',
+        googleBtn: 'Mit Google anmelden',
+        or: 'oder',
+        apiKeyLabel: 'API-Schlüssel eingeben',
+        getApiKey: 'API-Schlüssel holen',
+        skipForNow: 'Überspringen',
+        tourTitle: 'Schnelltour',
+        tourDesc: 'Das können Sie mit GeminiStudio machen.',
+        sidebarTitle: 'Seitenleiste',
+        sidebarDesc: 'Zugriff auf Chatverlauf, Projekte und Suche.',
+        settingsTitle: 'Einstellungen',
+        settingsDesc: 'API-Schlüssel, Themes, Systemanweisungen konfigurieren.',
+        projectsTitle: 'Projekte',
+        projectsDesc: 'Chats in Projekte mit KI-Gedächtnis organisieren.',
+        modelsTitle: 'Modellauswahl',
+        modelsDesc: 'Zwischen verschiedenen Gemini-Modellen wechseln.',
+        doneTitle: 'Alles bereit!',
+        doneDesc: 'Starten Sie den Chat. Einstellungen können jederzeit geändert werden.',
+        getStarted: 'Loslegen',
+        previous: 'Zurück',
+        next: 'Weiter',
+        skipTutorial: 'Überspringen',
+    },
+    fr: {
+        langTitle: 'Quelle est votre langue ?',
+        langDesc: 'Choisissez votre langue préférée.',
+        agentTitle: 'Personnalisez votre Agent',
+        agentDesc: "Donnez des instructions personnalisées et ajustez la créativité.",
+        instructionsLabel: 'Instructions système',
+        instructionsHint: 'Modifiable plus tard dans les Paramètres.',
+        tempLabel: 'Température',
+        precise: 'Précis',
+        creative: 'Créatif',
+        authTitle: 'Connectez votre compte',
+        authDesc: "Connectez-vous avec Google ou entrez une clé API.",
+        googleBtn: 'Se connecter avec Google',
+        or: 'ou',
+        apiKeyLabel: 'Entrer la clé API',
+        getApiKey: 'Obtenir une clé API',
+        skipForNow: 'Passer',
+        tourTitle: 'Tour rapide',
+        tourDesc: 'Voici ce que vous pouvez faire avec GeminiStudio.',
+        sidebarTitle: 'Barre latérale',
+        sidebarDesc: "Accédez à l'historique, aux projets et à la recherche.",
+        settingsTitle: 'Paramètres',
+        settingsDesc: 'Configurez les clés API, thèmes et instructions.',
+        projectsTitle: 'Projets',
+        projectsDesc: 'Organisez les chats en projets avec mémoire IA.',
+        modelsTitle: 'Sélection du modèle',
+        modelsDesc: 'Basculez entre les modèles Gemini.',
+        doneTitle: 'Tout est prêt !',
+        doneDesc: 'Commencez à discuter. Les paramètres sont modifiables à tout moment.',
+        getStarted: 'Commencer',
+        previous: 'Précédent',
+        next: 'Suivant',
+        skipTutorial: 'Passer le tutoriel',
+    },
+    es: {
+        langTitle: '¿Cuál es tu idioma?',
+        langDesc: 'Elige tu idioma preferido.',
+        agentTitle: 'Personaliza tu Agente',
+        agentDesc: 'Dale instrucciones personalizadas y ajusta la creatividad.',
+        instructionsLabel: 'Instrucciones del sistema',
+        instructionsHint: 'Puedes cambiar esto después en Configuración.',
+        tempLabel: 'Temperatura',
+        precise: 'Preciso',
+        creative: 'Creativo',
+        authTitle: 'Conecta tu cuenta',
+        authDesc: 'Inicia sesión con Google o ingresa una clave API.',
+        googleBtn: 'Iniciar sesión con Google',
+        or: 'o',
+        apiKeyLabel: 'Ingresar clave API',
+        getApiKey: 'Obtener clave API',
+        skipForNow: 'Omitir por ahora',
+        tourTitle: 'Tour rápido',
+        tourDesc: 'Esto es lo que puedes hacer con GeminiStudio.',
+        sidebarTitle: 'Barra lateral',
+        sidebarDesc: 'Accede al historial, proyectos y búsqueda.',
+        settingsTitle: 'Configuración',
+        settingsDesc: 'Configura claves API, temas e instrucciones.',
+        projectsTitle: 'Proyectos',
+        projectsDesc: 'Organiza chats en proyectos con memoria IA.',
+        modelsTitle: 'Selección de modelo',
+        modelsDesc: 'Cambia entre modelos Gemini.',
+        doneTitle: '¡Todo listo!',
+        doneDesc: 'Comienza a chatear. La configuración se puede cambiar después.',
+        getStarted: 'Comenzar',
+        previous: 'Anterior',
+        next: 'Siguiente',
+        skipTutorial: 'Omitir tutorial',
+    },
+    pt: {
+        langTitle: 'Qual é o seu idioma?',
+        langDesc: 'Escolha seu idioma preferido.',
+        agentTitle: 'Personalize seu Agente',
+        agentDesc: 'Dê instruções personalizadas e ajuste a criatividade.',
+        instructionsLabel: 'Instruções do sistema',
+        instructionsHint: 'Você pode mudar isso depois nas Configurações.',
+        tempLabel: 'Temperatura',
+        precise: 'Preciso',
+        creative: 'Criativo',
+        authTitle: 'Conecte sua conta',
+        authDesc: 'Entre com Google ou insira uma chave API.',
+        googleBtn: 'Entrar com Google',
+        or: 'ou',
+        apiKeyLabel: 'Inserir chave API',
+        getApiKey: 'Obter chave API',
+        skipForNow: 'Pular por enquanto',
+        tourTitle: 'Tour rápido',
+        tourDesc: 'Veja o que você pode fazer com GeminiStudio.',
+        sidebarTitle: 'Barra lateral',
+        sidebarDesc: 'Acesse histórico, projetos e pesquisa.',
+        settingsTitle: 'Configurações',
+        settingsDesc: 'Configure chaves API, temas e instruções.',
+        projectsTitle: 'Projetos',
+        projectsDesc: 'Organize chats em projetos com memória IA.',
+        modelsTitle: 'Seleção de modelo',
+        modelsDesc: 'Alterne entre modelos Gemini.',
+        doneTitle: 'Tudo pronto!',
+        doneDesc: 'Comece a conversar. As configurações podem ser alteradas depois.',
+        getStarted: 'Começar',
+        previous: 'Anterior',
+        next: 'Próximo',
+        skipTutorial: 'Pular tutorial',
+    },
+    it: {
+        langTitle: 'Qual è la tua lingua?',
+        langDesc: 'Scegli la tua lingua preferita.',
+        agentTitle: 'Personalizza il tuo Agente',
+        agentDesc: "Dai istruzioni personalizzate e regola la creatività.",
+        instructionsLabel: 'Istruzioni di sistema',
+        instructionsHint: 'Puoi modificarle nelle Impostazioni.',
+        tempLabel: 'Temperatura',
+        precise: 'Preciso',
+        creative: 'Creativo',
+        authTitle: 'Collega il tuo account',
+        authDesc: 'Accedi con Google o inserisci una chiave API.',
+        googleBtn: 'Accedi con Google',
+        or: 'o',
+        apiKeyLabel: 'Inserisci chiave API',
+        getApiKey: 'Ottieni chiave API',
+        skipForNow: 'Salta per ora',
+        tourTitle: 'Tour rapido',
+        tourDesc: 'Ecco cosa puoi fare con GeminiStudio.',
+        sidebarTitle: 'Barra laterale',
+        sidebarDesc: 'Accedi alla cronologia, progetti e ricerca.',
+        settingsTitle: 'Impostazioni',
+        settingsDesc: 'Configura chiavi API, temi e istruzioni.',
+        projectsTitle: 'Progetti',
+        projectsDesc: 'Organizza le chat in progetti con memoria IA.',
+        modelsTitle: 'Selezione modello',
+        modelsDesc: 'Passa tra i modelli Gemini.',
+        doneTitle: 'Tutto pronto!',
+        doneDesc: 'Inizia a chattare. Le impostazioni possono essere modificate in seguito.',
+        getStarted: 'Inizia',
+        previous: 'Precedente',
+        next: 'Avanti',
+        skipTutorial: 'Salta tutorial',
+    },
+};
+
+function getOnboardingText(key) {
+    const lang = ONBOARDING_I18N[currentLangCode] || ONBOARDING_I18N['en'] || {};
+    return lang[key] || (ONBOARDING_I18N['en'] || {})[key] || key;
+}
+
+function updateOnboardingTexts() {
+    const s = (id, key) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = getOnboardingText(key);
+    };
+
+    s('onboarding-lang-title', 'langTitle');
+    s('onboarding-lang-desc', 'langDesc');
+    s('onboarding-agent-title', 'agentTitle');
+    s('onboarding-agent-desc', 'agentDesc');
+    s('onboarding-instructions-label', 'instructionsLabel');
+    s('onboarding-instructions-hint', 'instructionsHint');
+    s('onboarding-temp-label', 'tempLabel');
+    s('onboarding-temp-precise', 'precise');
+    s('onboarding-temp-creative', 'creative');
+    s('onboarding-auth-title', 'authTitle');
+    s('onboarding-auth-desc', 'authDesc');
+    s('onboarding-google-text', 'googleBtn');
+    s('onboarding-or-text', 'or');
+    s('onboarding-apikey-label', 'apiKeyLabel');
+    s('onboarding-auth-skip', 'skipForNow');
+    s('onboarding-tour-title', 'tourTitle');
+    s('onboarding-tour-desc', 'tourDesc');
+    s('tour-sidebar-title', 'sidebarTitle');
+    s('tour-sidebar-desc', 'sidebarDesc');
+    s('tour-settings-title', 'settingsTitle');
+    s('tour-settings-desc', 'settingsDesc');
+    s('tour-projects-title', 'projectsTitle');
+    s('tour-projects-desc', 'projectsDesc');
+    s('tour-models-title', 'modelsTitle');
+    s('tour-models-desc', 'modelsDesc');
+    s('onboarding-done-title', 'doneTitle');
+    s('onboarding-done-desc', 'doneDesc');
+    s('onboarding-finish', 'getStarted');
+    s('onboarding-prev-text', 'previous');
+    s('onboarding-next-text', 'next');
+
+    const skipBtn = document.getElementById('onboarding-skip');
+    if (skipBtn) skipBtn.textContent = getOnboardingText('skipTutorial');
+
+    const apiKeyLink = document.getElementById('onboarding-apikey-link');
+    if (apiKeyLink) apiKeyLink.textContent = getOnboardingText('getApiKey');
+}
+
+function initOnboarding() {
+    const overlay = document.getElementById('onboarding-overlay');
+    if (!overlay) return;
+
+    let currentStep = 1;
+    const totalSteps = 5;
+    let selectedLang = currentLangCode;
+
+    const prevBtn = document.getElementById('onboarding-prev');
+    const nextBtn = document.getElementById('onboarding-next');
+    const skipBtn = document.getElementById('onboarding-skip');
+    const finishBtn = document.getElementById('onboarding-finish');
+    const progressFill = document.getElementById('onboarding-progress-fill');
+    const stepLabel = document.getElementById('onboarding-step-label');
+    const tempSliderOnboard = document.getElementById('onboarding-temperature');
+    const tempDisplay = document.getElementById('onboarding-temp-display');
+
+    // Populate language grid
+    const langGrid = document.getElementById('onboarding-lang-grid');
+    if (langGrid) {
+        langGrid.innerHTML = '';
+        ONBOARDING_LANGUAGES.forEach(lang => {
+            const btn = document.createElement('button');
+            btn.className = 'onboarding-lang-btn' + (lang.code === selectedLang ? ' selected' : '');
+            btn.dataset.lang = lang.code;
+            btn.innerHTML = `<span class="lang-flag">${lang.flag}</span><span>${lang.name}</span>`;
+            btn.addEventListener('click', () => {
+                langGrid.querySelectorAll('.onboarding-lang-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedLang = lang.code;
+                // Apply language immediately
+                loadLanguageSync(lang.code);
+                localStorage.setItem('app_language', lang.code);
+                applyTranslations();
+                updateOnboardingTexts();
+            });
+            langGrid.appendChild(btn);
+        });
+    }
+
+    // Temperature slider
+    if (tempSliderOnboard) {
+        tempSliderOnboard.addEventListener('input', () => {
+            if (tempDisplay) tempDisplay.textContent = parseFloat(tempSliderOnboard.value).toFixed(2);
+        });
+    }
+
+    function showStep(step) {
+        document.querySelectorAll('.onboarding-step').forEach(el => el.classList.remove('active'));
+        const target = document.querySelector(`.onboarding-step[data-step="${step}"]`);
+        if (target) target.classList.add('active');
+
+        progressFill.style.width = `${(step / totalSteps) * 100}%`;
+        stepLabel.textContent = `${step} / ${totalSteps}`;
+
+        prevBtn.disabled = step === 1;
+
+        // Hide nav on last step (has its own finish button)
+        const nav = document.getElementById('onboarding-nav');
+        if (step === totalSteps) {
+            nav.style.display = 'none';
+        } else {
+            nav.style.display = 'flex';
+        }
+    }
+
+    function completeOnboarding() {
+        // Apply settings
+        const instructions = document.getElementById('onboarding-instructions')?.value?.trim();
+        if (instructions) {
+            localStorage.setItem('custom_system_instructions', instructions);
+            if (customInstructionsInput) customInstructionsInput.value = instructions;
+        }
+
+        const temp = tempSliderOnboard?.value;
+        if (temp) {
+            localStorage.setItem('gemini_temperature', temp);
+            if (tempSlider) tempSlider.value = temp;
+            if (tempVal) tempVal.textContent = parseFloat(temp).toFixed(2);
+        }
+
+        // Mark as complete (persistent file, not localStorage)
+        markOnboardingComplete({ language: selectedLang });
+
+        // Hide overlay
+        overlay.classList.add('hidden');
+    }
+
+    // Navigation
+    nextBtn.addEventListener('click', () => {
+        if (currentStep < totalSteps) {
+            currentStep++;
+            showStep(currentStep);
+        }
+    });
+
+    prevBtn.addEventListener('click', () => {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+        }
+    });
+
+    skipBtn.addEventListener('click', completeOnboarding);
+    if (finishBtn) finishBtn.addEventListener('click', completeOnboarding);
+
+    // Auth step: skip button
+    const authSkipBtn = document.getElementById('onboarding-auth-skip');
+    if (authSkipBtn) {
+        authSkipBtn.addEventListener('click', () => {
+            currentStep++;
+            showStep(currentStep);
+        });
+    }
+
+    // Google sign-in from onboarding
+    const googleBtn = document.getElementById('onboarding-google-btn');
+    if (googleBtn) {
+        googleBtn.addEventListener('click', async () => {
+            try {
+                await ipcRenderer.invoke('google-oauth-start');
+            } catch (e) {
+                console.error('OAuth start failed:', e);
+            }
+        });
+    }
+
+    // API key save from onboarding
+    const apiKeySaveBtn = document.getElementById('onboarding-apikey-save');
+    if (apiKeySaveBtn) {
+        apiKeySaveBtn.addEventListener('click', async () => {
+            const keyInput = document.getElementById('onboarding-apikey-input');
+            const key = keyInput?.value?.trim();
+            if (key) {
+                await setApiKey(key);
+                await ipcRenderer.invoke('save-api-key', key);
+                keyInput.value = '';
+                // Move to next step
+                currentStep++;
+                showStep(currentStep);
+            }
+        });
+    }
+
+    // Initialize
+    updateOnboardingTexts();
+    showStep(1);
+    overlay.classList.remove('hidden');
+}
+
+// ─── Auto-update checker ──────────────────────────────────────
+const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour
+const GITHUB_RELEASES_URL = "https://api.github.com/repos/studio-toolkit/chat-toolkit-rust-mcp/releases/latest";
+const GITHUB_RELEASES_PAGE = "https://github.com/studio-toolkit/chat-toolkit-rust-mcp/releases";
+let _updateDismissedVersion = null;
+
+function compareVersions(a, b) {
+    const pa = a.replace(/^v/, '').split('.').map(Number);
+    const pb = b.replace(/^v/, '').split('.').map(Number);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+        const na = pa[i] || 0;
+        const nb = pb[i] || 0;
+        if (na > nb) return 1;
+        if (na < nb) return -1;
+    }
+    return 0;
+}
+
+async function checkForUpdates() {
+    try {
+        const pkg = require('./package.json');
+        const currentVersion = pkg.version;
+
+        const response = await fetch(GITHUB_RELEASES_URL, {
+            headers: { 'Accept': 'application/vnd.github.v3+json' },
+        });
+        if (!response.ok) return;
+
+        const release = await response.json();
+        const latestVersion = (release.tag_name || '').replace(/^v/, '');
+
+        if (!latestVersion) return;
+
+        if (compareVersions(latestVersion, currentVersion) > 0) {
+            // Don't show if user already dismissed this version
+            if (_updateDismissedVersion === latestVersion) return;
+
+            const notification = document.getElementById('update-notification');
+            const versionInfo = document.getElementById('update-version-info');
+            if (notification && versionInfo) {
+                versionInfo.textContent = `v${currentVersion} → v${latestVersion}`;
+                notification.classList.remove('hidden');
+            }
+        }
+    } catch (err) {
+        // Silently fail — update check is non-critical
+        console.error('Update check failed:', err.message);
+    }
+}
+
+function initUpdateChecker() {
+    const downloadBtn = document.getElementById('update-download-btn');
+    const dismissBtn = document.getElementById('update-dismiss-btn');
+
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            shell.openExternal(GITHUB_RELEASES_PAGE);
+        });
+    }
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', () => {
+            const versionInfo = document.getElementById('update-version-info');
+            if (versionInfo) {
+                const match = versionInfo.textContent.match(/→ v(.+)/);
+                if (match) _updateDismissedVersion = match[1];
+            }
+            const notification = document.getElementById('update-notification');
+            if (notification) notification.classList.add('hidden');
+        });
+    }
+
+    // Check on startup (after 10s delay to not block init)
+    setTimeout(checkForUpdates, 10000);
+    // Then check periodically
+    setInterval(checkForUpdates, UPDATE_CHECK_INTERVAL);
+}
+
 async function init() {
     initLanguage();
     initTheme();
+
+    // Check if onboarding is needed (persistent, survives cookie clearing)
+    const onboardingDone = await isOnboardingComplete();
+    if (!onboardingDone) {
+        initOnboarding();
+    } else {
+        const overlay = document.getElementById('onboarding-overlay');
+        if (overlay) overlay.classList.add('hidden');
+    }
+
     await loadUserAvatar();
     loadSidebarHistory();
 
@@ -5120,7 +5790,7 @@ async function init() {
     }
 
     const hasKey = await checkStatus();
-    if (!hasKey) {
+    if (!hasKey && onboardingDone) {
         showModal();
     } else {
         inputEl.focus();
@@ -5128,6 +5798,9 @@ async function init() {
     await fetchModels();
 
     setInterval(checkStatus, 30000);
+
+    // Auto-update checker
+    initUpdateChecker();
 }
 
 init();
