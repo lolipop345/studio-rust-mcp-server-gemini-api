@@ -47,6 +47,7 @@ fn main() {
     let electron_builder_config = serde_json::json!({
         "appId": "com.chat-toolkit.gemini-studio",
         "productName": "GeminiStudio",
+        "electronDist": "node_modules/electron/dist",
         "directories": {
             "output": "../dist"
         },

@@ -1,5 +1,6 @@
 {
   "appId": "com.chat-toolkit.gemini-studio",
+  "electronDist": "node_modules/electron/dist",
   "directories": {
     "output": "../dist"
   },

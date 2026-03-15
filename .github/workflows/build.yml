@@ -60,7 +60,6 @@ jobs:
           cd electron
           ./node_modules/.bin/electron-builder --mac --x64 --publish never --config electron-builder.json
         env:
-          ELECTRON_OVERRIDE_DIST_PATH: ./node_modules/electron/dist
           CSC_LINK: ${{ secrets.APPLE_CERT_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -128,8 +127,6 @@ jobs:
         run: |
           cd electron
           ./node_modules/.bin/electron-builder --win --x64 --publish never --config electron-builder.json
-        env:
-          ELECTRON_OVERRIDE_DIST_PATH: ./node_modules/electron/dist
       - name: Upload exe artifact
         uses: actions/upload-artifact@v4
         with:
