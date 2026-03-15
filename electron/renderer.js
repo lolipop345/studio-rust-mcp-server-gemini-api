@@ -62,25 +62,14 @@ function copyToClipboard(text) {
 
 // Windows/Linux custom window controls
 if (platform !== "darwin") {
-    const { remote } = (() => {
-        try { return require("@electron/remote"); } catch { return {}; }
-    })();
-    const currentWindow = remote ? remote.getCurrentWindow() : null;
-
     document.getElementById("btn-minimize")?.addEventListener("click", () => {
-        if (currentWindow) currentWindow.minimize();
-        else ipcRenderer.send("window-minimize");
+        ipcRenderer.send("window-minimize");
     });
     document.getElementById("btn-maximize")?.addEventListener("click", () => {
-        if (currentWindow) {
-            currentWindow.isMaximized() ? currentWindow.unmaximize() : currentWindow.maximize();
-        } else {
-            ipcRenderer.send("window-maximize");
-        }
+        ipcRenderer.send("window-maximize");
     });
     document.getElementById("btn-close-window")?.addEventListener("click", () => {
-        if (currentWindow) currentWindow.close();
-        else ipcRenderer.send("window-close");
+        ipcRenderer.send("window-close");
     });
 }
 
