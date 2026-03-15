@@ -60,11 +60,7 @@ jobs:
           cd electron
           ./node_modules/.bin/electron-builder --mac --x64 --publish never --config electron-builder.json
         env:
-          CSC_LINK: ${{ secrets.APPLE_CERT_BASE64 }}
-          CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
       - name: Upload dmg artifact
         uses: actions/upload-artifact@v4
         with:
@@ -104,16 +100,8 @@ jobs:
         run: |
           cargo install cargo-edit
           cargo set-version --workspace "$CARGO_PKG_VERSION"
-          mkdir output
           touch build.rs
           cargo build --release
-      - name: Sign Rust binary
-        run: ./util/sign.windows.ps1
-        env:
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          SIGNING_ACCOUNT: ${{ secrets.SIGNING_ACCOUNT }}
       - name: Sync Electron version
         run: |
           cd electron
