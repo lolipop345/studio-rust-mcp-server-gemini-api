@@ -1,6 +1,5 @@
 {
   "appId": "com.chat-toolkit.gemini-studio",
-  "electronDist": "node_modules/electron/dist",
   "directories": {
     "output": "../dist"
   },
@@ -26,7 +25,7 @@
       "width": 660
     }
   },
-  "publish": null,
+  "electronDist": "node_modules/electron/dist",
   "files": [
     "**/*",
     "!user-themes",
@@ -53,21 +52,22 @@
   "mac": {
     "category": "public.app-category.developer-tools",
     "darkModeSupport": true,
-    "gatekeeperAssess": false,
-    "hardenedRuntime": true,
-    "icon": "icons/AppLogo.png",
     "extraResources": [
       {
         "from": "../target/release/rbx-studio-mcp",
         "to": "server"
       }
     ],
+    "gatekeeperAssess": false,
+    "hardenedRuntime": false,
+    "icon": "icons/AppLogoWithoutBG.png",
+    "identity": null,
     "target": [
       {
         "arch": [
           "x64"
         ],
-        "target": "dmg"
+        "target": "dir"
       }
     ]
   },
@@ -90,14 +90,15 @@
     "uninstallerIcon": "icons/AppLogo.ico"
   },
   "productName": "GeminiStudio",
+  "publish": null,
   "win": {
-    "icon": "icons/AppLogo.ico",
     "extraResources": [
       {
         "from": "../target/release/rbx-studio-mcp.exe",
         "to": "server.exe"
       }
     ],
+    "icon": "icons/AppLogo.ico",
     "target": [
       {
         "arch": [

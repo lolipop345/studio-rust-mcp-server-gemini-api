@@ -55,12 +55,24 @@ jobs:
         run: |
           cd electron
           npm ci || npm install
-      - name: Build Electron installer (macOS dmg)
+      - name: Build Electron app (macOS)
         run: |
-          cd electron
-          ./node_modules/.bin/electron-builder --mac --x64 --publish never --config electron-builder.json
+          ./electron/node_modules/.bin/electron-builder --mac --x64 --publish never --config electron-builder.json --project electron
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+      - name: Ad-hoc codesign and create DMG
+        run: |
+          APP_DIR=$(find dist -name "*.app" -maxdepth 3 -type d | head -1)
+          echo "Found app: $APP_DIR"
+          # Ad-hoc codesign so macOS doesn't flag as "damaged"
+          codesign --force --deep --sign - "$APP_DIR"
+          codesign --verify "$APP_DIR" || true
+          # Create DMG
+          APP_NAME="GeminiStudio"
+          DMG_PATH="dist/${APP_NAME}-${CARGO_PKG_VERSION}.dmg"
+          hdiutil create -volname "$APP_NAME" -srcfolder "$(dirname "$APP_DIR")" -ov -format UDZO "$DMG_PATH"
+          echo "Created DMG: $DMG_PATH"
+          ls -la dist/*.dmg
       - name: Upload dmg artifact
         uses: actions/upload-artifact@v4
         with:
@@ -113,8 +125,7 @@ jobs:
       - name: Build Electron installer (Windows NSIS)
         shell: bash
         run: |
-          cd electron
-          ./node_modules/.bin/electron-builder --win --x64 --publish never --config electron-builder.json
+          ./electron/node_modules/.bin/electron-builder --win --x64 --publish never --config electron-builder.json --project electron
       - name: Upload exe artifact
         uses: actions/upload-artifact@v4
         with:

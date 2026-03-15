@@ -5880,7 +5880,8 @@ mark.search-highlight {
 .update-notification {
   position: fixed;
   bottom: 24px;
-  right: 24px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 10000;
   animation: update-slide-in 0.4s ease-out;
 }
