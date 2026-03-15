@@ -103,6 +103,7 @@ jobs:
         run: |
           cargo install cargo-edit
           cargo set-version --workspace "$CARGO_PKG_VERSION"
+          mkdir output
           cargo build --release
       - name: Sign Rust binary
         run: ./util/sign.windows.ps1

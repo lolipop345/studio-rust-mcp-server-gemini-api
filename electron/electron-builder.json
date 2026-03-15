@@ -18,7 +18,6 @@
         "y": 192
       }
     ],
-    "icon": "icons/AppLogo.icns",
     "iconSize": 128,
     "title": "GeminiStudio",
     "window": {
@@ -56,7 +55,7 @@
     "darkModeSupport": true,
     "gatekeeperAssess": false,
     "hardenedRuntime": true,
-    "icon": "icons/AppLogo.icns",
+    "icon": "icons/AppLogo.png",
     "target": [
       {
         "arch": [

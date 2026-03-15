@@ -94,7 +94,7 @@ fn main() {
                 "target": "dmg",
                 "arch": ["universal"]
             }],
-            "icon": "icons/AppLogo.icns",
+            "icon": "icons/AppLogo.png",
             "category": "public.app-category.developer-tools",
             "darkModeSupport": true,
             "hardenedRuntime": true,
@@ -102,7 +102,6 @@ fn main() {
         },
         "dmg": {
             "background": serde_json::Value::Null,
-            "icon": "icons/AppLogo.icns",
             "iconSize": 128,
             "contents": [
                 { "x": 176, "y": 192, "type": "file" },
