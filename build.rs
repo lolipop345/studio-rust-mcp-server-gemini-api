@@ -63,7 +63,6 @@ fn main() {
                 "arch": ["x64"]
             }],
             "icon": "icons/AppLogo.ico",
-            "publisherName": "Chat Toolkit Community",
             "extraResources": [
                 {
                     "from": "../target/release/rbx-studio-mcp.exe",
@@ -126,10 +125,12 @@ fn main() {
             "icon": "icons/AppLogo.png",
             "category": "Development",
             "desktop": {
-                "Name": "GeminiStudio",
-                "Comment": "Gemini-powered agent for Roblox Studio",
-                "Type": "Application",
-                "Categories": "Development;IDE;"
+                "entry": {
+                    "Name": "GeminiStudio",
+                    "Comment": "Gemini-powered agent for Roblox Studio",
+                    "Type": "Application",
+                    "Categories": "Development;IDE;"
+                }
             }
         }
     });

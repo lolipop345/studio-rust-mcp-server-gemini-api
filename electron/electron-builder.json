@@ -34,10 +34,12 @@
   "linux": {
     "category": "Development",
     "desktop": {
-      "Categories": "Development;IDE;",
-      "Comment": "Gemini-powered agent for Roblox Studio",
-      "Name": "GeminiStudio",
-      "Type": "Application"
+      "entry": {
+        "Categories": "Development;IDE;",
+        "Comment": "Gemini-powered agent for Roblox Studio",
+        "Name": "GeminiStudio",
+        "Type": "Application"
+      }
     },
     "icon": "icons/AppLogo.png",
     "target": [
@@ -87,7 +89,6 @@
   "productName": "GeminiStudio",
   "win": {
     "icon": "icons/AppLogo.ico",
-    "publisherName": "Chat Toolkit Community",
     "extraResources": [
       {
         "from": "../target/release/rbx-studio-mcp.exe",

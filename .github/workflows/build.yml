@@ -42,6 +42,7 @@ jobs:
         run: |
           cargo install cargo-edit
           cargo set-version --workspace "$CARGO_PKG_VERSION"
+          touch build.rs
           rustup target add x86_64-apple-darwin aarch64-apple-darwin
           cargo build --release --target aarch64-apple-darwin --target x86_64-apple-darwin
           mkdir -p target/release
@@ -105,6 +106,7 @@ jobs:
           cargo install cargo-edit
           cargo set-version --workspace "$CARGO_PKG_VERSION"
           mkdir output
+          touch build.rs
           cargo build --release
       - name: Sign Rust binary
         run: ./util/sign.windows.ps1
