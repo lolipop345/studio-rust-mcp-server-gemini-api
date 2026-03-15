@@ -25,12 +25,7 @@
       "width": 660
     }
   },
-  "extraResources": [
-    {
-      "from": "../target/release/rbx-studio-mcp",
-      "to": "server"
-    }
-  ],
+  "publish": null,
   "files": [
     "**/*",
     "!user-themes",
@@ -56,10 +51,16 @@
     "gatekeeperAssess": false,
     "hardenedRuntime": true,
     "icon": "icons/AppLogo.png",
+    "extraResources": [
+      {
+        "from": "../target/release/rbx-studio-mcp",
+        "to": "server"
+      }
+    ],
     "target": [
       {
         "arch": [
-          "universal"
+          "x64"
         ],
         "target": "dmg"
       }
@@ -87,6 +88,12 @@
   "win": {
     "icon": "icons/AppLogo.ico",
     "publisherName": "Chat Toolkit Community",
+    "extraResources": [
+      {
+        "from": "../target/release/rbx-studio-mcp.exe",
+        "to": "server.exe"
+      }
+    ],
     "target": [
       {
         "arch": [

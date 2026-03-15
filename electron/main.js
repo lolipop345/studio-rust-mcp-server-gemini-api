@@ -648,9 +648,9 @@ app.on("second-instance", () => {
 
 // ── macOS .app first-run: start backend server if bundled ──────────────────
 function startBundledServer() {
-  const serverPath = process.platform === 'darwin'
-    ? path.join(process.resourcesPath, 'server', 'rbx-studio-mcp')
-    : path.join(process.resourcesPath, 'server', process.platform === 'win32' ? 'rbx-studio-mcp.exe' : 'rbx-studio-mcp');
+  const serverPath = process.platform === 'win32'
+    ? path.join(process.resourcesPath, 'server.exe')
+    : path.join(process.resourcesPath, 'server');
 
   if (fs.existsSync(serverPath)) {
     const { spawn } = require('child_process');

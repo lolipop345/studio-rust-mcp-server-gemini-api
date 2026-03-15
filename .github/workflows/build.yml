@@ -57,7 +57,7 @@ jobs:
       - name: Build Electron installer (macOS dmg)
         run: |
           cd electron
-          npx electron-builder --mac --config electron-builder.json
+          npx electron-builder --mac --publish never --config electron-builder.json
         env:
           CSC_LINK: ${{ secrets.APPLE_CERT_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
@@ -123,7 +123,7 @@ jobs:
       - name: Build Electron installer (Windows NSIS)
         run: |
           cd electron
-          npx electron-builder --win --config electron-builder.json
+          npx electron-builder --win --publish never --config electron-builder.json
       - name: Upload exe artifact
         uses: actions/upload-artifact@v4
         with:

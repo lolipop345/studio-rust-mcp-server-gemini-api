@@ -50,16 +50,11 @@ fn main() {
         "directories": {
             "output": "../dist"
         },
+        "publish": serde_json::Value::Null,
         "files": [
             "**/*",
             "!user-themes",
             "!oauth_config.json"
-        ],
-        "extraResources": [
-            {
-                "from": "../target/release/rbx-studio-mcp",
-                "to": "server"
-            }
         ],
         // ── Windows (.exe) NSIS Installer ────────────────────────────────
         "win": {
@@ -68,7 +63,13 @@ fn main() {
                 "arch": ["x64"]
             }],
             "icon": "icons/AppLogo.ico",
-            "publisherName": "Chat Toolkit Community"
+            "publisherName": "Chat Toolkit Community",
+            "extraResources": [
+                {
+                    "from": "../target/release/rbx-studio-mcp.exe",
+                    "to": "server.exe"
+                }
+            ]
         },
         "nsis": {
             "oneClick": false,
@@ -92,13 +93,19 @@ fn main() {
         "mac": {
             "target": [{
                 "target": "dmg",
-                "arch": ["universal"]
+                "arch": ["x64"]
             }],
             "icon": "icons/AppLogo.png",
             "category": "public.app-category.developer-tools",
             "darkModeSupport": true,
             "hardenedRuntime": true,
-            "gatekeeperAssess": false
+            "gatekeeperAssess": false,
+            "extraResources": [
+                {
+                    "from": "../target/release/rbx-studio-mcp",
+                    "to": "server"
+                }
+            ]
         },
         "dmg": {
             "background": serde_json::Value::Null,
