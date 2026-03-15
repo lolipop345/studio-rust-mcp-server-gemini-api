@@ -268,7 +268,7 @@ fn main() {
                 if !dev_deps.contains_key("electron-builder") {
                     dev_deps.insert(
                         "electron-builder".to_string(),
-                        serde_json::Value::String("^25.0.0".to_string()),
+                        serde_json::Value::String("^26.8.1".to_string()),
                     );
                 }
             }
