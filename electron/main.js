@@ -76,39 +76,6 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
-  // ── Security: Content Security Policy ──────────────────────────────────────
-  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [
-          "default-src 'self'; " +
-          "script-src 'self'; " +
-          "style-src 'self' 'unsafe-inline'; " +
-          "img-src 'self' data: https:; " +
-          "connect-src 'self' http://127.0.0.1:* https://generativelanguage.googleapis.com https://oauth2.googleapis.com https://www.googleapis.com; " +
-          "font-src 'self'; " +
-          "object-src 'none'; " +
-          "frame-src 'none';"
-        ]
-      }
-    });
-  });
-
-  // Block navigation to external URLs (prevent phishing/redirect attacks)
-  mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (!url.startsWith('file://')) {
-      event.preventDefault();
-      shell.openExternal(url);
-    }
-  });
-
-  // Block new window creation (popup attacks)
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
-    return { action: 'deny' };
-  });
-
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
   });
@@ -646,34 +613,7 @@ app.on("second-instance", () => {
   }
 });
 
-// ── macOS .app first-run: start backend server if bundled ──────────────────
-function startBundledServer() {
-  const serverPath = process.platform === 'win32'
-    ? path.join(process.resourcesPath, 'server.exe')
-    : path.join(process.resourcesPath, 'server');
-
-  if (fs.existsSync(serverPath)) {
-    const { spawn } = require('child_process');
-    const server = spawn(serverPath, [], {
-      stdio: 'ignore',
-      detached: false,
-      env: { ...process.env, ELECTRON_MANAGED: '1' }
-    });
-    server.unref();
-
-    // Give server time to start
-    return new Promise(resolve => setTimeout(resolve, 1500));
-  }
-  return Promise.resolve();
-}
-
-app.whenReady().then(async () => {
-  // If running from a packaged app (.app / .exe), start the bundled server
-  if (app.isPackaged) {
-    await startBundledServer();
-  }
-  createWindow();
-});
+app.whenReady().then(createWindow);
 
 app.on("window-all-closed", () => {
   app.quit();

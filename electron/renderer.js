@@ -1,44 +1,11 @@
 const { Marked } = require("marked");
 const { markedHighlight } = require("marked-highlight");
 const hljs = require("highlight.js");
-const DOMPurify = require("dompurify");
 const { shell, ipcRenderer, clipboard } = require("electron");
 const os = require("os");
 const path = require("path");
 const { exec } = require("child_process");
 const fs = require("fs");
-
-// ─── DOMPurify configuration ───────────────────────────────────
-// Allow safe HTML from marked.js but block script injection
-DOMPurify.setConfig({
-    ALLOWED_TAGS: [
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'hr',
-        'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'em', 'strong',
-        'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
-        'del', 'ins', 'sup', 'sub', 'span', 'div', 'details', 'summary',
-        'mark', 'abbr', 'kbd', 'var', 'samp', 'small', 'figure', 'figcaption',
-        'dl', 'dt', 'dd', 'input', 'label',
-        'svg', 'path', 'polyline', 'circle', 'rect', 'line', 'polygon',
-        'button',
-    ],
-    ALLOWED_ATTR: [
-        'href', 'src', 'alt', 'title', 'class', 'id', 'target', 'rel',
-        'width', 'height', 'colspan', 'rowspan', 'style',
-        'viewBox', 'fill', 'stroke', 'stroke-width', 'stroke-linecap',
-        'stroke-linejoin', 'd', 'points', 'cx', 'cy', 'r', 'x', 'y',
-        'x1', 'y1', 'x2', 'y2', 'rx', 'ry', 'xmlns',
-        'type', 'checked', 'disabled', 'data-lang',
-    ],
-    ALLOW_DATA_ATTR: false,
-    ADD_ATTR: ['target'],
-    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'textarea', 'select'],
-    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
-});
-
-// Safe HTML sanitizer wrapper
-function sanitizeHTML(html) {
-    return DOMPurify.sanitize(html);
-}
 
 // Set platform attribute for CSS
 const platform = os.platform(); // "darwin" | "win32" | "linux"
@@ -62,34 +29,39 @@ function copyToClipboard(text) {
 
 // Windows/Linux custom window controls
 if (platform !== "darwin") {
+    const { remote } = (() => {
+        try { return require("@electron/remote"); } catch { return {}; }
+    })();
+    const currentWindow = remote ? remote.getCurrentWindow() : null;
+
     document.getElementById("btn-minimize")?.addEventListener("click", () => {
-        ipcRenderer.send("window-minimize");
+        if (currentWindow) currentWindow.minimize();
+        else ipcRenderer.send("window-minimize");
     });
     document.getElementById("btn-maximize")?.addEventListener("click", () => {
-        ipcRenderer.send("window-maximize");
+        if (currentWindow) {
+            currentWindow.isMaximized() ? currentWindow.unmaximize() : currentWindow.maximize();
+        } else {
+            ipcRenderer.send("window-maximize");
+        }
     });
     document.getElementById("btn-close-window")?.addEventListener("click", () => {
-        ipcRenderer.send("window-close");
+        if (currentWindow) currentWindow.close();
+        else ipcRenderer.send("window-close");
     });
 }
 
 window.addEventListener('error', (e) => {
-    console.error('[GeminiStudio Error]', e.error ? e.error.message : e.message);
+    try { fs.appendFileSync('/tmp/renderer.log', (e.error ? e.error.stack : e.message) + '\n'); } catch (err) { }
 });
 window.addEventListener('unhandledRejection', (e) => {
-    console.error('[GeminiStudio Rejection]', e.reason ? (e.reason.message || 'Promise rejection') : 'Promise rejection');
+    try { fs.appendFileSync('/tmp/renderer.log', (e.reason ? (e.reason.stack || e.reason) : 'Promise rejection') + '\n'); } catch (err) { }
 });
 
 const API_BASE = "http://127.0.0.1:44755";
 
 // ─── Onboarding Persistence (survives cookie clearing) ─────────────────────
 // Uses a file in Electron's userData directory, not localStorage
-const ONBOARDING_FLAG_PATH = path.join(
-    (require('electron').app || require('@electron/remote')?.app || { getPath: () => '' }).getPath?.('userData') || '',
-    'onboarding_complete.json'
-);
-
-// Fallback: use ipcRenderer to ask main process for userData path
 let _onboardingFilePath = null;
 
 async function getOnboardingFilePath() {
@@ -101,7 +73,7 @@ async function getOnboardingFilePath() {
             return _onboardingFilePath;
         }
     } catch {}
-    // Fallback
+    // Fallback to home directory
     _onboardingFilePath = path.join(os.homedir(), '.gemini-studio-onboarding.json');
     return _onboardingFilePath;
 }
@@ -540,7 +512,9 @@ async function loadUserAvatar() {
                 const b64 = stdout ? stdout.trim() : "";
                 if (!err && b64.length > 100) {
                     userAvatarBase64 = `data:image/jpeg;base64,${b64}`;
+                    try { fs.appendFileSync('/tmp/renderer.log', `Avatar loaded: ${b64.length} chars. Prefix: ${b64.substring(0, 30)}\n`); } catch (e) { }
                 } else {
+                    try { fs.appendFileSync('/tmp/renderer.log', `Avatar load failed. err: ${err}, length: ${b64.length}, stdout_start: ${b64.substring(0, 20)}\n`); } catch (e) { }
                 }
                 resolve();
             });
@@ -2512,7 +2486,7 @@ function addThinkingSection(parentEl, thoughtText) {
         // Update existing
         const summaryEl = chainEl.querySelector(".thought-summary");
         const bodyEl = chainEl.querySelector(".thought-chain-body");
-        summaryEl.innerHTML = sanitizeHTML(marked.parseInline(summaryLine));
+        summaryEl.innerHTML = marked.parseInline(summaryLine);
         bodyEl.innerHTML = '';
         const timelineEl = buildTimeline(detailLines);
         bodyEl.appendChild(timelineEl);
@@ -2530,7 +2504,7 @@ function addThinkingSection(parentEl, thoughtText) {
 
     const summaryEl = document.createElement("span");
     summaryEl.className = "thought-summary";
-    summaryEl.innerHTML = sanitizeHTML(marked.parseInline(summaryLine));
+    summaryEl.innerHTML = marked.parseInline(summaryLine);
 
     const chevron = `<svg class="thought-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>`;
 
@@ -2585,7 +2559,7 @@ function buildTimeline(lines) {
 
         const textEl = document.createElement("div");
         textEl.className = "thought-timeline-text";
-        textEl.innerHTML = sanitizeHTML(marked.parseInline(line.trim()));
+        textEl.innerHTML = marked.parseInline(line.trim());
 
         item.appendChild(iconEl);
         item.appendChild(textEl);
@@ -2661,16 +2635,13 @@ function renderMarkdown(text) {
     let cleanText = text.replace(/<memory>[\s\S]*?(?:<\/memory>|$)/i, "").trim();
     let html = marked.parse(cleanText);
 
-    // Sanitize HTML to prevent XSS from AI responses
-    html = sanitizeHTML(html);
-
     html = html.replace(/<pre><code(.*?)>/g, (match, attrs) => {
         let lang = "";
         const langMatch = attrs.match(/class="hljs language-(\w+)"/);
         if (langMatch) {
             lang = langMatch[1];
         }
-        const header = `<div class="code-header"><span>${lang || "code"}</span><button class="copy-btn" data-action="copy-code">Copy</button></div>`;
+        const header = `<div class="code-header"><span>${lang || "code"}</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>`;
         return `<pre>${header}<code${attrs}>`;
     });
 
@@ -2696,12 +2667,6 @@ window.copyCode = function (btn) {
         btn.textContent = t("actions.copy");
     }, 2000);
 };
-
-// Event delegation for copy-code buttons (replaces inline onclick)
-document.addEventListener("click", (e) => {
-    const btn = e.target.closest('[data-action="copy-code"]');
-    if (btn) window.copyCode(btn);
-});
 
 function scrollToBottom() {
     requestAnimationFrame(() => {
@@ -5166,10 +5131,7 @@ if (btnClearHistory) {
     });
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ONBOARDING TUTORIAL SYSTEM
-// ═══════════════════════════════════════════════════════════════════════════════
-
+// ─── Onboarding Tutorial System ────────────────────────────────────────────
 const ONBOARDING_LANGUAGES = [
     { code: 'en', name: 'English', flag: '\u{1F1FA}\u{1F1F8}' },
     { code: 'tr', name: 'Türkçe', flag: '\u{1F1F9}\u{1F1F7}' },
@@ -5186,7 +5148,6 @@ const ONBOARDING_LANGUAGES = [
     { code: 'be', name: 'Беларуская', flag: '\u{1F1E7}\u{1F1FE}' },
 ];
 
-// Onboarding i18n strings (loaded dynamically when language changes)
 const ONBOARDING_I18N = {
     en: {
         langTitle: 'What is your language?',
@@ -5541,7 +5502,6 @@ function initOnboarding() {
                 langGrid.querySelectorAll('.onboarding-lang-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedLang = lang.code;
-                // Apply language immediately
                 loadLanguageSync(lang.code);
                 localStorage.setItem('app_language', lang.code);
                 applyTranslations();
@@ -5568,7 +5528,6 @@ function initOnboarding() {
 
         prevBtn.disabled = step === 1;
 
-        // Hide nav on last step (has its own finish button)
         const nav = document.getElementById('onboarding-nav');
         if (step === totalSteps) {
             nav.style.display = 'none';
@@ -5578,7 +5537,6 @@ function initOnboarding() {
     }
 
     function completeOnboarding() {
-        // Apply settings
         const instructions = document.getElementById('onboarding-instructions')?.value?.trim();
         if (instructions) {
             localStorage.setItem('custom_system_instructions', instructions);
@@ -5592,14 +5550,10 @@ function initOnboarding() {
             if (tempVal) tempVal.textContent = parseFloat(temp).toFixed(2);
         }
 
-        // Mark as complete (persistent file, not localStorage)
         markOnboardingComplete({ language: selectedLang });
-
-        // Hide overlay
         overlay.classList.add('hidden');
     }
 
-    // Navigation
     nextBtn.addEventListener('click', () => {
         if (currentStep < totalSteps) {
             currentStep++;
@@ -5617,7 +5571,6 @@ function initOnboarding() {
     skipBtn.addEventListener('click', completeOnboarding);
     if (finishBtn) finishBtn.addEventListener('click', completeOnboarding);
 
-    // Auth step: skip button
     const authSkipBtn = document.getElementById('onboarding-auth-skip');
     if (authSkipBtn) {
         authSkipBtn.addEventListener('click', () => {
@@ -5626,7 +5579,6 @@ function initOnboarding() {
         });
     }
 
-    // Google sign-in from onboarding
     const googleBtn = document.getElementById('onboarding-google-btn');
     if (googleBtn) {
         googleBtn.addEventListener('click', async () => {
@@ -5638,7 +5590,6 @@ function initOnboarding() {
         });
     }
 
-    // API key save from onboarding
     const apiKeySaveBtn = document.getElementById('onboarding-apikey-save');
     if (apiKeySaveBtn) {
         apiKeySaveBtn.addEventListener('click', async () => {
@@ -5648,94 +5599,15 @@ function initOnboarding() {
                 await setApiKey(key);
                 await ipcRenderer.invoke('save-api-key', key);
                 keyInput.value = '';
-                // Move to next step
                 currentStep++;
                 showStep(currentStep);
             }
         });
     }
 
-    // Initialize
     updateOnboardingTexts();
     showStep(1);
     overlay.classList.remove('hidden');
-}
-
-// ─── Auto-update checker ──────────────────────────────────────
-const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour
-const GITHUB_RELEASES_URL = "https://api.github.com/repos/studio-toolkit/chat-toolkit-rust-mcp/releases/latest";
-const GITHUB_RELEASES_PAGE = "https://github.com/studio-toolkit/chat-toolkit-rust-mcp/releases";
-let _updateDismissedVersion = null;
-
-function compareVersions(a, b) {
-    const pa = a.replace(/^v/, '').split('.').map(Number);
-    const pb = b.replace(/^v/, '').split('.').map(Number);
-    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-        const na = pa[i] || 0;
-        const nb = pb[i] || 0;
-        if (na > nb) return 1;
-        if (na < nb) return -1;
-    }
-    return 0;
-}
-
-async function checkForUpdates() {
-    try {
-        const pkg = require('./package.json');
-        const currentVersion = pkg.version;
-
-        const response = await fetch(GITHUB_RELEASES_URL, {
-            headers: { 'Accept': 'application/vnd.github.v3+json' },
-        });
-        if (!response.ok) return;
-
-        const release = await response.json();
-        const latestVersion = (release.tag_name || '').replace(/^v/, '');
-
-        if (!latestVersion) return;
-
-        if (compareVersions(latestVersion, currentVersion) > 0) {
-            // Don't show if user already dismissed this version
-            if (_updateDismissedVersion === latestVersion) return;
-
-            const notification = document.getElementById('update-notification');
-            const versionInfo = document.getElementById('update-version-info');
-            if (notification && versionInfo) {
-                versionInfo.textContent = `v${currentVersion} → v${latestVersion}`;
-                notification.classList.remove('hidden');
-            }
-        }
-    } catch (err) {
-        // Silently fail — update check is non-critical
-        console.error('Update check failed:', err.message);
-    }
-}
-
-function initUpdateChecker() {
-    const downloadBtn = document.getElementById('update-download-btn');
-    const dismissBtn = document.getElementById('update-dismiss-btn');
-
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', () => {
-            shell.openExternal(GITHUB_RELEASES_PAGE);
-        });
-    }
-    if (dismissBtn) {
-        dismissBtn.addEventListener('click', () => {
-            const versionInfo = document.getElementById('update-version-info');
-            if (versionInfo) {
-                const match = versionInfo.textContent.match(/→ v(.+)/);
-                if (match) _updateDismissedVersion = match[1];
-            }
-            const notification = document.getElementById('update-notification');
-            if (notification) notification.classList.add('hidden');
-        });
-    }
-
-    // Check on startup (after 10s delay to not block init)
-    setTimeout(checkForUpdates, 10000);
-    // Then check periodically
-    setInterval(checkForUpdates, UPDATE_CHECK_INTERVAL);
 }
 
 async function init() {
@@ -5787,9 +5659,6 @@ async function init() {
     await fetchModels();
 
     setInterval(checkStatus, 30000);
-
-    // Auto-update checker
-    initUpdateChecker();
 }
 
 init();

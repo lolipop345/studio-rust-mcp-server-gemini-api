@@ -4,14 +4,13 @@
     "url": "https://github.com/studio-toolkit/chat-toolkit-rust-mcp"
   },
   "dependencies": {
-    "dompurify": "^3.3.3",
     "highlight.js": "^11.9.0",
     "marked": "^12.0.0",
     "marked-highlight": "^2.1.0"
   },
   "description": "Gemini-powered chat interface for Roblox Studio",
   "devDependencies": {
-    "electron": "^41.0.2",
+    "electron": "^33.0.0",
     "electron-builder": "^26.8.1"
   },
   "license": "MIT",

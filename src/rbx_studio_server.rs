@@ -900,7 +900,7 @@ pub fn build_tool_declarations() -> Vec<ToolDeclaration> {
     }]
 }
 
-pub fn build_system_instruction(custom_prompt: Option<String>, _thinking_level: Option<&str>) -> GeminiContent {
+pub fn build_system_instruction(custom_prompt: Option<String>, thinking_level: Option<&str>) -> GeminiContent {
     let mut text = "You are a Roblox Studio assistant. You must be aware of the current studio mode before using any tools. Infer the mode from conversation context or use get_studio_mode.\n\
         \n\
         ## Tool Usage Guidelines\n\
@@ -945,18 +945,20 @@ pub fn build_system_instruction(custom_prompt: Option<String>, _thinking_level: 
         - For COMPLEX tasks (new systems, full UI layouts, cross-script logic): first use `ask_planning_question` (at most 2 times) to clarify ambiguous choices, THEN use `propose_plan` to show a structured markdown plan before writing any code.\n\
         `ask_planning_question` opens an interactive card in the UI — keep questions short and options concrete (e.g., 'Fusion / React-Lua / Plain ScreenGui').".to_string();
 
-    // Debugging instructions — ALWAYS included regardless of thinking level
-    text.push_str("\n\
+    // Debugging instructions only for thoughtful/planning modes (not fast/none)
+    let is_thinking = thinking_level
+        .map(|l| !l.is_empty() && l != "none")
+        .unwrap_or(false);
+
+    if is_thinking {
+        text.push_str("\n\
         \n\
-        ### Debugging & Verification (MANDATORY)\n\
-        - **ALWAYS** use `debug_script` after writing or modifying ANY code. This is NOT optional — every code change MUST be verified.\n\
-        - After creating a script with `create_script`, immediately use `debug_script` to verify it runs without errors.\n\
-        - After editing code with `replace_with` or `replace_lines_with`, use `debug_script` to confirm the changes work.\n\
-        - `debug_script` runs code in a sandbox, tracks all Instance.new() calls, captures print/warn/error output, and reports runtime errors.\n\
+        ### Debugging (Thoughtful Mode)\n\
+        - **ALWAYS** use `debug_script` after writing or modifying code to verify it works correctly.\n\
+        - `debug_script` runs code in a sandbox, tracks all Instance.new() calls, captures output, and reports errors.\n\
         - After debug, all sandbox instances are automatically cleaned up (set cleanup=false to inspect).\n\
-        - If debug reveals errors, fix the code and debug again — repeat until the script passes with no errors.\n\
-        - **NEVER** tell the user the task is complete without first running `debug_script` to prove the code works.\n\
-        - Workflow: Write/Edit code → `debug_script` → Fix if needed → `debug_script` again → Only then report success.");
+        - If debug reveals errors, fix the code and debug again until it passes.");
+    }
 
     if let Some(custom) = custom_prompt {
         text.push_str("\n\n");
