@@ -126,6 +126,7 @@ jobs:
           cd electron
           npm ci || npm install
       - name: Create OAuth config
+        shell: bash
         run: |
           echo '{"client_id":"${{ secrets.OAUTH_CLIENT_ID }}","client_secret":"${{ secrets.OAUTH_CLIENT_SECRET }}"}' > electron/oauth_config.json
       - name: Build Electron installer (Windows NSIS)

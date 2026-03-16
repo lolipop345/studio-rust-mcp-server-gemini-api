@@ -1,4 +1,5 @@
 const { app, BrowserWindow, safeStorage, ipcMain, shell, dialog } = require("electron");
+const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
@@ -6,6 +7,7 @@ const http = require("http");
 const querystring = require("querystring");
 
 let mainWindow;
+let serverProcess = null;
 
 app.setName("GeminiStudio");
 if (process.platform === 'darwin') {
@@ -32,6 +34,59 @@ function sendToRenderer(channel, data) {
   if (mainWindow && mainWindow.webContents) {
     mainWindow.webContents.send(channel, data);
   }
+}
+
+// ── Bundled Rust server management (packaged app only) ─────────────────────
+function getBundledServerPath() {
+  if (!app.isPackaged) return null;
+  const name = process.platform === "win32" ? "server.exe" : "server";
+  return path.join(process.resourcesPath, name);
+}
+
+async function startBundledServer() {
+  const serverPath = getBundledServerPath();
+  if (!serverPath) return; // dev mode — server started by cargo run
+  if (!fs.existsSync(serverPath)) {
+    console.error("Bundled server not found at:", serverPath);
+    return;
+  }
+
+  // Use userData as working directory for database storage
+  const cwd = app.getPath("userData");
+
+  serverProcess = spawn(serverPath, [], {
+    cwd,
+    stdio: "pipe",
+    env: { ...process.env },
+  });
+
+  serverProcess.stdout.on("data", (d) => console.log("[server]", d.toString().trim()));
+  serverProcess.stderr.on("data", (d) => console.error("[server]", d.toString().trim()));
+  serverProcess.on("error", (err) => console.error("Server process error:", err));
+  serverProcess.on("exit", (code) => {
+    console.log("Server exited with code:", code);
+    serverProcess = null;
+  });
+
+  // Wait for server to become ready (up to 15 seconds)
+  for (let i = 0; i < 30; i++) {
+    try {
+      await new Promise((resolve, reject) => {
+        const req = http.get("http://127.0.0.1:44755/chat/status", (res) => {
+          let body = "";
+          res.on("data", (c) => { body += c; });
+          res.on("end", () => resolve());
+        });
+        req.on("error", reject);
+        req.setTimeout(1000, () => { req.destroy(); reject(new Error("timeout")); });
+      });
+      console.log("Bundled server is ready.");
+      return;
+    } catch {
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
+  console.error("Server did not start within 15 seconds.");
 }
 
 function createWindow() {
@@ -613,10 +668,20 @@ app.on("second-instance", () => {
   }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+  await startBundledServer();
+  createWindow();
+});
 
 app.on("window-all-closed", () => {
   app.quit();
+});
+
+app.on("will-quit", () => {
+  if (serverProcess) {
+    serverProcess.kill();
+    serverProcess = null;
+  }
 });
 
 app.on("activate", () => {

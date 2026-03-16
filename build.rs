@@ -55,7 +55,6 @@ fn main() {
         "files": [
             "**/*",
             "!user-themes",
-            "!oauth_config.json",
             "!node_modules/electron",
             "!node_modules/electron-builder"
         ],
