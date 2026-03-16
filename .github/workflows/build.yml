@@ -55,6 +55,9 @@ jobs:
         run: |
           cd electron
           npm ci || npm install
+      - name: Create OAuth config
+        run: |
+          echo '{"client_id":"${{ secrets.OAUTH_CLIENT_ID }}","client_secret":"${{ secrets.OAUTH_CLIENT_SECRET }}"}' > electron/oauth_config.json
       - name: Build Electron app (macOS)
         run: |
           ./electron/node_modules/.bin/electron-builder --mac --x64 --publish never --config electron-builder.json --project electron
@@ -122,6 +125,9 @@ jobs:
         run: |
           cd electron
           npm ci || npm install
+      - name: Create OAuth config
+        run: |
+          echo '{"client_id":"${{ secrets.OAUTH_CLIENT_ID }}","client_secret":"${{ secrets.OAUTH_CLIENT_SECRET }}"}' > electron/oauth_config.json
       - name: Build Electron installer (Windows NSIS)
         shell: bash
         run: |
